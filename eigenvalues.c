@@ -10,6 +10,16 @@
 
 #define NPHI 5000
 
+#define PRESSURECORRECTION
+#define GRAVITYCORRECTION
+
+#define SELFGRAVITY
+
+//#define SECONDORDER
+#define FOURTHORDER
+
+
+
 int N;
 
 double poly_n;
@@ -19,7 +29,8 @@ double *weights, *kernel,*kernel0, *H, *HL, *work;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds;
-double *omega,*kappa,*omega2,*kappa2;
+double *omega,*omega2,*kappa2;
+double complex *kappa;
 double *dphi0dr;
 
 double *D, *D2, *KD,*DKD;
@@ -54,6 +65,9 @@ void output(double complex *evals, double complex *evecs);
 void output_globals(void);
 void output_matrix(double complex *mat, double complex *bcmat);
 void output_kernel(void);
+
+double sigma_profile(double rval, double h, double rc,double beta);
+
 					
 int main(int argc, char *argv[]) {
 	int i,j;
@@ -163,7 +177,7 @@ void alloc_globals(void) {
 	sigma = (double *)malloc(sizeof(double)*N);
 	omega = (double *)malloc(sizeof(double)*N);
 	omega2 = (double *)malloc(sizeof(double)*N);
-	kappa = (double *)malloc(sizeof(double)*N);
+	kappa = (double complex *)malloc(sizeof(double complex)*N);
 	kappa2 = (double *)malloc(sizeof(double)*N);
 	scaleH = (double *)malloc(sizeof(double)*N);
 	dlds = (double *)malloc(sizeof(double)*N);
@@ -225,6 +239,13 @@ int init(double ri) {
 		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
 		sigma[i] = pow(c2[i],poly_n);
 		
+		
+//		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
+		
+//		c2[i] = scaleH[i]*scaleH[i] / (r[i]*r[i]*r[i]);
+		
+		
+		
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
 		lc2[i] = log(c2[i]);
@@ -240,12 +261,12 @@ int init(double ri) {
 		}
 		
 		if (isnan(lc2[i]) != 0) {
-			printf("\n\n Detected NaN in lc2 at i=%d, r=%.3lg\n\n", i, r[i]);
+			printf("\n\n Detected NaN in lc2 at i=%d, r=%.3lg, c2=%lg\n\n", i, r[i],c2[i]);
 			return -1;
 		}
 		
 		if (isnan(lsig[i]) != 0) {
-			printf("\n\n Detected NaN in lsig at i=%d, r=%.3lg\n\n", i, r[i]);
+			printf("\n\n Detected NaN in lsig at i=%d, r=%.3lg, sig=%lg\n\n", i, r[i],sigma[i]);
 			return -1;
 		}
 		
@@ -281,7 +302,10 @@ int init(double ri) {
 		}
 	}
 	
+	printf("sig tot = %lg\n", 2*M_PI*sigfac);
 	sigfac = Mdisk/(2*M_PI*sigfac);
+	
+	printf("sig tot = %lg\n", sigfac);
 	
 	for(i=0;i<N;i++) {
 		sigma[i] *= sigfac;
@@ -301,14 +325,20 @@ int init(double ri) {
 	
 	
 	for(i=0;i<N;i++) {
-		omega2[i] += (c2[i]*dlds[i] + dphi0dr[i])/(r[i]*r[i]);
+	
+#ifdef PRESSURECORRECTION
+		omega2[i] += c2[i]*dlds[i]/(r[i]*r[i]);
+#endif
+#ifdef GRAVITYCORRECTION
+		omega2[i] += dphi0dr[i]/(r[i]*r[i]);
+#endif
 		kappa2[i] = 4*omega2[i];
 	}
 	
 	matvec(D,omega2,kappa2,1,1,N);
 	
 	for(i=0;i<N;i++) {
-		kappa[i] = sqrt(kappa2[i]);
+		kappa[i] = csqrt(kappa2[i]);
 		omega[i] = sqrt(omega2[i]);
 		if (isnan(kappa[i]) != 0) {
 			printf("\n\n Detected NaN in kappa at i=%d, r=%.3lg\n\n", i, r[i]);
@@ -326,6 +356,26 @@ int init(double ri) {
 	return 0;
 }
 
+
+double sigma_profile(double rval, double h, double rc, double beta) {
+	double sigma_min, index, width,result, x;
+	
+	x = rval - rc;
+	sigma_min = 1e-1;
+	index = 2;
+	width = 2*h;
+	
+//	printf("%lg\t%lg\t%lg\t%lg\n", x,sigma_min,index,width);
+	result = (1 - (1-sigma_min)/(1 + pow(x/width,index)*exp(-(2.5*width/x)*(2.5*width/x))));
+	
+//	printf(" %lg\n", result);
+	result *= pow(rval,beta);
+	
+	return result;
+}
+
+
+#ifdef SECONDORDER
 double Dij(int i, int j) {
 	
 	if (i==0) {
@@ -416,7 +466,172 @@ double D2ij(int i, int j) {
 		
 }
 
+#endif
 
+#ifdef FOURTHORDER
+
+double Dij(int i, int j) {
+	
+	if (i==0 || i==1) {
+		if (j==i-1) {
+			return 0;
+		}
+		if (j==i) {
+			return -25./12;
+		}
+		if (j==i+1) {
+			return 4.;
+		}
+		if (j==i+2) {
+			return -3.;
+		}
+		if (j==i+3) {
+			return 4./3;
+		
+		}
+		if (j==i+4) {
+			return -1./4;
+		}
+		else {
+			return 0;
+		}
+	
+	}
+	
+	else if (i==N-2 || i==N-1) {
+		if (j==i+1) {
+			return 0;
+		}
+		if (j==i) {
+			return 25./12;
+		}
+		if (j==i-1) {
+			return -4.;
+		}
+		if (j==i-2) {
+			return 3.;
+		}
+		if (j==i-3) {
+			return -4./3;
+		
+		}
+		if (j==i-4) {
+			return 1./4;
+		}
+		else {
+			return 0;
+		}
+	
+	
+	}	
+	else {
+		if (j==i-2) {
+			return 1./12;
+		}
+		if (j==i-1) {
+			return -2./3;
+		}
+		if (j==i+1) {
+			return 2./3;
+		}
+		if (j==i+2) {
+			return -1./12;
+		}
+		else {
+			return 0;
+		}
+	
+	}
+
+}
+
+double D2ij(int i, int j) {
+	if (i==0 || i==1) {
+		if (j==i-1) {
+			return 0;
+		}
+		if (j==i) {
+			return 15./4;
+		}
+		if (j==i+1) {
+			return -77./6;
+		}
+		if (j==i+2) {
+			return 107./6;
+		}
+		if (j==i+3) {
+			return -13.;
+		
+		}
+		if (j==i+4) {
+			return 61./12;
+		}
+		if (j==i+5) {
+			return -5./6;
+		}
+		else {
+			return 0;
+		}
+	
+	
+	}
+	
+	else if (i==N-2 || i==N-1) {
+		if (j==i+1) {
+			return 0;
+		}
+		if (j==i) {
+			return 15./4;
+		}
+		if (j==i-1) {
+			return -77./6;
+		}
+		if (j==i-2) {
+			return 107./6;
+		}
+		if (j==i-3) {
+			return 13.;
+		
+		}
+		if (j==i-4) {
+			return 61./12;
+		}
+		if (j==i-5) {
+			return -5./6;
+		}
+		else {
+			return 0;
+		}
+	
+	
+	}	
+	else {
+		if (j==i-2) {
+			return -1./12;
+		}
+		if (j==i-1) {
+			return 4./3;
+		}
+		if (j==i) {
+			return -5./2;
+		}
+		if (j==i+1) {
+			return 4./3;
+		}
+		if (j==i+2) {
+			return -1./12;
+		}
+		else {
+			return 0;
+		}
+	
+	}
+
+
+}
+
+
+#endif
 
 void calc_weights(void) {
 /* O(N^(-4)) weights */
@@ -503,9 +718,10 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 	printf("Done 3\n");
 	matmat(HL,H,DKD,1,0,N);
 	
-	
+
+#ifdef SELFGRAVITY	
 	for(i=0;i<N*N;i++) mat[i] += DKD[i];
-	
+#endif
 	printf("Done 4\n");
 	lagrangian_pressure_bc_inner(mat, bcmat);
 	printf("Done 5\n");
@@ -742,7 +958,7 @@ void output_globals(void) {
 			eps*scaleH[i],
 			dldc2[i],
 			dlds[i],
-			kappa[i],
+			kappa2[i],
 			d2lds[i]);
 	}
 			
@@ -829,6 +1045,8 @@ void output(double complex *evals, double complex *evecs) {
 	fclose(f);
 	return;
 }
+
+
 
 
 

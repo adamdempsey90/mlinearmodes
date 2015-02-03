@@ -14,8 +14,10 @@ class Field():
 		self.soft = dat[:,6]
 		self.dldc2 = dat[:,7]
 		self.dlds = dat[:,8]
-		self.kappa = dat[:,9]
+		self.kappa2 = dat[:,9]
+		self.kappa = sqrt(self.kappa2)
 		self.d2lds = dat[:,10]
+		self.dlr = diff(self.lr)[0]
 		
 		evals = emat[:,0] + 1j*emat[:,1]
 		emat = emat[:,2:]
@@ -26,8 +28,9 @@ class Field():
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
 		self.edict = { ev:self.evecs[i,:] for i,ev in enumerate(self.evals)}
+		self.sigp = { ev:-gradient(self.evecs[i,:]*self.sigma,self.dlr) for i,ev in enumerate(self.evals) }
 	
-	def plot(self,q,logr=False):
+	def plot(self,q,logr=False,logy=False):
 		arglist = vars(self).keys()
 		if logr:
 			r = self.lr
@@ -43,7 +46,7 @@ class Field():
 		
 		dat = getattr(self,q)
 		
-		
+
 		if q=='matrix':
 			ry,rx = meshgrid(r,r)
 			figure()
@@ -62,9 +65,15 @@ class Field():
 			title('Im('+q+')',fontsize='large')
 			
 		else:
+			if logy:
+				dat = log(dat)
+				tstr = '$\ln ($' + q + ')'
+			else:
+				tstr = q
+				
 			figure()
 			plot(r,dat)
-			title(q,fontsize='large')
+			title(tstr,fontsize='large')
 			xlabel(xstr,fontsize='large')
 		
 		
@@ -88,7 +97,10 @@ class Field():
 				if renormalize:
 					dat /= self.sigma
 				if scale != 0:
-					dat *= scale/dat[0]
+					if scale == 'max':
+						dat /= dat.max()
+					else:
+						dat *= scale/dat[0]
 				
 				plot(r,real(dat),'-k')
 				plot(r,imag(dat),'--k')
@@ -97,13 +109,31 @@ class Field():
 			if renormalize:
 					dat /= self.sigma
 			if scale != 0:
-				dat *= scale/dat[0]
+				if scale == 'max':
+					dat /= dat.max()
+				else:
+					dat *= scale/dat[0]
 			
 			plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
 			plot(r,imag(dat),'--k',label=('$\\gamma = %.2e$' % imag(ev)))
 			legend(loc='best')
 		
 		return
+	
+	# def convert_real(self,ev,Nphi=500):
+# 		phi = linspace(-pi,pi,Nphi)
+# 		sigmatot = array([self.sigma[i] + 2*real(self.sigp[ev][i]*exp(phi)) for i in range(len(self.r))])
+# 		
+# 		rr,pp = meshgrid(phi,self.r)
+# 		x = rr*cos(pp)
+# 		y = rr*sin(pp)
+# 		figure()
+# 		pcolormesh(x,y,log10(sigmatot))
+# 		colorbar()
+# 		title('$\\Sigma$')
+# 		
+# 		return
+	
 		
 			
 		
