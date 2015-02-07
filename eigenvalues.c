@@ -14,10 +14,12 @@
 #define GRAVITYCORRECTION
 
 #define SELFGRAVITY
+//#define INDIRECT
 
-//#define SECONDORDER
-#define FOURTHORDER
 
+#define SECONDORDER
+//#define FOURTHORDER
+//#define CHEBYSHEV
 
 
 int N;
@@ -53,6 +55,8 @@ double kernel_integrand(int m, double r, double rp, double rs, double phi);
 void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat);
 void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat);
 
+void calc_sigmap(double complex *sigmap, double complex *evecs);
+
 void matmat(double  *A, double *B, double *C, 
 					double alpha, double beta, int nA); 
 
@@ -60,11 +64,13 @@ void matvec(double  *A, double *B, double *C,
 					double alpha, double beta, int nA); 
 
 
-void output(double complex *evals, double complex *evecs);
+void output(double complex *evals, double complex *evecs, double complex *sigmap);
 
 void output_globals(void);
 void output_matrix(double complex *mat, double complex *bcmat);
 void output_kernel(void);
+void output_derivatives(void);
+
 
 double sigma_profile(double rval, double h, double rc,double beta);
 
@@ -111,7 +117,10 @@ int main(int argc, char *argv[]) {
 	double complex *mat = (double complex *)malloc(sizeof(double complex)*N*N);	
 	double complex *evals = (double complex *)malloc(sizeof(double complex)*N);	
 	double complex *evecs = (double complex *)malloc(sizeof(double complex)*N*N);	
-	double complex *bcmat = (double complex *)malloc(sizeof(double complex)*N*N);	  
+	double complex *bcmat = (double complex *)malloc(sizeof(double complex)*N*N);	
+	
+	double complex *sigmap = (double complex *)malloc(sizeof(double complex)*N*N);
+	  
   
   
   	printf("Allocating Arrays...\n");
@@ -119,6 +128,7 @@ int main(int argc, char *argv[]) {
   	
   	printf("Initializing Derivative Matrices...\n");
   	init_derivatives();
+  	output_derivatives();
   	calc_weights();
   	printf("Initializing Variables...\n");
   	int nanflag = init(ri);
@@ -146,14 +156,16 @@ int main(int argc, char *argv[]) {
   	printf("Solving For Eigenvalues and Eigenvectors...\n");
   	reigenvalues(mat,bcmat,evals,evecs,N);
   	
+  	calc_sigmap(sigmap, evecs);
+  	
   	printf("Outputting Results...\n");
-  	output(evals,evecs);
+  	output(evals,evecs,sigmap);
 
   	
   	printf("Freeing Arrays...\n");
   	
   	free_globals();
-	free(mat); free(evecs); free(evals); free(bcmat);
+	free(mat); free(evecs); free(evals); free(bcmat); free(sigmap);
 	
   return 0;
 }
@@ -231,20 +243,26 @@ int init(double ri) {
 	
 	
 	for(i=0;i<N;i++) {
+#ifdef CHEBYSHEV
+		lr[i] = cos( (M_PI*i)/N);
+#else
 		lr[i] = log(ri) + i*dlr;
+#endif
 		r[i] = exp(lr[i]);
 		
 		scaleH[i] = h0*r[i];
 		
-		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
-		sigma[i] = pow(c2[i],poly_n);
+//		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+//		sigma[i] = pow(c2[i],poly_n);
 		
 		
 //		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
 		
 //		c2[i] = scaleH[i]*scaleH[i] / (r[i]*r[i]*r[i]);
 		
-		
+
+		sigma[i] = pow(r[i],-poly_n);
+		c2[i] = pow(h0/r[i],2);		
 		
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
@@ -739,7 +757,12 @@ void calc_coefficients(int i, double *A, double *B, double *C, double *G) {
 	
 	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i] - kappa[i];
 	*B = (2 + dldc2[i] + dlds[i]) * (*C);
+
+#ifdef SELFGRAVITY
 	*G = -1.0/(2*omega[i]*r[i]*r[i]*r[i]*r[i]);
+#else
+	*G = 0;
+#endif
 	return; 
 
 }
@@ -789,7 +812,11 @@ double Kij(int i, int j) {
 	
 	result *= dp*2;
 //	result = weights[j]*r[i]*r[i]*(r[j]*r[j]*result - M_PI*r[i]);
-	result = weights[j] * (r[j]*r[j]*result - M_PI*r[i]);	
+	result = weights[j] * (r[j]*r[j]*result);
+
+#ifdef INDIRECT
+	result -= M_PI*r[i]*weights[j];
+#endif	
 	return result;
 
 
@@ -826,6 +853,26 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 		mat[indx] = D[indx];
 		bcmat[indx] = 0;
 	}
+	return;
+}
+
+void calc_sigmap(double complex *sigmap, double complex *evecs) {
+	int i,j,k,indx;
+	
+#ifdef OPENMP
+#pragma omp parallel private(indx,i,j,k) shared(N,dlds,evecs,sigma,sigmap,D)
+#pragma omp for schedule(static)
+#endif
+	for(indx=0;indx<N*N;indx++) {
+		i = indx/N;
+		j = indx - i*N;
+		sigmap[indx] = -sigma[j]*evecs[indx]*dlds[j];
+		
+		for(k=0;k<N;k++) {
+				sigmap[indx] += -sigma[j]*D[k+N*i]*evecs[k+N*i];
+		}
+	}
+	
 	return;
 }
 
@@ -1023,7 +1070,7 @@ void output_matrix(double complex *mat, double complex *bcmat) {
 	return;
 }
 
-void output(double complex *evals, double complex *evecs) {
+void output(double complex *evals, double complex *evecs, double complex *sigmap) {
 	int i,j;
 	double complex evecij;
 	FILE *f = fopen("eigen.dat","w");
@@ -1043,8 +1090,50 @@ void output(double complex *evals, double complex *evecs) {
 	}
 	
 	fclose(f);
+	
+	f = fopen("sigmap.dat","w");
+	
+	fprintf(f,"#sigmap along rows\n");
+	for(i=0;i<N;i++) {
+		for(j=0;j<N;j++) {
+			fprintf(f,"%.12lg\t%.12lg\t",creal(sigmap[j+i*N]),cimag(sigmap[j+i*N]));
+		}
+		fprintf(f,"\n");
+	}
+	
+	fclose(f);
+	
 	return;
 }
+
+void output_derivatives(void) {
+	FILE *f;
+	
+	int i,j;
+	
+	f=fopen("D.dat","w");
+	for(i=0;i<N;i++) {
+		for(j=0;j<N;j++) {
+			fprintf(f,"%.12lg\t",D[j+N*i]);
+		}
+		fprintf(f,"\n");
+	}	
+	fclose(f);
+	
+	f=fopen("D2.dat","w");
+	for(i=0;i<N;i++) {
+		for(j=0;j<N;j++) {
+			fprintf(f,"%.12lg\t",D2[j+N*i]);
+		}
+		fprintf(f,"\n");
+	}	
+	fclose(f);
+		
+	return;
+}
+	
+	
+
 
 
 
