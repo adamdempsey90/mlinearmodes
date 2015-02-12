@@ -260,12 +260,15 @@ int init(double ri) {
 		
 //		c2[i] = scaleH[i]*scaleH[i] / (r[i]*r[i]*r[i]);
 		
-
-		sigma[i] = pow(r[i],-poly_n);
-		c2[i] = pow(h0/r[i],2);		
 		
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
+	
+		sigma[i] = pow(r[i],0);
+		c2[i] = scaleH[i]*scaleH[i] * omega2[i] * r[i];
+		
+		
+		
 		lc2[i] = log(c2[i]);
 		lsig[i] = log(sigma[i]);
 		

@@ -1,3 +1,4 @@
+from scipy.integrate import cumtrapz
 
 class Field():
 	def __init__(self):
@@ -198,40 +199,86 @@ class Field():
 # 		return
 	def predicted_k(self,ev,sg=True,bt2=False,logr=False,logy=False):
 	
-		a = self.c2/(self.r*self.r)
-		if sg:
-			b = -2*pi*self.sigma/self.r
-		else:
-			b = 0
-			
-		if bt2:
-			c = self.kappa**2 - (self.omega - ev)**2
-		else:
-			c = -2*self.omega*(self.kappa - self.omega - ev)
-			
 	
-		krp = -b + sqrt(b*b - 4*a*c)
-		krm = -b - sqrt(b*b - 4*a*c)
-		krp /= (2*a)
-		krm /= (2*a)
+		if bt2:
+			kt2 = self.kappa2 -(self.omega - ev)**2
+		else:
+			kt2 = 2*self.omega*(self.kappa-self.omega - ev)
+			
+		kt2 /= self.c2
 		
-				
+		if sg:
+			kc = pi*fld.sigma/fld.c2
+		else:
+			kc = 0
+			
+		kp = kc + sqrt(kc*kc + kt2)
+		km = kc - sqrt(kc*kc + kt2)
 		
-
+		
+		kpr = cumtrapz(kp,x=self.r,initial=0)
+		kmr = cumtrapz(km,x=self.r,initial=0)
+		
+		
+	
+# 		a = self.c2/(self.r*self.r)
+# 		if sg:
+# 			b = -2*pi*self.sigma/self.r
+# 		else:
+# 			b = 0
+# 			
+# 		if bt2:
+# 			c = self.kappa**2 - (self.omega - ev)**2
+# 		else:
+# 			c = -2*self.omega*(self.kappa - self.omega - ev)
+# 			
+# 	
+# 		krp = -b + sqrt(b*b - 4*a*c)
+# 		krm = -b - sqrt(b*b - 4*a*c)
+# 		krp /= (2*a)
+# 		krm /= (2*a)
+# 		
+# 				
+# 		
+		
 		emode = self.edict[ev]
 		
 		dedr = gradient(emode,self.dlr)
+		dabsedr = gradient(abs(emode),self.dlr)
 		
+#		emodep = dabsedr*exp(1j*krp) + 1j*krp*emode
+#		emodem = dabsedr*exp(1j*krm) + 1j*krm*emode
+		
+		
+		
+#		emodep = 1j*kp*emode*self.r
+#		emodem = 1j*km*emode*self.r
 
-		
+
+#		emodep =  emode[0] * exp(1j*kp*(self.r-self.r[0]))
+#		emodem =  emode[0]*exp(1j*km*(self.r-self.r[0]))
+
+		emodep = emode[0] * exp(1j*kpr)	
+		emodem = emode[0] * exp(1j*kmr)	
+#		emodep = abs(emode) * exp(1j*kp*self.r)
+#		emodem = abs(emode) * exp(1j*km*self.r)
+			
 		figure()
-		plot(self.r,real(1j*krp*emode),'-r')
-		plot(self.r,imag(1j*krp*emode),'--r')
-		plot(self.r,real(1j*krm*emode),'-b')
-		plot(self.r,imag(1j*krm*emode),'--b')
-		plot(self.r,real(dedr),'-k')
-		plot(self.r,imag(dedr),'-k')
+		plot(self.r,kp,'-r',self.r,km,'-b',self.r,imag(kp),'--r',self.r,imag(km),'--b')
+	
+	
+		figure()
+		plot(self.r, emodep, '-r',self.r, emodem,'-b')
+		plot(self.r,emode,'-k')
 		
+# 		figure()
+# 		plot(self.r,real(emodep),'-r')
+# #		plot(self.r,imag(emodep),'--r')
+# 		plot(self.r,real(emodem),'-b')
+# #		plot(self.r,imag(emodem),'--b')
+# 		plot(self.r,real(dedr),'-k')
+# #		plot(self.r,imag(dedr),'-k')
+# 		
 		if logy:
 			yscale('symlog')
 		
