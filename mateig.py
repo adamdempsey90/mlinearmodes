@@ -190,6 +190,7 @@ class Field():
 			axe.legend(loc='best')
 			axw.plot(r,angle(self.edict[ev])/pi,'-k')
 		
+		subplots_adjust(hspace=.1)
 		return
 	
 	# def convert_real(self,ev,Nphi=500):
@@ -303,6 +304,57 @@ class Field():
 				f.write(linestr)
 		
 		return
+
+def compare(flds, evnum, nustr,logr=False,scale=0):
+	
+	evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
+	
+	fldstr = [nustr[i] + ', ' + evstr[i] for i in range(len(flds))]
+	print evstr
+	
+	
+	if logr:
+		r = [fld.lr for fld in flds]
+		xstr = '$\ln r$'
+	else:
+		r = [fld.r for fld in flds]
+		xstr = '$r$'
+	
+	
+		
+	fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
+	axw.set_xlabel(xstr,fontsize='large')
+	axe.set_ylabel('$e(r)$',fontsize='large')
+	axex.set_ylabel('$e_x(r)$',fontsize='large')
+	axey.set_ylabel('$e_y(r)$',fontsize='large')
+	axw.set_ylabel('$\omega(r)/ \pi $',fontsize='large')
+	
+	for i,fld in enumerate(flds):
+		ev = fld.evals[evnum]
+		dat = copy(fld.edict[ev])
+		
+		if scale != 0:
+			if scale == 'max':
+				dat /= dat.max()
+			else:
+				dat *= scale/dat[0]
+		
+		if fld == '':
+			axex.plot(r[i],real(dat))
+		else:
+			axex.plot(r[i],real(dat),label=fldstr[i])
+		axey.plot(r[i],imag(dat))
+		axe.plot(r[i],abs(dat))
+		axw.plot(r[i],angle(fld.edict[ev])/pi)
+	
+	if fld != '':
+		axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+           ncol=len(flds)/2, mode="expand", borderaxespad=0.)
+	
+	subplots_adjust(hspace=.1)
+	return
+	
+
 			
 		
 		
