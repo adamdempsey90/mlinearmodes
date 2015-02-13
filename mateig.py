@@ -18,6 +18,10 @@ class Field():
 		self.kappa2 = dat[:,9]
 		self.kappa = sqrt(self.kappa2)
 		self.d2lds = dat[:,10]
+		self.dldom = dat[:,11]
+		self.d2dom = dat[:,12]
+		self.nu = dat[:,13]
+		self.dldnu = dat[:,14]
 		self.dlr = diff(self.lr)[0]
 		self.nr = len(self.r)
 		evals = emat[:,0] + 1j*emat[:,1]
@@ -152,9 +156,11 @@ class Field():
 			xstr = '$r$'
 			
 			
-		figure()
-		xlabel(xstr,fontsize='large')
-		ylabel('$e(r)$',fontsize='large')
+		fig,(axe,axw) = subplots(2,1,sharex='col')
+		axw.set_xlabel(xstr,fontsize='large')
+		axe.set_ylabel('$e(r)$',fontsize='large')
+		axw.set_ylabel('$\omega(r)/ \pi $',fontsize='large')
+		
 		if type(ev) == list or type(ev)==numpy.ndarray:
 			for x in ev:
 				dat = copy(self.edict[x])
@@ -166,8 +172,9 @@ class Field():
 					else:
 						dat *= scale/dat[0]
 				
-				plot(r,real(dat),'-k')
-				plot(r,imag(dat),'--k')
+				axe.plot(r,real(dat),'-k')
+				axe.plot(r,imag(dat),'--k')
+				axw.plot(r,angle(self.edict[x])/pi,'-k')
 		else:
 			dat = copy(self.edict[ev])
 			if renormalize:
@@ -178,9 +185,10 @@ class Field():
 				else:
 					dat *= scale/dat[0]
 			
-			plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
-			plot(r,imag(dat),'--k',label=('$\\gamma = %.2e$' % imag(ev)))
-			legend(loc='best')
+			axe.plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
+			axe.plot(r,imag(dat),'--k',label=('$\\gamma = %.2e$' % imag(ev)))
+			axe.legend(loc='best')
+			axw.plot(r,angle(self.edict[ev])/pi,'-k')
 		
 		return
 	

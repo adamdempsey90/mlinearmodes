@@ -14,7 +14,10 @@
 #define GRAVITYCORRECTION
 
 #define SELFGRAVITY
-//#define INDIRECT
+#define INDIRECT
+
+#define VISCOSITY
+
 
 
 #define SECONDORDER
@@ -30,12 +33,15 @@ double Mdisk, eps, h0, dlr,rout;
 double *weights, *kernel,*kernel0, *H, *HL, *work;
 
 
-double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds;
+double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
 double *omega,*omega2,*kappa2;
 double complex *kappa;
 double *dphi0dr;
 
 double *D, *D2, *KD,*DKD;
+
+double *nu, *dldnu, *lnu;
+double alpha_s;
 
 
 void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA);
@@ -47,7 +53,7 @@ double D2ij(int i, int j);
 void calc_weights(void) ;
 void init_derivatives(void);
 int calc_matrices(double complex *mat, double complex *bcmat);
-void calc_coefficients(int i, double *A, double *B, double *C, double *G);
+void calc_coefficients(int i, double complex *A, double complex *B, double complex *C, double complex *G);
 double K0ij(int i, int j);
 double Kij(int i, int j);
 double kernel_integrand(int m, double r, double rp, double rs, double phi);
@@ -80,7 +86,7 @@ int main(int argc, char *argv[]) {
 	double ri, ro;
 	
 	printf("Reading arguments...\n");
-	if (argc < 9) {
+	if (argc < 10) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -94,6 +100,12 @@ int main(int argc, char *argv[]) {
 	eps = atof(argv[5]);
 	h0 = atof(argv[6]);
 	poly_n = atof(argv[7]);
+
+#ifdef VISCOSITY
+	alpha_s = atof(argv[8]);
+#else
+	alpha_s = 0;
+#endif
 	
 	
 	dlr = (log(ro) - log(ri))/((float) N);
@@ -110,8 +122,8 @@ int main(int argc, char *argv[]) {
 		N,ri,ro,dlr,Mdisk,poly_n);
 	
 #ifdef OPENMP
-	omp_set_num_threads(atoi(argv[8]));
-	printf("\t\tOpenMP threads = %d\n", atoi(argv[8]));
+	omp_set_num_threads(atoi(argv[9]));
+	printf("\t\tOpenMP threads = %d\n", atoi(argv[9]));
 #endif	
 	
 	double complex *mat = (double complex *)malloc(sizeof(double complex)*N*N);	
@@ -198,6 +210,15 @@ void alloc_globals(void) {
 	lc2 = (double *)malloc(sizeof(double)*N);
 	dphi0dr=(double *)malloc(sizeof(double)*N);
 	d2lds = (double *)malloc(sizeof(double)*N);
+	lom = (double *)malloc(sizeof(double)*N);
+	dldom = (double *)malloc(sizeof(double)*N);
+	d2dom = (double *)malloc(sizeof(double)*N);
+
+	nu = (double *)malloc(sizeof(double)*N);
+	dldnu = (double *)malloc(sizeof(double)*N);
+	lnu = (double *)malloc(sizeof(double)*N);
+
+
 	return;
 
 }
@@ -229,7 +250,14 @@ void free_globals(void) {
 	free(lc2);
 	free(dphi0dr);
 	free(d2lds);
+	free(lom);
+	free(dldom);
+	free(d2dom);
 	
+	free(nu); 
+	free(dldnu);
+	free(lnu);
+
 	return;
 
 }
@@ -252,8 +280,8 @@ int init(double ri) {
 		
 		scaleH[i] = h0*r[i];
 		
-//		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
-//		sigma[i] = pow(c2[i],poly_n);
+		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+		sigma[i] = pow(c2[i],poly_n);
 		
 		
 //		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
@@ -264,17 +292,28 @@ int init(double ri) {
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
 	
-		sigma[i] = pow(r[i],0);
-		c2[i] = scaleH[i]*scaleH[i] * omega2[i] * r[i];
+//		sigma[i] = pow(r[i],-1.5);
+//		c2[i] = scaleH[i]*scaleH[i] * omega2[i] * r[i];
 		
+#ifdef VISCOSITY		
+		nu[i] = alpha_s * sqrt(c2[i])*scaleH[i];
+		lnu[i] = log(nu[i]);
 		
-		
+#else
+		nu[i] = 0;
+		lnu[i] = 0;
+#endif
+
 		lc2[i] = log(c2[i]);
 		lsig[i] = log(sigma[i]);
 		
 		dlds[i] = 0;
 		dldc2[i] = 0;
 		d2lds[i] = 0;
+		d2dom[i] = 0;
+		dldom[i] = 0;
+		dldnu[i] = 0;
+		
 		
 		if (isnan(c2[i]) != 0) {
 			printf("\n\n Detected NaN in c2 at i=%d, r=%.3lg\n\n", i, r[i]);
@@ -342,8 +381,9 @@ int init(double ri) {
 	matvec(D,lsig,dlds,1,0,N);
 	matvec(D,lc2,dldc2,1,0,N);
 	matvec(D2,lsig,d2lds,1,0,N);
-	
-	
+#ifdef VISCOSITY
+	matvec(D,lnu,dldnu,1,0,N);
+#endif
 	
 	for(i=0;i<N;i++) {
 	
@@ -361,6 +401,7 @@ int init(double ri) {
 	for(i=0;i<N;i++) {
 		kappa[i] = csqrt(kappa2[i]);
 		omega[i] = sqrt(omega2[i]);
+		lom[i] = log(omega[i]);
 		if (isnan(kappa[i]) != 0) {
 			printf("\n\n Detected NaN in kappa at i=%d, r=%.3lg\n\n", i, r[i]);
 			return -1;
@@ -371,6 +412,9 @@ int init(double ri) {
 		}
 
 	}
+	
+	matvec(D,lom,dldom,1,0,N);
+	matvec(D2,lom,d2dom,1,0,N);
 	
 	
 	
@@ -693,7 +737,7 @@ void init_derivatives(void) {
 int calc_matrices(double complex *mat, double complex *bcmat) {
 	int i,j,indx;
 	
-	double A, B, C, G;
+	double complex A, B, C, G;
 /* Compute the matrix including all of its component matrices */
 
 	
@@ -753,7 +797,7 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 }
 
 
-void calc_coefficients(int i, double *A, double *B, double *C, double *G) {
+void calc_coefficients(int i, double complex *A, double complex *B, double complex *C, double complex *G) {
 
 	
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
@@ -766,6 +810,29 @@ void calc_coefficients(int i, double *A, double *B, double *C, double *G) {
 #else
 	*G = 0;
 #endif
+
+#ifdef VISCOSITY
+	double complex temp, norm;
+	double q = dldom[i];
+	double qp = d2dom[i];
+	double beta = dlds[i];
+	double gam = dldnu[i];
+	double betap = d2lds[i];
+	
+	norm = I/(r[i]*omega[i]);
+	
+	temp = -2.*(12.+9.*beta + 9.*gam + 7.*qp) + q*(-31.+4.*beta*(-2.+3*beta)-14.*gam-12.*betap);
+
+	*A += temp*(nu[i]*omega[i]*norm/(12*r[i]));
+	
+	temp = 31. + 14.*beta + 2*q*(11. + 6*beta) + 14.*gam;
+	
+	*B += -temp*norm*(nu[i]*omega[i]/(12*r[i]));
+
+	*C += -(nu[i]*omega[i]*norm/(6*r[i]))*(7 + 6*q);
+
+#endif
+
 	return; 
 
 }
@@ -994,11 +1061,11 @@ void output_globals(void) {
 	FILE *f = fopen("globals.dat","w");
 	
 	
-	fprintf(f,"# lr \t r \t omega \t c2 \t sigma \t H/r \t soft \t dldc2 \t dlds \t kappa\n");
+	fprintf(f,"# lr \t r \t omega \t c2 \t sigma \t H/r \t soft \t dldc2 \t dlds \t kappa^2 \t d2lds \t dldom \t d2dom \t nu \t dldnu\n");
 	
 	
 	for(i=0;i<N;i++) {
-		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\n",
+		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\n",
 			lr[i],
 			r[i],
 			omega[i],
@@ -1009,7 +1076,11 @@ void output_globals(void) {
 			dldc2[i],
 			dlds[i],
 			kappa2[i],
-			d2lds[i]);
+			d2lds[i],
+			dldom[i],
+			d2dom[i],
+			nu[i],
+			dldnu[i]);
 	}
 			
 			
