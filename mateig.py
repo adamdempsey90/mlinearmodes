@@ -305,12 +305,47 @@ class Field():
 		
 		return
 
+	def draw_ellipse(self,ev,num_ellipse,(xc,yc)=(0,0),Nph=500):
+		pgrid = linspace(0,2*pi,Nph)
+		# (Np , Nr)		
+		
+		emode = self.edict[ev]
+		
+		u = self.r*(self.omega - ev)*1j*emode
+		v = .5*1j*u
+		
+		x = zeros((Nph,self.nr))
+		y = zeros((Nph,self.nr))
+		for i in range(Nph):
+			# semi latus rectum
+			l = self.r * (self.omega*self.r  + real(v*exp(-1j*pgrid[i])))
+			l0 = self.r*self.r * self.omega
+			p = self.r*(l/l0)*(l/l0)
+			theta = pgrid[i] - angle(emode)
+			a = p/(1-abs(emode)**2)
+			b = p/sqrt(1-abs(emode)**2)
+			x[i,:] = xc +a*cos(theta) 
+			y[i,:] = yc + b*sin(theta)
+			
+			
+		figure();	
+		size_x = abs(x).max()
+		size_y = abs(y).max()
+		xlim((-size_x,size_x))
+		ylim((-size_y,size_y))
+		plot(0,0,'k*',markersize=10)
+		for i in range(self.nr)[::self.nr/num_ellipse]:
+			plot(x[:,i],y[:,i],'-k')
+				
+		return 
+		
+		
+		
 def compare(flds, evnum, nustr,logr=False,scale=0):
 	
 	evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
 	
 	fldstr = [nustr[i] + ', ' + evstr[i] for i in range(len(flds))]
-	print evstr
 	
 	
 	if logr:
@@ -347,9 +382,15 @@ def compare(flds, evnum, nustr,logr=False,scale=0):
 		axe.plot(r[i],abs(dat))
 		axw.plot(r[i],angle(fld.edict[ev])/pi)
 	
-	if fld != '':
-		axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-           ncol=len(flds)/2, mode="expand", borderaxespad=0.)
+
+	if fldstr != '':
+	
+		if len(flds) > 3:
+			print 1
+			axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=len(flds)/2, mode="expand", borderaxespad=0.)
+        else:
+        	print 2
+        	axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=len(flds), mode="expand", borderaxespad=0.)
 	
 	subplots_adjust(hspace=.1)
 	return

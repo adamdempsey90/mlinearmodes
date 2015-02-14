@@ -16,7 +16,7 @@
 #define SELFGRAVITY
 #define INDIRECT
 
-#define VISCOSITY
+//#define VISCOSITY
 
 
 
