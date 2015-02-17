@@ -341,10 +341,12 @@ class Field():
 		
 		
 		
-def compare(flds, evnum, nustr,logr=False,scale=0):
+def compare(flds, evnum, nustr,logr=False,scale=0,logy=False):
 	
-	evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
-	
+	if type(evnum) != list and type(evnum) != array: 
+		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
+	else:
+		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum[i]]),imag(fld.evals[evnum[i]])) for i,fld in enumerate(flds)]
 	fldstr = [nustr[i] + ', ' + evstr[i] for i in range(len(flds))]
 	
 	
@@ -359,13 +361,19 @@ def compare(flds, evnum, nustr,logr=False,scale=0):
 		
 	fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
 	axw.set_xlabel(xstr,fontsize='large')
-	axe.set_ylabel('$e(r)$',fontsize='large')
+	if logy:
+		axe.set_ylabel('$ \ln e(r)$',fontsize='large')
+	else:
+		axe.set_ylabel('$e(r)$',fontsize='large')
 	axex.set_ylabel('$e_x(r)$',fontsize='large')
 	axey.set_ylabel('$e_y(r)$',fontsize='large')
-	axw.set_ylabel('$\omega(r)/ \pi $',fontsize='large')
-	
+	axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
+#	axw.set_ylim((-1.1,1.1))
 	for i,fld in enumerate(flds):
-		ev = fld.evals[evnum]
+		if type(evnum) != list and type(evnum) != array:
+			ev = fld.evals[evnum]
+		else:
+			ev = fld.evals[evnum[i]]
 		dat = copy(fld.edict[ev])
 		
 		if scale != 0:
@@ -379,8 +387,11 @@ def compare(flds, evnum, nustr,logr=False,scale=0):
 		else:
 			axex.plot(r[i],real(dat),label=fldstr[i])
 		axey.plot(r[i],imag(dat))
-		axe.plot(r[i],abs(dat))
-		axw.plot(r[i],angle(fld.edict[ev])/pi)
+		if logy:
+			axe.plot(r[i],log(abs(dat)))
+		else:
+			axe.plot(r[i],abs(dat))
+		axw.plot(r[i],abs(angle(fld.edict[ev])/pi))
 	
 
 	if fldstr != '':

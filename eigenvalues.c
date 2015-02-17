@@ -118,12 +118,13 @@ int main(int argc, char *argv[]) {
 		\tOuter radius = %lg\n \
 		\tLog spacing = %.3e\n \
 		\tDisk Mass = %lg\n \
-		\tPolytropic Index = %lg\n",
-		N,ri,ro,dlr,Mdisk,poly_n);
+		\tPolytropic Index = %lg\n \
+		\tAlpha Viscosity = %lg\n",
+		N,ri,ro,dlr,Mdisk,poly_n,alpha_s);
 	
 #ifdef OPENMP
 	omp_set_num_threads(atoi(argv[9]));
-	printf("\t\tOpenMP threads = %d\n", atoi(argv[9]));
+	printf("\t\t\tOpenMP threads = %d\n", atoi(argv[9]));
 #endif	
 	
 	double complex *mat = (double complex *)malloc(sizeof(double complex)*N*N);	
@@ -755,7 +756,7 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 				mat[indx] = A;
 				bcmat[indx] = 1;
 				KD[indx] = -sigma[j]* ( dlds[j] + D[indx]);
-				HL[indx] = G*(2*r[i] + D[indx]);
+				HL[indx] = G*(2. + D[indx]);
 			}
 			else {
 				mat[indx] = 0;
@@ -806,7 +807,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 	*B = (2 + dldc2[i] + dlds[i]) * (*C);
 
 #ifdef SELFGRAVITY
-	*G = -1.0/(2*omega[i]*r[i]*r[i]*r[i]*r[i]);
+	*G = -1.0/(2*omega[i]*r[i]*r[i]);
 #else
 	*G = 0;
 #endif
