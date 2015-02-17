@@ -30,7 +30,8 @@ int N;
 double poly_n;
 double Mdisk, eps, h0, dlr,rout; 
 
-double *weights, *kernel,*kernel0, *H, *HL, *work;
+double *weights, *kernel,*kernel0, *work;
+double complex *H, *HL, *KD,*DKD;;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
@@ -38,7 +39,7 @@ double *omega,*omega2,*kappa2;
 double complex *kappa;
 double *dphi0dr;
 
-double *D, *D2, *KD,*DKD;
+double *D, *D2;
 
 double *nu, *dldnu, *lnu;
 double alpha_s;
@@ -76,7 +77,11 @@ void output_globals(void);
 void output_matrix(double complex *mat, double complex *bcmat);
 void output_kernel(void);
 void output_derivatives(void);
-
+void cmatvec(double  complex *A, double complex *B, double complex *C, 
+					double complex alpha, double complex beta, int nB);
+					
+void cmatmat(double complex *A, double complex *B, double complex *C, 
+					double complex alpha, double complex beta, int nA);					
 
 double sigma_profile(double rval, double h, double rc,double beta);
 
@@ -190,10 +195,10 @@ void alloc_globals(void) {
 	kernel = (double *)malloc(sizeof(double)*N*N);
 	kernel0 = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
-	KD = (double *)malloc(sizeof(double)*N*N);
-	DKD = (double *)malloc(sizeof(double)*N*N);
-	H = (double *)malloc(sizeof(double)*N*N);
-	HL = (double *)malloc(sizeof(double)*N*N);
+	KD = (double complex*)malloc(sizeof(double complex)*N*N);
+	DKD = (double complex*)malloc(sizeof(double complex)*N*N);
+	H = (double complex *)malloc(sizeof(double complex)*N*N);
+	HL = (double complex*)malloc(sizeof(double complex)*N*N);
 	work = (double *)malloc(sizeof(double)*N*N);
 	
 	r = (double *)malloc(sizeof(double)*N);
@@ -752,18 +757,28 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 		for(j=0 ; j<N ; j++) {
 			indx = j + N*i;
 			
+			
+			KD[indx] = sigma[j]*D[indx];
+			HL[indx] = G*D[indx];
+			
+			mat[indx] = 0;
+			bcmat[indx] = 0;
+			
+			
 			if (i==j) {
-				mat[indx] = A;
-				bcmat[indx] = 1;
-				KD[indx] = -sigma[j]* ( dlds[j] + D[indx]);
-				HL[indx] = G*(2. + D[indx]);
+				mat[indx] += A;
+				bcmat[indx] += 1;
+//				KD[indx] = -sigma[j]* ( dlds[j] + D[indx]);
+//				HL[indx] = G*(2. + D[indx]);
+				KD[indx] += sigma[j]*dlds[j];
+				HL[indx] += 2*G;
 			}
-			else {
-				mat[indx] = 0;
-				bcmat[indx] = 0;
-				KD[indx] = -D[indx]*sigma[j];
-				HL[indx] = G*D[indx];
-			}
+// 			else {
+// 				mat[indx] = 0;
+// 				bcmat[indx] = 0;
+// 				KD[indx] = -D[indx]*sigma[j];
+// 				HL[indx] = G*D[indx];
+// 			}
 			
 			mat[indx] += B*D[indx] + C*D2[indx];
 			
@@ -1031,7 +1046,45 @@ void matmat(double  *A, double *B, double *C,
 	return;
 
 }
+void cmatmat(double complex *A, double complex *B, double complex *C, 
+					double complex alpha, double complex beta, int nA) 
+{
+/* Performs \alpha * A.B + \beta * C and stores the output in C.
+	A,B, and C are all matrices.
+	This is essenitally a wrapper for the ZGEMM BLAS routine 
+*/
+	int i,j;
+	char TRANSA = 't';
+	char TRANSB = 't';
+	int m = nA;
+	int n = nA;
+	int k = nA;
+	int LDA = nA;
+	int LDB = nA;
+	int LDC = nA;
+		 
+	
+	for(i=0;i<nA;i++) {
+		for(j=0;j<nA;j++) cwork[i+N*j] = C[j + nA*i];
+	}
+	
+	for(i=0;i<nA;i++) {
+		for(j=0;j<nA;j++)	C[i + nA*j] = cwork[i+N*j];
+	}
+	
+	zgemm_(&TRANSA, &TRANSB, &m,&n,&k,&alpha,A,&LDA,B,&LDB,&beta,C,&LDC);
 
+
+	for(i=0;i<nA;i++) {
+		for(j=0;j<nA;j++)  cwork[i+N*j] = C[j + nA*i];
+	}
+	
+	for(i=0;i<nA;i++) {
+		for(j=0;j<nA;j++)	C[i + nA*j] = cwork[i+N*j];
+	}
+	return;
+
+}
 
 void matvec(double  *A, double*B, double *C, 
 					double alpha, double beta, int nB) 
@@ -1051,6 +1104,29 @@ void matvec(double  *A, double*B, double *C,
 	
 
 	dgemv_(&TRANS, &m,&n,&alpha,A,&LDA,B,&INCX,&beta,C,&INCY);
+
+	return;
+
+}
+
+void cmatvec(double  complex *A, double complex *B, double complex *C, 
+					double complex alpha, double complex beta, int nB) 
+{
+/* Performs \alpha * A.B + \beta * C and stores the output in C. 
+	A is a matrix, B and C are vectors.
+	This is essenitally a wrapper for the ZGEMV BLAS routine 
+*/
+
+	char TRANS = 't';
+	int m = nB;
+	int n = nB;
+	int LDA = nB;
+	int INCX = 1;
+	int INCY = 1;
+		 
+	
+
+	zgemv_(&TRANS, &m,&n,&alpha,A,&LDA,B,&INCX,&beta,C,&INCY);
 
 	return;
 
