@@ -11,27 +11,32 @@
 #define NPHI 5000
 
 #define PRESSURECORRECTION
+
+
+//#define SELFGRAVITY
+
+#ifdef SELFGRAVITY
+
+#define INDIRECT
 #define GRAVITYCORRECTION
 
-#define SELFGRAVITY
-#define INDIRECT
+#endif
 
-//#define VISCOSITY
+#define VISCOSITY
 
 
 
 #define SECONDORDER
 //#define FOURTHORDER
-//#define CHEBYSHEV
 
 
 int N;
 
 double poly_n;
-double Mdisk, eps, h0, dlr,rout; 
+double Mdisk, eps, h0, dlr,rout, flare_index; 
 
-double *weights, *kernel,*kernel0, *work;
-double complex *H, *HL, *KD,*DKD;;
+double *weights,*kernel0, *work;
+double complex *H, *HL, *KD,*DKD, *kernel, *cwork;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
@@ -44,11 +49,10 @@ double *D, *D2;
 double *nu, *dldnu, *lnu;
 double alpha_s;
 
-
 void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA);
 void alloc_globals(void);
 void free_globals(void);
-int init(double ri);
+int init(double ri, double ro);
 double Dij(int i, int j);
 double D2ij(int i, int j);
 void calc_weights(void) ;
@@ -91,7 +95,7 @@ int main(int argc, char *argv[]) {
 	double ri, ro;
 	
 	printf("Reading arguments...\n");
-	if (argc < 10) {
+	if (argc < 11) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -105,9 +109,10 @@ int main(int argc, char *argv[]) {
 	eps = atof(argv[5]);
 	h0 = atof(argv[6]);
 	poly_n = atof(argv[7]);
+	flare_index = atof(argv[8]);
 
 #ifdef VISCOSITY
-	alpha_s = atof(argv[8]);
+	alpha_s = atof(argv[9]);
 #else
 	alpha_s = 0;
 #endif
@@ -124,12 +129,13 @@ int main(int argc, char *argv[]) {
 		\tLog spacing = %.3e\n \
 		\tDisk Mass = %lg\n \
 		\tPolytropic Index = %lg\n \
+		\tFlare Index = %lg\n \
 		\tAlpha Viscosity = %lg\n",
-		N,ri,ro,dlr,Mdisk,poly_n,alpha_s);
+		N,ri,ro,dlr,Mdisk,poly_n,flare_index,alpha_s);
 	
 #ifdef OPENMP
-	omp_set_num_threads(atoi(argv[9]));
-	printf("\t\t\tOpenMP threads = %d\n", atoi(argv[9]));
+	omp_set_num_threads(atoi(argv[10]));
+	printf("\t\t\tOpenMP threads = %d\n", atoi(argv[10]));
 #endif	
 	
 	double complex *mat = (double complex *)malloc(sizeof(double complex)*N*N);	
@@ -149,7 +155,7 @@ int main(int argc, char *argv[]) {
   	output_derivatives();
   	calc_weights();
   	printf("Initializing Variables...\n");
-  	int nanflag = init(ri);
+  	int nanflag = init(ri,ro);
   	
   	if (nanflag == -1) {
   		printf("Aborting...\n");
@@ -192,13 +198,14 @@ void alloc_globals(void) {
 	
 	D = (double *)malloc(sizeof(double)*N*N);
 	D2 = (double *)malloc(sizeof(double)*N*N);
-	kernel = (double *)malloc(sizeof(double)*N*N);
+	kernel = (double complex *)malloc(sizeof(double complex)*N*N);
 	kernel0 = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
 	KD = (double complex*)malloc(sizeof(double complex)*N*N);
 	DKD = (double complex*)malloc(sizeof(double complex)*N*N);
 	H = (double complex *)malloc(sizeof(double complex)*N*N);
 	HL = (double complex*)malloc(sizeof(double complex)*N*N);
+	cwork = (double complex *)malloc(sizeof(double complex)*N*N);
 	work = (double *)malloc(sizeof(double)*N*N);
 	
 	r = (double *)malloc(sizeof(double)*N);
@@ -239,6 +246,7 @@ void free_globals(void) {
 	free(DKD);
 	free(H);
 	free(HL);
+	free(cwork);
 	free(work);
 	
 	free(r);
@@ -264,11 +272,13 @@ void free_globals(void) {
 	free(dldnu);
 	free(lnu);
 
+
+
 	return;
 
 }
 
-int init(double ri) {
+int init(double ri,double ro) {
 
 	int i,j,indx;
 	double sigfac;
@@ -277,17 +287,14 @@ int init(double ri) {
 	
 	
 	for(i=0;i<N;i++) {
-#ifdef CHEBYSHEV
-		lr[i] = cos( (M_PI*i)/N);
-#else
+
 		lr[i] = log(ri) + i*dlr;
-#endif
 		r[i] = exp(lr[i]);
 		
-		scaleH[i] = h0*r[i];
+		scaleH[i] = h0*r[i] * pow(r[i],flare_index);
 		
-		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
-		sigma[i] = pow(c2[i],poly_n);
+//		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+//		sigma[i] = pow(c2[i],poly_n);
 		
 		
 //		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
@@ -298,12 +305,18 @@ int init(double ri) {
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
 	
-//		sigma[i] = pow(r[i],-1.5);
-//		c2[i] = scaleH[i]*scaleH[i] * omega2[i] * r[i];
+		sigma[i] = pow(r[i],-poly_n);
+		c2[i] = scaleH[i]*scaleH[i] * omega2[i];
 		
 #ifdef VISCOSITY		
 		nu[i] = alpha_s * sqrt(c2[i])*scaleH[i];
-		lnu[i] = log(nu[i]);
+		
+		if (alpha_s == 0) {
+			lnu[i] = 0;
+		}
+		else { 
+			lnu[i] = log(nu[i]);
+		}
 		
 #else
 		nu[i] = 0;
@@ -338,10 +351,30 @@ int init(double ri) {
 		
 
 	}
+
+	sigfac=0;
+	for(i=0;i<N;i++) {
+		sigfac += weights[i]*sigma[i]*r[i]*r[i];	
+
+	}
+	
+	printf("sig tot = %lg\n", 2*M_PI*sigfac);
+	sigfac = Mdisk/(2*M_PI*sigfac);
+	
+	printf("sig tot = %lg\n", sigfac);
+	
+	for(i=0;i<N;i++) {
+		sigma[i] *= sigfac;
+		if (isnan(sigma[i]) != 0) {
+			printf("\n\n Detected NaN in sigma at i=%d, r=%.3lg\n\n", i, r[i]);
+			return -1;
+		}
+	}	
 	
 	
 	printf("Calculating Kernels\n");
 
+#ifdef SELFGRAVITY
 #ifdef OPENMP
 #pragma omp parallel private(indx,i,j) shared(kernel,kernel0,N)
 #pragma omp for schedule(static)
@@ -353,11 +386,8 @@ int init(double ri) {
 		kernel[indx] = Kij(i,j);
 		kernel0[indx] = K0ij(i,j);
 	}
-	printf("Finished part 1\n");
 	
-	sigfac=0;
 	for(i=0;i<N;i++) {
-		sigfac += weights[i]*sigma[i]*r[i]*r[i];	
 		dphi0dr[i] = 0;
 		for(j=0;j<N;j++) {
 			dphi0dr[i] -= weights[j]*kernel0[j+N*i]*sigma[j];
@@ -366,26 +396,17 @@ int init(double ri) {
 			printf("\n\n Detected NaN in dphi0dr at i=%d, r=%.3lg\n\n", i, r[i]);
 			return -1;
 		}
+
 	}
+#endif
+	printf("Finished part 1\n");
 	
-	printf("sig tot = %lg\n", 2*M_PI*sigfac);
-	sigfac = Mdisk/(2*M_PI*sigfac);
-	
-	printf("sig tot = %lg\n", sigfac);
-	
-	for(i=0;i<N;i++) {
-		sigma[i] *= sigfac;
-		dphi0dr[i] *= sigfac;
-		if (isnan(sigma[i]) != 0) {
-			printf("\n\n Detected NaN in sigma at i=%d, r=%.3lg\n\n", i, r[i]);
-			return -1;
-		}
-	}	
-	
+
 	
 	printf("Finished part 2\n");
 	matvec(D,lsig,dlds,1,0,N);
 	matvec(D,lc2,dldc2,1,0,N);
+	
 	matvec(D2,lsig,d2lds,1,0,N);
 #ifdef VISCOSITY
 	matvec(D,lnu,dldnu,1,0,N);
@@ -701,8 +722,8 @@ double D2ij(int i, int j) {
 
 }
 
-
 #endif
+
 
 void calc_weights(void) {
 /* O(N^(-4)) weights */
@@ -722,7 +743,6 @@ void calc_weights(void) {
 		}
 	
 	}
-	
 	return;
 
 }
@@ -758,9 +778,9 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 			indx = j + N*i;
 			
 			
-			KD[indx] = sigma[j]*D[indx];
-			HL[indx] = G*D[indx];
-			
+			KD[indx] = G*sigma[j]*D[indx];
+//			HL[indx] = G*D[indx];
+			HL[indx] = 0;
 			mat[indx] = 0;
 			bcmat[indx] = 0;
 			
@@ -770,8 +790,8 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 				bcmat[indx] += 1;
 //				KD[indx] = -sigma[j]* ( dlds[j] + D[indx]);
 //				HL[indx] = G*(2. + D[indx]);
-				KD[indx] += sigma[j]*dlds[j];
-				HL[indx] += 2*G;
+				KD[indx] += G*sigma[j]*dlds[j];
+//				HL[indx] += 2*G;
 			}
 // 			else {
 // 				mat[indx] = 0;
@@ -795,12 +815,13 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 //	matmat(kernel,D,KD,1,0,N);
 	printf("Done 2\n");
 //	matmat(D,KD,DKD,1,0,N);
-	matmat(kernel,KD,H,1,0,N);
+	
 	printf("Done 3\n");
-	matmat(HL,H,DKD,1,0,N);
+//	cmatmat(HL,H,DKD,1,0,N);
 	
 
 #ifdef SELFGRAVITY	
+	cmatmat(kernel,KD,DKD,1,0,N);
 	for(i=0;i<N*N;i++) mat[i] += DKD[i];
 #endif
 	printf("Done 4\n");
@@ -901,7 +922,7 @@ double Kij(int i, int j) {
 	result = weights[j] * (r[j]*r[j]*result);
 
 #ifdef INDIRECT
-	result -= M_PI*r[i]*weights[j];
+	result -= 3*M_PI*r[i]*weights[j];
 #endif	
 	return result;
 
@@ -909,12 +930,16 @@ double Kij(int i, int j) {
 }
 
 double kernel_integrand(int m, double r, double rp, double rs2, double phi) {
+	double numerator, denominator;
 	if (m==0) {
 	
 		return (rp*cos(phi) - r)*pow(r*r + rs2 - 2*r*rp*cos(phi),-1.5);
 	}
 	else if (m==1) {
-		return cos(phi)/sqrt(r*r + rs2 - 2*r*rp*cos(phi));
+//		return cos(phi)/sqrt(r*r + rs2 - 2*r*rp*cos(phi));	
+		denominator = pow(r*r + rs2 - 2*r*rp*cos(phi), -1.5);
+		numerator = cos(phi)*(2*rs2 + r*r - 3*r*rp*cos(phi));
+		return numerator * denominator;
 	}
 	else {
 		return 0;
@@ -1175,7 +1200,7 @@ void output_kernel(void) {
 	FILE *f = fopen("kernel.dat","w");
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
-			fprintf(f,"%lg\t",kernel[j+i*N]);
+			fprintf(f,"%lg\t",creal(kernel[j+i*N]));
 		}
 		fprintf(f,"\n");
 	}
@@ -1283,7 +1308,7 @@ void output_derivatives(void) {
 	return;
 }
 	
-	
+
 
 
 

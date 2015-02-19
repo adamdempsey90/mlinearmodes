@@ -1,4 +1,5 @@
 from scipy.integrate import cumtrapz
+from subprocess import call
 
 class Field():
 	def __init__(self):
@@ -147,7 +148,7 @@ class Field():
 		return
 		
 	
-	def plotmode(self,ev,logr=False,renormalize=False,scale=0):
+	def plotmode(self,ev,logr=False,logy=False,renormalize=False,scale=0):
 		if logr:
 			r = self.lr
 			xstr = '$\ln r$'
@@ -155,11 +156,23 @@ class Field():
 			r = self.r
 			xstr = '$r$'
 			
-			
-		fig,(axe,axw) = subplots(2,1,sharex='col')
+		
+		fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
 		axw.set_xlabel(xstr,fontsize='large')
-		axe.set_ylabel('$e(r)$',fontsize='large')
-		axw.set_ylabel('$\omega(r)/ \pi $',fontsize='large')
+		if logy:
+			axe.set_ylabel('$ \ln e(r)$',fontsize='large')
+		else:
+			axe.set_ylabel('$e(r)$',fontsize='large')
+		axex.set_ylabel('$e_x(r)$',fontsize='large')
+		axey.set_ylabel('$e_y(r)$',fontsize='large')
+		axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
+		axw.set_ylim((-.9,1.1))
+		
+		
+#	 	fig,(axe,axw) = subplots(2,1,sharex='col')
+# 		axw.set_xlabel(xstr,fontsize='large')
+# 		axe.set_ylabel('$e(r)$',fontsize='large')
+# 		axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
 		
 		if type(ev) == list or type(ev)==numpy.ndarray:
 			for x in ev:
@@ -172,9 +185,10 @@ class Field():
 					else:
 						dat *= scale/dat[0]
 				
-				axe.plot(r,real(dat),'-k')
-				axe.plot(r,imag(dat),'--k')
-				axw.plot(r,angle(self.edict[x])/pi,'-k')
+				axex.plot(r,real(dat))
+				axey.plot(r,imag(dat))
+				axe.plot(r,abs(dat))
+				axw.plot(r,abs(angle(self.edict[x])/pi))
 		else:
 			dat = copy(self.edict[ev])
 			if renormalize:
@@ -185,10 +199,12 @@ class Field():
 				else:
 					dat *= scale/dat[0]
 			
-			axe.plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
-			axe.plot(r,imag(dat),'--k',label=('$\\gamma = %.2e$' % imag(ev)))
-			axe.legend(loc='best')
-			axw.plot(r,angle(self.edict[ev])/pi,'-k')
+			axex.plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
+			axey.plot(r,imag(dat),'-k',label=('$\\gamma = %.2e$' % imag(ev)))
+			axex.legend(loc='best')
+			axey.legend(loc='best')
+			axe.plot(r,abs(dat),'-k')
+			axw.plot(r,abs(angle(self.edict[ev])/pi),'-k')
 		
 		subplots_adjust(hspace=.1)
 		return
@@ -341,14 +357,18 @@ class Field():
 		
 		
 		
-def compare(flds, evnum, nustr,logr=False,scale=0,logy=False):
+def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 	
 	if type(evnum) != list and type(evnum) != array: 
 		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
 	else:
 		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum[i]]),imag(fld.evals[evnum[i]])) for i,fld in enumerate(flds)]
-	fldstr = [nustr[i] + ', ' + evstr[i] for i in range(len(flds))]
 	
+	
+	if nustr != None:
+		fldstr = [nustr[i] + ', ' + evstr[i] for i in range(len(flds))]
+	else:
+		fldstr = evstr
 	
 	if logr:
 		r = [fld.lr for fld in flds]
@@ -368,7 +388,7 @@ def compare(flds, evnum, nustr,logr=False,scale=0,logy=False):
 	axex.set_ylabel('$e_x(r)$',fontsize='large')
 	axey.set_ylabel('$e_y(r)$',fontsize='large')
 	axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
-#	axw.set_ylim((-1.1,1.1))
+#	axw.set_ylim((-.9,1.1))
 	for i,fld in enumerate(flds):
 		if type(evnum) != list and type(evnum) != array:
 			ev = fld.evals[evnum]
@@ -394,19 +414,267 @@ def compare(flds, evnum, nustr,logr=False,scale=0,logy=False):
 		axw.plot(r[i],abs(angle(fld.edict[ev])/pi))
 	
 
-	if fldstr != '':
-	
-		if len(flds) > 3:
-			print 1
-			axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=len(flds)/2, mode="expand", borderaxespad=0.)
-        else:
-        	print 2
-        	axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=len(flds), mode="expand", borderaxespad=0.)
+	if len(flds) > 3:
+		axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=len(flds)/2, mode="expand", borderaxespad=0.)
+	else:
+		axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=len(flds), mode="expand", borderaxespad=0.)
 	
 	subplots_adjust(hspace=.1)
 	return
 	
 
+def run_batch(ri,ro,nr):
+	
+	h0 = .05
+	rs = .01
+	mdisk = .004
+	np = 8
+	
+	alpha_vals = array([0,1e-5, 3e-5,1e-4, 3e-4, 1e-3, 3e-3, 1e-2,3e-2])
+	beta_vals = array([-3, -2.5, -2, -1.5, -1, -.5, 0])
+	flare_vals = array([0,.5,1,1.5,2])
+	
+	aa,bb = meshgrid(alpha_vals,beta_vals)
+	
+	flds = dict()
+	
+	
+	
+	(ni,nj) = aa.shape
+	
+	call(["./compile"])
+	
+	tot = 0
+	for i in range(len(alpha_vals)):
+		for j in range(len(beta_vals)):
+			for k in range(len(flare_vals)):
+				alpha = alpha_vals[i]
+				beta = beta_vals[j]
+				flare = flare_vals[k]
 			
+				print '\n\n\n'
+				print tot, alpha, beta, flare
+				print '\n\n\n'
+				tot += 1
+				call(["./a.out",str(nr),str(ri),str(ro),str(mdisk),str(rs),str(h0),str(beta),str(flare),str(alpha),str(np)])
+				flds[(alpha,beta,flare)] = Field()
+	
+	
+	
+	
+	return alpha_vals, beta_vals, flare_vals, flds
+	
+	
+def zeromode(flds,alpha_vals,beta_vals,flare_vals):
+	
+	
+	na = len(alpha_vals)
+	nb = len(beta_vals)
+	nf = len(flare_vals)
+	
+	zm = []
+	ev = []
+	for beta in beta_vals:
+		zm.append( [ flds[(a,beta,0)] for a in alpha_vals[1:] ] )
+		ev.append( array([ flds[(a,beta,0)].evals[-2] for a in alpha_vals[1:] ]) )
+	
+	point_type = ['x', 'o', 'v', '+', 's', 'D', '*', '^', 'v','h','p','8','<','>'] 
+	figure()
+	for i in range(nb):
+		loglog(alpha_vals[1:],abs(imag(ev[i])),point_type[i], label='$\\beta $= %.1f' % beta_vals[i])
+	
+	xlabel('$\\alpha$',fontsize='large')
+	ylabel('|$\\gamma$|',fontsize='large')
+	
+#	xscale('symlog')
+#	yscale('symlog')
+	
+	legend(loc='best')
+	ylim(1e-12,1e-4)
+	
+	print [ log10(abs(imag(y))) for y in ev ]
+	
+	fits=[ polyfit(log10(aa[0,1:]),log10(abs(imag(y))),1) for y in ev ]
+	
+	
+	zm=[]
+	ev=[]
+	for alpha in alpha_vals[1:]:
+		zm.append([ flds[(alpha,beta,0)] for beta in beta_vals])
+		ev.append( array([ flds[(alpha,beta,0)].evals[-2] for beta in beta_vals]))
+	
+	figure()
+	for i,alpha in enumerate(alpha_vals[1:]):
+		semilogy(beta_vals,abs(imag(ev[i])),point_type[i],label='$\\alpha$ = %.1e' % alpha)
+	
+	xlabel('$\\beta$',fontsize='large')
+	ylabel('|$\\gamma$|',fontsize='large')
+	legend(loc='best')
+	
+	
+	
+# alpha variation
+
+	# Choose flare  = 0 slice
+
+
+	ev_ab = [ array([ abs(imag(flds[ (alpha,beta,0) ].evals[-2])) for alpha in alpha_vals[1:]]) for beta in beta_vals]
+	
+	  
+
+	# Choose beta = -1.5 slice
+
+	ev_af = [ array([ abs(imag(flds[ (alpha,-1.5,flare) ].evals[-2])) for alpha in alpha_vals[1:]]) for flare in flare_vals]
+
+# both 
+# 		bb,ff = meshgrid(beta_vals,flare_vals)
+# 		bbff=[ zip(bb[i,:],ff[i,:]) for i in range(bb.shape[0]) ]
+# 		
+# 		g_alpha = zeros(bb.shape)
+# 		
+# 		for i in range(bb.shape[0]):
+# 			for j in range(bb.shape[1]):
+# 				g_alpha[i,j] = abs(imag(flds[ (
 		
+
+# beta variation
+
+	# Choose flare = 0 slice 
+	ev_ba =  [ array([ abs(imag(flds[ (alpha,beta,0) ].evals[-2])) for beta in beta_vals]) for alpha in alpha_vals[1:]]
+	
+	# Choose alpha = 1e-3 slice
+	ev_bf =  [ array([ abs(imag(flds[ (1e-3,beta,flare) ].evals[-2])) for beta in beta_vals]) for flare in flare_vals]
+	
+
+# delta variation
+	
+	# Choose beta = -1.5 slice
+	ev_fa =  [ array([ abs(imag(flds[ (alpha,-1.5,flare) ].evals[-2])) for flare in flare_vals]) for alpha in alpha_vals[1:]]
+	
+	# Choose alpha = 1e-3 slice
+	ev_fb =  [ array([ abs(imag(flds[ (1e-3,beta,flare) ].evals[-2])) for flare in flare_vals]) for beta in beta_vals]
+
+	
+	fig, ((ax_af,ax_bf,ax_fb),(ax_ab,ax_ba,ax_fa)) = subplots(2,3,sharex='col', sharey='row')
+	
+	ax_ab.set_xlabel('$\\alpha$',fontsize='large')
+	ax_ba.set_xlabel('$\\beta$',fontsize='large')
+	ax_fa.set_xlabel('$f$',fontsize='large')
+	
+	ax_af.set_ylabel('$|\\gamma|$',fontsize='large')
+	ax_ab.set_ylabel('$|\\gamma|$',fontsize='large')
+	
+	ax_af.set_title('$\\beta = -1.5$',fontsize='large')
+	ax_bf.set_title('$\\alpha = 1.0e-03$',fontsize='large')
+	ax_fb.set_title('$\\alpha = 1.0e-03$',fontsize='large')
+	
+	ax_ab.set_title('$f = 0$',fontsize='large')
+	ax_ba.set_title('$f  = 0$',fontsize='large')
+	ax_fa.set_title('$\\beta = -1.5$',fontsize='large')
+	
+	
+	for i,beta in enumerate(beta_vals):
+		ax_ab.loglog(alpha_vals[1:],ev_ab[i],point_type[i],label='$\\beta $= %.1f' % beta)
+		ax_fb.semilogy(flare_vals, ev_fb[i],point_type[i],label='$\\beta $= %.1f' % beta)
+	
+	for i, alpha in enumerate(alpha_vals[1:]):
+		ax_ba.semilogy(beta_vals, ev_ba[i],point_type[i],label='$\\alpha $= %.1e' % alpha)
+		ax_fa.semilogy(flare_vals, ev_fa[i],point_type[i],label='$\\alpha $= %.1e' % alpha)
+	
+	for i, flare in enumerate(flare_vals):
+		ax_af.loglog(alpha_vals[1:],ev_af[i],point_type[i], label='$f$ = %.1f' % flare)
+		ax_bf.semilogy(beta_vals,ev_bf[i],point_type[i], label='$f$ = %.1f' % flare)
+	
+	ax_af.legend(loc='best')
+	ax_bf.legend(loc='best')
+	ax_fb.legend(loc='best')
+	
+	ax_ab.legend(loc='best')
+	ax_ba.legend(loc='best')
+	ax_fa.legend(loc='best')
+	
+	ax_ab.set_xlim((.5*min(alpha_vals[1:]),1.5*max(alpha_vals[1:])))
+	ax_af.set_xlim((.5*min(alpha_vals[1:]),1.5*max(alpha_vals[1:])))
+	
+	ax_ba.set_xlim(( min(beta_vals)-.5, max(beta_vals)+.5))
+	ax_bf.set_xlim(( min(beta_vals)-.5, max(beta_vals)+.5))
+	
+	ax_fa.set_xlim(( min(flare_vals)-.5, max(flare_vals)+.5))
+	ax_fb.set_xlim(( min(flare_vals)-.5, max(flare_vals)+.5))
+
+	
+
+# 	color plots 
+
+# fix alpha = 1e-3
+		
+		bb_fb,ff_fb = meshgrid(beta_vals,flare_vals)
+		
+		bbff=[ zip(bb_fb[i,:],ff_fb[i,:]) for i in range(bb_fb.shape[0]) ]
+		
+		g_fb = zeros(bb_fb.shape)
+		
+		for i in range(bb_Fb.shape[0]):
+			for j in range(bb_fb.shape[1]):
+				g_fb[i,j] = abs(imag(flds[ (1e-3,bbff[i][j][0],bbff[i][j][1])].evals[-2]))
+
+
+#	fix flare = 0
+		
+		bb_ba,aa_ba = meshgrid(beta_vals,alpha_vals[1:])
+		
+		bbaa=[ zip(bb_ba[i,:],aa_ba[i,:]) for i in range(bb_ba.shape[0]) ]
+		
+		g_ba = zeros(bb_ba.shape)
+		
+		for i in range(bb_ba.shape[0]):
+			for j in range(bb_ba.shape[1]):
+				g_ba[i,j] = abs(imag(flds[ (bbaa[i][j][1],bbaa[i][j][0],0)].evals[-2]))
+
+# fix beta = -1.5
+
+		ff_fa,aa_fa = meshgrid(flare_vals,alpha_vals[1:])
+		
+		ffaa=[ zip(ff_fa[i,:],aa_fa[i,:]) for i in range(ff_fa.shape[0]) ]
+		
+		g_fa = zeros(ff_fa.shape)
+		
+		for i in range(ff_fa.shape[0]):
+			for j in range(ff_fa.shape[1]):
+				g_fa[i,j] = abs(imag(flds[ (ffaa[i][j][1],-1.5,ffaa[i][j][0])].evals[-2]))
+	
+	
+	
+	fig1, (ax_fb,ax_ba,ax_fa) = subplots(1,3)
+	
+	ax_fb.set_title('$\\alpha$ = 1.0e-03, $\log_{10} | \\gamma |$',fontsize='large')
+	ax_ba.set_title('$f$ =0, $\log_{10} | \\gamma |$',fontsize='large')
+	ax_fa.set_title('$\\beta $= -1.5, $\log_{10} | \\gamma |$',fontsize='large')
+	
+	
+	
+	ax_fb.pcolormesh(bb_fb,ff_fb,log10(g_fb))
+	ax_ba.pcolormesh(bb_ba,aa_ba,log10(g_ba))
+	ax_fa.pcolormesh(ff_fa,aa_fa,log10(g_fa))
+	
+	ax_fb.colorbar()
+	ax_ba.colorbar()
+	ax_fa.colorbar()
+	
+	
+	
+	
+	
+	
+	
+	return 
+	
+		
+	
+	
+	
+	
+	
+	
+	
 		
