@@ -13,7 +13,7 @@
 #define PRESSURECORRECTION
 
 
-//#define SELFGRAVITY
+#define SELFGRAVITY
 
 #ifdef SELFGRAVITY
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	double ri, ro;
 	
 	printf("Reading arguments...\n");
-	for(i=0;i<argc;i++) {
+	for(i=1;i<argc;i++) {
 		printf("%s\t",argv[i]);
 	}
 	
@@ -297,8 +297,8 @@ int init(double ri,double ro) {
 		
 		scaleH[i] = h0*r[i] * pow(r[i],flare_index);
 		
-		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
-		sigma[i] = pow(c2[i],1.5);
+//		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+//		sigma[i] = pow(c2[i],1.5);
 		
 		
 //		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
@@ -309,8 +309,8 @@ int init(double ri,double ro) {
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
 	
-//		sigma[i] = pow(r[i],sigma_index);
-//		c2[i] = scaleH[i]*scaleH[i] * omega2[i];
+		sigma[i] = pow(r[i],sigma_index);
+		c2[i] = scaleH[i]*scaleH[i] * omega2[i];
 		
 #ifdef VISCOSITY		
 		nu[i] = alpha_s * sqrt(c2[i])*scaleH[i];
@@ -923,7 +923,7 @@ double Kij(int i, int j) {
 	
 	result *= dp*2;
 //	result = weights[j]*r[i]*r[i]*(r[j]*r[j]*result - M_PI*r[i]);
-	result = weights[j] * (r[j]*r[j]*result);
+	result *= weights[j]*r[j]*r[j];
 
 #ifdef INDIRECT
 	result -= 3*M_PI*r[i]*weights[j];
