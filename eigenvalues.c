@@ -33,7 +33,7 @@
 int N;
 
 double poly_n;
-double Mdisk, eps, h0, dlr,rout, flare_index; 
+double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index; 
 
 double *weights,*kernel0, *work;
 double complex *H, *HL, *KD,*DKD, *kernel, *cwork;
@@ -95,6 +95,10 @@ int main(int argc, char *argv[]) {
 	double ri, ro;
 	
 	printf("Reading arguments...\n");
+	for(i=0;i<argc;i++) {
+		printf("%s\t",argv[i]);
+	}
+	
 	if (argc < 11) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
@@ -108,7 +112,7 @@ int main(int argc, char *argv[]) {
 	Mdisk = atof(argv[4]);
 	eps = atof(argv[5]);
 	h0 = atof(argv[6]);
-	poly_n = atof(argv[7]);
+	sigma_index = atof(argv[7]);
 	flare_index = atof(argv[8]);
 
 #ifdef VISCOSITY
@@ -122,16 +126,16 @@ int main(int argc, char *argv[]) {
 	
 	rout = 100;
 	
-	printf("Using the Parameters:\n \
+	printf("\nUsing the Parameters:\n \
 		\tNr=%d\n \
 		\tInner radius = %lg\n \
 		\tOuter radius = %lg\n \
 		\tLog spacing = %.3e\n \
 		\tDisk Mass = %lg\n \
-		\tPolytropic Index = %lg\n \
+		\tSigma Index = %lg\n \
 		\tFlare Index = %lg\n \
 		\tAlpha Viscosity = %lg\n",
-		N,ri,ro,dlr,Mdisk,poly_n,flare_index,alpha_s);
+		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
 	
 #ifdef OPENMP
 	omp_set_num_threads(atoi(argv[10]));
@@ -293,8 +297,8 @@ int init(double ri,double ro) {
 		
 		scaleH[i] = h0*r[i] * pow(r[i],flare_index);
 		
-//		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
-//		sigma[i] = pow(c2[i],poly_n);
+		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+		sigma[i] = pow(c2[i],1.5);
 		
 		
 //		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
@@ -305,8 +309,8 @@ int init(double ri,double ro) {
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
 	
-		sigma[i] = pow(r[i],-poly_n);
-		c2[i] = scaleH[i]*scaleH[i] * omega2[i];
+//		sigma[i] = pow(r[i],sigma_index);
+//		c2[i] = scaleH[i]*scaleH[i] * omega2[i];
 		
 #ifdef VISCOSITY		
 		nu[i] = alpha_s * sqrt(c2[i])*scaleH[i];
@@ -430,11 +434,11 @@ int init(double ri,double ro) {
 		omega[i] = sqrt(omega2[i]);
 		lom[i] = log(omega[i]);
 		if (isnan(kappa[i]) != 0) {
-			printf("\n\n Detected NaN in kappa at i=%d, r=%.3lg\n\n", i, r[i]);
+			printf("\n\n Detected NaN in kappa at i=%d, r=%.3lg, kap2=%.3lg\n\n", i, r[i],kappa2[i]);
 			return -1;
 		}
 		if (isnan(omega[i]) != 0) {
-			printf("\n\n Detected NaN in omega at i=%d, r=%.3lg\n\n", i, r[i]);
+			printf("\n\n Detected NaN in omega at i=%d, r=%.3lg, om2=%.3lg\n\n", i, r[i],omega2[i]);
 			return -1;
 		}
 
