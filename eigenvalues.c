@@ -12,12 +12,13 @@
 
 #define PRESSURECORRECTION
 
+//#define PAPALOIZOU
 
-#define SELFGRAVITY
+//#define SELFGRAVITY
 
 #ifdef SELFGRAVITY
 
-#define INDIRECT
+//#define INDIRECT
 #define GRAVITYCORRECTION
 
 #endif
@@ -296,11 +297,8 @@ int init(double ri,double ro) {
 		r[i] = exp(lr[i]);
 		
 		scaleH[i] = h0*r[i] * pow(r[i],flare_index);
-		
-//		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
-//		sigma[i] = pow(c2[i],1.5);
-		
-		
+
+
 //		sigma[i] = sigma_profile(r[i],scaleH[i],30., -poly_n); //.5*(ri + exp( log(ri) + (N-1)*dlr)),-poly_n);
 		
 //		c2[i] = scaleH[i]*scaleH[i] / (r[i]*r[i]*r[i]);
@@ -308,9 +306,17 @@ int init(double ri,double ro) {
 		
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
-	
+
+
+
+#ifdef PAPALOIZOU		
+		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+		sigma[i] = pow(c2[i],1.5);
+#else
 		sigma[i] = pow(r[i],sigma_index);
-		c2[i] = scaleH[i]*scaleH[i] * omega2[i];
+		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
+#endif	
+		
 		
 #ifdef VISCOSITY		
 		nu[i] = alpha_s * sqrt(c2[i])*scaleH[i];
