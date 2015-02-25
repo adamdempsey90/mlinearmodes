@@ -13,10 +13,16 @@
 #define PRESSURECORRECTION
 
 //#define PAPALOIZOU
+//#define HEEMSKERK
+//#define MLIN
 
-//#define SELFGRAVITY
+
+#define SELFGRAVITY
 
 #ifdef SELFGRAVITY
+
+
+//#define READKERNEL
 
 //#define INDIRECT
 #define GRAVITYCORRECTION
@@ -90,6 +96,7 @@ void cmatmat(double complex *A, double complex *B, double complex *C,
 
 double sigma_profile(double rval, double h, double rc,double beta);
 
+void read_kernel(void);
 					
 int main(int argc, char *argv[]) {
 	int i,j;
@@ -171,7 +178,9 @@ int main(int argc, char *argv[]) {
   	
   	printf("Outputting Variables...\n");
   	output_globals();
+#ifndef READKERNEL
   	output_kernel();
+#endif
   	printf("Populating Matrix...\n");
   	nanflag = calc_matrices(mat,bcmat);
   	if (nanflag == -1) {
@@ -288,7 +297,20 @@ int init(double ri,double ro) {
 	int i,j,indx;
 	double sigfac;
 	double phifac = 0;
-	
+
+#ifdef MLIN
+		double f1func, f2func;
+		double hinner, houter;
+		double sigref;
+		double c2slope;
+		
+		hinner = h0;
+		houter = h0*2*pow(2.,flare_index);
+		
+		sigref = 6.34*h0;
+		c2slope = .2;
+		
+#endif	
 	
 	
 	for(i=0;i<N;i++) {
@@ -313,13 +335,38 @@ int init(double ri,double ro) {
 		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
 		sigma[i] = pow(c2[i],1.5);
 #else
+#ifdef HEEMSKERK
+
+		sigma[i] = pow(r[i]-ri + .05,2)*pow(ro - r[i] +.05,2.5);
+		c2[i] = sigma[i]*h0*h0;
+
+
+#else
+#ifdef MLIN
+
+	
+		c2[i] = h0*pow(r[i],-c2slope/2);
+				
+		sigma[i] = sigref*pow(r[i],-2.0);
+		
+		
+		
+		f1func = .1 + .5*(1-.1)*(1 + tanh((r[i] - ri)/(5.*hinner)));
+		f2func =  .1 + .5*(1-.1)*(1 - tanh((r[i] - ri)/(5.*houter)));
+		
+		sigma[i] *= f1func*f2func;
+		
+
+#else
 		sigma[i] = pow(r[i],sigma_index);
 		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
+#endif
+#endif
 #endif	
 		
 		
 #ifdef VISCOSITY		
-		nu[i] = alpha_s * sqrt(c2[i])*scaleH[i];
+		nu[i] = alpha_s * scaleH[i]*scaleH[i]*omega[i];
 		
 		if (alpha_s == 0) {
 			lnu[i] = 0;
@@ -334,7 +381,6 @@ int init(double ri,double ro) {
 #endif
 
 		lc2[i] = log(c2[i]);
-		lsig[i] = log(sigma[i]);
 		
 		dlds[i] = 0;
 		dldc2[i] = 0;
@@ -362,6 +408,7 @@ int init(double ri,double ro) {
 
 	}
 
+#ifndef MLIN
 	sigfac=0;
 	for(i=0;i<N;i++) {
 		sigfac += weights[i]*sigma[i]*r[i]*r[i];	
@@ -372,9 +419,16 @@ int init(double ri,double ro) {
 	sigfac = Mdisk/(2*M_PI*sigfac);
 	
 	printf("sig tot = %lg\n", sigfac);
-	
+#else
+	sigfac = 1;
+#endif	
 	for(i=0;i<N;i++) {
 		sigma[i] *= sigfac;
+		lsig[i] = log(sigma[i]);
+#ifdef HEEMSKERK
+		c2[i] *= sigfac;
+		lc2[i] = log(c2[i]);
+#endif
 		if (isnan(sigma[i]) != 0) {
 			printf("\n\n Detected NaN in sigma at i=%d, r=%.3lg\n\n", i, r[i]);
 			return -1;
@@ -385,6 +439,17 @@ int init(double ri,double ro) {
 	printf("Calculating Kernels\n");
 
 #ifdef SELFGRAVITY
+
+
+#ifdef READKERNEL
+
+/* Read the kernel from the kernel.dat and kernel0.dat files written by output_kerenels
+	and found in the execution directory */
+
+	read_kernel();
+
+#else
+
 #ifdef OPENMP
 #pragma omp parallel private(indx,i,j) shared(kernel,kernel0,N)
 #pragma omp for schedule(static)
@@ -396,7 +461,7 @@ int init(double ri,double ro) {
 		kernel[indx] = Kij(i,j);
 		kernel0[indx] = K0ij(i,j);
 	}
-	
+#endif	
 	for(i=0;i<N;i++) {
 		dphi0dr[i] = 0;
 		for(j=0;j<N;j++) {
@@ -1210,7 +1275,7 @@ void output_kernel(void) {
 	FILE *f = fopen("kernel.dat","w");
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
-			fprintf(f,"%lg\t",creal(kernel[j+i*N]));
+			fprintf(f,"%.20lg\t",creal(kernel[j+i*N]));
 		}
 		fprintf(f,"\n");
 	}
@@ -1220,7 +1285,7 @@ void output_kernel(void) {
 	f = fopen("kernel0.dat","w");
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
-			fprintf(f,"%lg\t",kernel0[j+i*N]);
+			fprintf(f,"%.20lg\t",kernel0[j+i*N]);
 		}
 		fprintf(f,"\n");
 	}
@@ -1316,6 +1381,37 @@ void output_derivatives(void) {
 	fclose(f);
 		
 	return;
+}
+
+
+void read_kernel(void) {
+	int i,j;
+	FILE *f;
+	
+	f=fopen("kernel.dat","r");
+	
+	for(i=0;i<N;i++) {
+		for(j=0;j<N;j++) {
+			if (!fscanf(f, "%lg", &kernel[j+N*i])) 
+          		break;
+			
+		}
+	}
+	fclose(f);
+
+	f=fopen("kernel0.dat","r");
+	
+	for(i=0;i<N;i++) {
+		for(j=0;j<N;j++) {
+			if (!fscanf(f, "%lg", &kernel0[j+N*i])) 
+          		break;
+			
+		}
+	}
+	fclose(f);
+	
+	return;
+
 }
 	
 

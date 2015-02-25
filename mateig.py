@@ -31,6 +31,8 @@ class Field():
 				
 		inds = argsort(evals)
 		
+		self.Q = self.kappa * self.omega/(pi*self.sigma)
+		
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
 		self.edict = { ev:self.evecs[i,:] for i,ev in enumerate(self.evals)}
@@ -355,8 +357,49 @@ class Field():
 				
 		return 
 		
+	def argand(self,logx=False,logy=False):
+	# Plots the Argand diagram for the pattern speed and growthrates
+	
+		figure()
+		plot(real(self.evals),imag(self.evals),'x')
 		
+		xscale('symlog',linthreshx=1e-8)
+		yscale('symlog',linthreshy=1e-8)
 		
+		xlabel('$\\Omega_p$',fontsize='large')
+		ylabel('$\\gamma$',fontsize='large')
+		
+		return
+
+
+def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
+		
+	if labelstr == None:
+		labelstr = [ str(i) for i in range(len(flds)) ]
+	
+
+	figure()
+
+	if tstr != None:
+		title(tstr,fontsize='large')
+		
+			
+	point_type = ['x', 'o', 'v', 'h', 's', 'D', '*', '^','+','p','8','<','>'] 
+	for i,fld in enumerate(flds):
+		plot(real(fld.evals),imag(fld.evals),point_type[i],label=labelstr[i])
+	
+	xscale('symlog',linthreshx=linrange[0])
+	yscale('symlog',linthreshy=linrange[1])
+	
+	xlabel('$\\Omega_p$',fontsize='large')
+	ylabel('$\\gamma$',fontsize='large')
+	legend(loc='best')
+	xlim(-1e-3,1e-3)
+	ylim(-1,1)
+	grid('on')
+	return
+	
+	
 def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 	
 	if type(evnum) != list and type(evnum) != array: 
@@ -422,6 +465,32 @@ def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 	subplots_adjust(hspace=.1)
 	return
 	
+
+def run_masses(mvals,alpha):
+	nr = 200
+	ri = 1
+	ro = 100
+	rs = .1 
+	h0 = .05
+	beta = -1.5
+	flare = 0
+	np = 8
+	
+	flds=dict()
+	
+	call(["./compile"])
+	for i,mass in enumerate(mvals):
+		print '\n\nWorking on Mdisk = ', mass
+		callstr = ['./a.out',str(nr),str(ri),str(ro),str(mass),str(rs),str(h0),str(beta),str(flare),str(alpha),str(np)]
+		res = call(callstr)
+		if res != 0:
+			print '\n\nProblem with ',mass
+			return -1
+		flds[mass] = Field()
+	
+	argand_compare([ flds[m] for m in mvals],labelstr=[ '$M_D = %.2e $' % m for m in mvals ],linrange=(1e-6,1e-9),tstr='$\\alpha=%.1e$' % alpha)
+		
+	return flds
 
 def run_batch(ri,ro,nr):
 	
