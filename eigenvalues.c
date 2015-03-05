@@ -10,6 +10,9 @@
 
 #define NPHI 5000
 
+
+//#define ISOTHERMAL
+
 #define PRESSURECORRECTION
 
 //#define PAPALOIZOU
@@ -55,6 +58,11 @@ double *D, *D2;
 
 double *nu, *dldnu, *lnu;
 double alpha_s;
+
+#ifndef ISOTHERMAL
+double *pres, *lpres, *temp, *d2ldpres, *dldpres;
+double adi_gam, beta_cool;
+#endif
 
 void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA);
 void alloc_globals(void);
@@ -106,11 +114,20 @@ int main(int argc, char *argv[]) {
 	for(i=1;i<argc;i++) {
 		printf("%s\t",argv[i]);
 	}
-	
+
+#ifdef ISOTHERMAL	
 	if (argc < 11) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
+#else 
+	if (argc < 13) {
+		printf("\n\nToo Few Arguments!\n\n");
+		return -1;
+	}
+#endif
+
+
 	N = atoi(argv[1]);
 	
 	ri = atof(argv[2]);
@@ -128,12 +145,17 @@ int main(int argc, char *argv[]) {
 #else
 	alpha_s = 0;
 #endif
-	
+
+#ifndef ISOTHERMAL
+	adi_gam = atof(argv[11]);
+	beta_cool = atof(argv[12]);
+#endif
 	
 	dlr = (log(ro) - log(ri))/((float) N);
 	
 	rout = 100;
-	
+
+#ifdef ISOTHERMAL	
 	printf("\nUsing the Parameters:\n \
 		\tNr=%d\n \
 		\tInner radius = %lg\n \
@@ -142,8 +164,24 @@ int main(int argc, char *argv[]) {
 		\tDisk Mass = %lg\n \
 		\tSigma Index = %lg\n \
 		\tFlare Index = %lg\n \
-		\tAlpha Viscosity = %lg\n",
+		\tAlpha Viscosity = %lg \
+		\tAdiabatic Index = 1\n \
+		\tBeta Cooling = 0\n",
 		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
+#else
+	printf("\nUsing the Parameters:\n \
+		\tNr=%d\n \
+		\tInner radius = %lg\n \
+		\tOuter radius = %lg\n \
+		\tLog spacing = %.3e\n \
+		\tDisk Mass = %lg\n \
+		\tSigma Index = %lg\n \
+		\tFlare Index = %lg\n \
+		\tAlpha Viscosity = %lg \
+		\tAdiabatic Index = %lg\n \
+		\tBeta Cooling = %lg\n",
+		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,adi_gam,beta_cool);
+#endif
 	
 #ifdef OPENMP
 	omp_set_num_threads(atoi(argv[10]));
@@ -241,6 +279,15 @@ void alloc_globals(void) {
 	dldom = (double *)malloc(sizeof(double)*N);
 	d2dom = (double *)malloc(sizeof(double)*N);
 
+#ifndef ISOTHERMAL
+	pres = (double *)malloc(sizeof(double)*N);
+	lpres = (double *)malloc(sizeof(double)*N);
+	temp = (double *)malloc(sizeof(double)*N);
+	dldpres = (double *)malloc(sizeof(double)*N);
+	d2ldpres = (double *)malloc(sizeof(double)*N);
+#endif
+
+
 	nu = (double *)malloc(sizeof(double)*N);
 	dldnu = (double *)malloc(sizeof(double)*N);
 	lnu = (double *)malloc(sizeof(double)*N);
@@ -281,6 +328,14 @@ void free_globals(void) {
 	free(lom);
 	free(dldom);
 	free(d2dom);
+	
+#ifndef ISOTHERMAL
+	free(pres);
+	free(lpres);
+	free(temp);
+	free(d2ldpres);
+	free(dldpres);
+#endif
 	
 	free(nu); 
 	free(dldnu);
@@ -363,7 +418,11 @@ int init(double ri,double ro) {
 #endif
 #endif
 #endif	
-		
+
+#ifndef ISOTHERMAL
+		temp[i] = scaleH[i]*scaleH[i]*omega2[i];
+		pres[i] = sigma[i]*temp[i];
+#endif		
 		
 #ifdef VISCOSITY		
 		nu[i] = alpha_s * scaleH[i]*scaleH[i]*omega[i];
@@ -389,7 +448,10 @@ int init(double ri,double ro) {
 		dldom[i] = 0;
 		dldnu[i] = 0;
 		
-		
+#ifndef ISOTHERMAL
+		dldpres[i] = 0;
+		d2ldpres[i] = 0;
+#endif		
 		if (isnan(c2[i]) != 0) {
 			printf("\n\n Detected NaN in c2 at i=%d, r=%.3lg\n\n", i, r[i]);
 			return -1;
@@ -425,6 +487,10 @@ int init(double ri,double ro) {
 	for(i=0;i<N;i++) {
 		sigma[i] *= sigfac;
 		lsig[i] = log(sigma[i]);
+#ifndef ISOTHERMAL
+		pres[i] *= sigfac;
+		lpres[i] = log(pres[i]);
+#endif
 #ifdef HEEMSKERK
 		c2[i] *= sigfac;
 		lc2[i] = log(c2[i]);
@@ -486,11 +552,20 @@ int init(double ri,double ro) {
 #ifdef VISCOSITY
 	matvec(D,lnu,dldnu,1,0,N);
 #endif
-	
+
+#ifndef ISOTHERMAL
+	matvec(D,lpres,dldpres,1,0,N);
+	matvec(D2,lpres,d2ldpres,1,0,N);
+#endif
+
 	for(i=0;i<N;i++) {
 	
 #ifdef PRESSURECORRECTION
+#ifdef ISOTHERMAL
 		omega2[i] += c2[i]*dlds[i]/(r[i]*r[i]);
+#else
+		omega2[i] += dldpres[i] * temp[i]/(r[i]*r[i]);
+#endif
 #endif
 #ifdef GRAVITYCORRECTION
 		omega2[i] += dphi0dr[i]/(r[i]*r[i]);
@@ -911,12 +986,23 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 void calc_coefficients(int i, double complex *A, double complex *B, double complex *C, double complex *G) {
 
-	
+#ifdef ISOTHERMAL	
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
 	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i] - kappa[i];
 	*B = (2 + dldc2[i] + dlds[i]) * (*C);
+#else
+	double complex cool_fac = ( 1 + 1j*beta_cool)/(1 + beta_cool*beta_cool);
+	
+	*C = cool_fac *  temp[i]/(2*omega[i]*r[i]*r[i]);
 
+	*B = (*C) * ( adi_gam*(2 + dldpres[i]) + 1j*beta_cool*dldpres[i]);
+	
+	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
+
+	*C *= adi_gam;
+
+#endif
 #ifdef SELFGRAVITY
 	*G = -1.0/(2*omega[i]*r[i]*r[i]);
 #else
