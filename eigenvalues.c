@@ -15,12 +15,12 @@
 
 #define PRESSURECORRECTION
 
-//#define PAPALOIZOU
+#define PAPALOIZOU
 //#define HEEMSKERK
 //#define MLIN
 
 
-#define SELFGRAVITY
+//#define SELFGRAVITY
 
 #ifdef SELFGRAVITY
 
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
 		\tDisk Mass = %lg\n \
 		\tSigma Index = %lg\n \
 		\tFlare Index = %lg\n \
-		\tAlpha Viscosity = %lg \
+		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = 1\n \
 		\tBeta Cooling = 0\n",
 		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
 		\tDisk Mass = %lg\n \
 		\tSigma Index = %lg\n \
 		\tFlare Index = %lg\n \
-		\tAlpha Viscosity = %lg \
+		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = %lg\n \
 		\tBeta Cooling = %lg\n",
 		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,adi_gam,beta_cool);
@@ -420,7 +420,7 @@ int init(double ri,double ro) {
 #endif	
 
 #ifndef ISOTHERMAL
-		temp[i] = scaleH[i]*scaleH[i]*omega2[i];
+		temp[i] = c2[i];
 		pres[i] = sigma[i]*temp[i];
 #endif		
 		
@@ -1167,16 +1167,19 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 	char JOBVR = 'V';
 	int INFO; 
 	int LDA = nA;
+	int LDB = nA;
 	int LDVL = nA;
 	int LDVR = nA;
 	int LWORK = 2*nA;
 	
-	double *RWORK = (double *)malloc(sizeof(double)*2*nA);
+	double *RWORK = (double *)malloc(sizeof(double)*8*nA);
 	double complex *CWORK = (double complex *)malloc(sizeof(double complex)*2*nA);
 	
 	double complex *tA = (double complex *)malloc(sizeof(double complex)*nA*nA);
 	double complex *tQ = (double complex *)malloc(sizeof(double complex)*nA*nA);
 	
+	double complex *evals_alpha = (double complex *)malloc(sizeof(double complex)*nA);
+	double complex *evals_beta = (double complex *)malloc(sizeof(double complex)*nA);
 
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++) {
@@ -1186,10 +1189,18 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 	}
 
 
-	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
-
+//	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
+	zggev_( &JOBVL, &JOBVR, &nA, tA, &LDA, tQ, &LDB, evals_alpha,evals_beta, NULL, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
+	
+	for(i=0;i<nA;i++) {
+		if (cabs(evals_beta[i]) != 0) {
+			evals[i] = evals_alpha[i]/evals_beta[i];
+		}
+	}
 	free(tA); free(tQ);
 	free(RWORK); free(CWORK);
+	free(evals_alpha);
+	free(evals_beta);
  	return;
 }
 

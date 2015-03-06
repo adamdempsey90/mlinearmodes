@@ -190,7 +190,7 @@ class Field():
 				axex.plot(r,real(dat))
 				axey.plot(r,imag(dat))
 				axe.plot(r,abs(dat))
-				axw.plot(r,abs(angle(self.edict[x])/pi))
+				axw.plot(r,angle(self.edict[x])/pi)
 		else:
 			dat = copy(self.edict[ev])
 			if renormalize:
@@ -206,7 +206,7 @@ class Field():
 			axex.legend(loc='best')
 			axey.legend(loc='best')
 			axe.plot(r,abs(dat),'-k')
-			axw.plot(r,abs(angle(self.edict[ev])/pi),'-k')
+			axw.plot(r,angle(self.edict[ev])/pi,'-k')
 		
 		subplots_adjust(hspace=.1)
 		return
@@ -394,7 +394,7 @@ def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
 	xlabel('$\\Omega_p$',fontsize='large')
 	ylabel('$\\gamma$',fontsize='large')
 	legend(loc='best')
-	xlim(-1e-3,1e-3)
+	xlim(-1e-1,1e-1)
 	ylim(-1,1)
 	grid('on')
 	return
@@ -454,7 +454,7 @@ def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 			axe.plot(r[i],log(abs(dat)))
 		else:
 			axe.plot(r[i],abs(dat))
-		axw.plot(r[i],abs(angle(fld.edict[ev])/pi))
+		axw.plot(r[i],angle(fld.edict[ev])/pi)
 	
 
 	if len(flds) > 3:
