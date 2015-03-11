@@ -13,16 +13,20 @@ class Field():
 		self.c2 = dat[:,3]
 		self.sigma = dat[:,4]
 		self.hor = dat[:,5]
-		self.soft = dat[:,6]
-		self.dldc2 = dat[:,7]
-		self.dlds = dat[:,8]
-		self.kappa2 = dat[:,9]
+		self.pres = dat[:,6]
+		self.temp = dat[:,7]
+		self.soft = dat[:,8]
+		self.dldc2 = dat[:,9]
+		self.dlds = dat[:,10]
+		self.dldpres = dat[:,11]
+		self.kappa2 = dat[:,12]
 		self.kappa = sqrt(self.kappa2)
-		self.d2lds = dat[:,10]
-		self.dldom = dat[:,11]
-		self.d2dom = dat[:,12]
-		self.nu = dat[:,13]
-		self.dldnu = dat[:,14]
+		self.d2lds = dat[:,13]
+		self.d2ldpres = dat[:,14]
+		self.dldom = dat[:,15]
+		self.d2dom = dat[:,16]
+		self.nu = dat[:,17]
+		self.dldnu = dat[:,18]
 		self.dlr = diff(self.lr)[0]
 		self.nr = len(self.r)
 		evals = emat[:,0] + 1j*emat[:,1]
@@ -48,7 +52,7 @@ class Field():
 	def plot(self,q,logr=False,logy=False):
 		arglist = vars(self).keys()
 		if logr:
-			r = self.lr
+			r = log10(self.r)
 			xstr = '$\ln r$'
 		else:
 			r = self.r
@@ -93,8 +97,8 @@ class Field():
 				ax.set_ylim(-1,1)
 		else:
 			if logy:
-				dat = log(dat)
-				tstr = '$\ln ($' + q + ')'
+				dat = log10(dat)
+				tstr = '$\log_{10} ($' + q + ')'
 			else:
 				tstr = q
 				
@@ -152,7 +156,7 @@ class Field():
 	
 	def plotmode(self,ev,logr=False,logy=False,renormalize=False,scale=0):
 		if logr:
-			r = self.lr
+			r = log10(self.r)
 			xstr = '$\ln r$'
 		else:
 			r = self.r
@@ -162,7 +166,7 @@ class Field():
 		fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
 		axw.set_xlabel(xstr,fontsize='large')
 		if logy:
-			axe.set_ylabel('$ \ln e(r)$',fontsize='large')
+			axe.set_ylabel('$ \log_{10} e(r)$',fontsize='large')
 		else:
 			axe.set_ylabel('$e(r)$',fontsize='large')
 		axex.set_ylabel('$e_x(r)$',fontsize='large')
@@ -368,8 +372,12 @@ class Field():
 		
 		xlabel('$\\Omega_p$',fontsize='large')
 		ylabel('$\\gamma$',fontsize='large')
-		
-		return
+	
+	def nodes(self,ev):
+		ex = real(self.edict[ev])
+		overlap = sign(ex[1:]) - sign(ex[:-1])
+		return len(overlap[overlap != 0])
+	
 
 
 def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
@@ -414,8 +422,8 @@ def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 		fldstr = evstr
 	
 	if logr:
-		r = [fld.lr for fld in flds]
-		xstr = '$\ln r$'
+		r = [log10(fld.r) for fld in flds]
+		xstr = '$\log_{10} r$'
 	else:
 		r = [fld.r for fld in flds]
 		xstr = '$r$'
@@ -425,7 +433,7 @@ def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 	fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
 	axw.set_xlabel(xstr,fontsize='large')
 	if logy:
-		axe.set_ylabel('$ \ln e(r)$',fontsize='large')
+		axe.set_ylabel('$ \log_{10} e(r)$',fontsize='large')
 	else:
 		axe.set_ylabel('$e(r)$',fontsize='large')
 	axex.set_ylabel('$e_x(r)$',fontsize='large')
@@ -451,7 +459,7 @@ def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 			axex.plot(r[i],real(dat),label=fldstr[i])
 		axey.plot(r[i],imag(dat))
 		if logy:
-			axe.plot(r[i],log(abs(dat)))
+			axe.plot(r[i],log10(abs(dat)))
 		else:
 			axe.plot(r[i],abs(dat))
 		axw.plot(r[i],angle(fld.edict[ev])/pi)
@@ -748,10 +756,65 @@ def zeromode(flds,alpha_vals,beta_vals,flare_vals):
 	
 	return 
 	
-		
+def lin_profile(q,r=linspace(.4,4,200)):
+	r1=1
+	r2=2 
+	epsilon=.1
+	deltar = 5
+	h=.05
+	Qout= 2
+	
+	s = 1.5 + .5*q
+	
+	c = h*r**(-.5*q)
+	c2 = c*c
+	omk = r**(-1.5)
+	H = c/omk
 	
 	
+	delta1 = deltar*h*pow(r1,1.5-.5*q)
+	delta2 = deltar*h*pow(r2,1.5-.5*q)
 	
+	bump = lambda r: (.5*(1-epsilon)*(1+tanh((r-r1)/delta1))+epsilon)*(.5*(1-epsilon)*(1-tanh((r-r2)/delta2))+epsilon)
+	
+	
+#	sig_r2 = h*r2**(-.5*q) * pow(r2,-1.5) / (pi*Qout)
+
+#	sigref = sig_r2 * pow(r2,s) / bump(r2)
+	
+	sigref = h * pow(r2,s - .5*q - 1.5)/(pi*Qout * bump(r2))
+	
+	sigma = sigref * bump(r) * pow(r,-s)
+	
+	Q = c*omk/(pi*sigma)
+	
+	sig_norm = sigref*bump(r1)
+	
+	
+	fig,(axt,axm,axb) = subplots(3,1,sharex='col')
+	
+	axt.set_title('$q = %.1f$' % q)
+	axt.plot(r,sigma/sig_norm)
+	axb.set_xlabel('$r$')
+	axt.set_ylabel('$\Sigma/\Sigma(R_0)$')
+	axb.set_xlim(.4,4)
+	
+	axb.plot(r,Q)
+	axb.set_ylabel('$Q$')
+	axm.plot(r,c)
+	axm.set_ylabel('$c^2$')
+	
+	figure()
+	plot(r,bump(r))
+	ylabel('Bump Function')
+	xlabel('$r$')
+	
+	
+	figure()
+	plot(r,-1.5*omk/sigma)
+	
+	
+	return r, sigma, c2, Q, H 
 	
 	
 	

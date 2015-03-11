@@ -12,12 +12,19 @@
 
 
 //#define ISOTHERMAL
+//#define BAROTROPIC
+//#define ADIABATIC
+#define COOLING
+
+
+
+
 
 #define PRESSURECORRECTION
 
-#define PAPALOIZOU
+//#define PAPALOIZOU
 //#define HEEMSKERK
-//#define MLIN
+#define MLIN
 
 
 //#define SELFGRAVITY
@@ -59,10 +66,9 @@ double *D, *D2;
 double *nu, *dldnu, *lnu;
 double alpha_s;
 
-#ifndef ISOTHERMAL
 double *pres, *lpres, *temp, *d2ldpres, *dldpres;
 double adi_gam, beta_cool;
-#endif
+
 
 void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA);
 void alloc_globals(void);
@@ -105,6 +111,11 @@ void cmatmat(double complex *A, double complex *B, double complex *C,
 double sigma_profile(double rval, double h, double rc,double beta);
 
 void read_kernel(void);
+
+#ifdef MLIN
+double bump_function(double rval);
+#endif
+
 					
 int main(int argc, char *argv[]) {
 	int i,j;
@@ -146,16 +157,23 @@ int main(int argc, char *argv[]) {
 	alpha_s = 0;
 #endif
 
-#ifndef ISOTHERMAL
+#if  defined(COOLING) || defined(ADIABATIC) 
 	adi_gam = atof(argv[11]);
 	beta_cool = atof(argv[12]);
 #endif
+
+#ifdef ADIABATIC 
+	beta_cool = 0;
+#endif
+
 	
 	dlr = (log(ro) - log(ri))/((float) N);
 	
 	rout = 100;
 
-#ifdef ISOTHERMAL	
+
+
+#if defined(ISOTHERMAL) || defined(BAROTROPIC)	
 	printf("\nUsing the Parameters:\n \
 		\tNr=%d\n \
 		\tInner radius = %lg\n \
@@ -166,7 +184,7 @@ int main(int argc, char *argv[]) {
 		\tFlare Index = %lg\n \
 		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = 1\n \
-		\tBeta Cooling = 0\n",
+		\tBeta Cooling = inf\n",
 		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
 #else
 	printf("\nUsing the Parameters:\n \
@@ -206,7 +224,8 @@ int main(int argc, char *argv[]) {
   	calc_weights();
   	printf("Initializing Variables...\n");
   	int nanflag = init(ri,ro);
-  	
+
+
   	if (nanflag == -1) {
   		printf("Aborting...\n");
   		free_globals();
@@ -279,13 +298,11 @@ void alloc_globals(void) {
 	dldom = (double *)malloc(sizeof(double)*N);
 	d2dom = (double *)malloc(sizeof(double)*N);
 
-#ifndef ISOTHERMAL
 	pres = (double *)malloc(sizeof(double)*N);
 	lpres = (double *)malloc(sizeof(double)*N);
 	temp = (double *)malloc(sizeof(double)*N);
 	dldpres = (double *)malloc(sizeof(double)*N);
 	d2ldpres = (double *)malloc(sizeof(double)*N);
-#endif
 
 
 	nu = (double *)malloc(sizeof(double)*N);
@@ -329,13 +346,13 @@ void free_globals(void) {
 	free(dldom);
 	free(d2dom);
 	
-#ifndef ISOTHERMAL
+//#ifndef ISOTHERMAL
 	free(pres);
 	free(lpres);
 	free(temp);
 	free(d2ldpres);
 	free(dldpres);
-#endif
+//#endif
 	
 	free(nu); 
 	free(dldnu);
@@ -353,20 +370,6 @@ int init(double ri,double ro) {
 	double sigfac;
 	double phifac = 0;
 
-#ifdef MLIN
-		double f1func, f2func;
-		double hinner, houter;
-		double sigref;
-		double c2slope;
-		
-		hinner = h0;
-		houter = h0*2*pow(2.,flare_index);
-		
-		sigref = 6.34*h0;
-		c2slope = .2;
-		
-#endif	
-	
 	
 	for(i=0;i<N;i++) {
 
@@ -385,7 +388,7 @@ int init(double ri,double ro) {
 		omega2[i] = omega[i]*omega[i];
 
 
-
+/* Set up special sigma and c^2 profiles */
 #ifdef PAPALOIZOU		
 		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
 		sigma[i] = pow(c2[i],1.5);
@@ -400,29 +403,35 @@ int init(double ri,double ro) {
 #ifdef MLIN
 
 	
-		c2[i] = h0*pow(r[i],-c2slope/2);
-				
-		sigma[i] = sigref*pow(r[i],-2.0);
+		c2[i] = .05 * pow(r[i],-.5*flare_index);
+	
+		scaleH[i] = c2[i]/omega[i];
+		c2[i] *= c2[i];
+
+	
+//		sigfac = .05 * pow(2.0,2 - .5*flare_index - 1.5)/(2 * M_PI * bump_function(2.0));
+//		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-2.0);
+		sigfac = .05 /(2 * M_PI * bump_function(2.0));
+		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-(1.5 + .5*flare_index));
+	
 		
-		
-		
-		f1func = .1 + .5*(1-.1)*(1 + tanh((r[i] - ri)/(5.*hinner)));
-		f2func =  .1 + .5*(1-.1)*(1 - tanh((r[i] - ri)/(5.*houter)));
-		
-		sigma[i] *= f1func*f2func;
 		
 
 #else
 		sigma[i] = pow(r[i],sigma_index);
 		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
-#endif
-#endif
-#endif	
+#endif // Mlin
+#endif // HEEMSKERK
+#endif // PAPALOIZOU
 
-#ifndef ISOTHERMAL
-		temp[i] = c2[i];
-		pres[i] = sigma[i]*temp[i];
-#endif		
+
+/*	Set pressure and temperature */
+
+	temp[i] = c2[i];
+	pres[i] = sigma[i] * temp[i];
+
+	
+/*	Set viscosity if enabled, if not then make sure it's zero */
 		
 #ifdef VISCOSITY		
 		nu[i] = alpha_s * scaleH[i]*scaleH[i]*omega[i];
@@ -439,6 +448,8 @@ int init(double ri,double ro) {
 		lnu[i] = 0;
 #endif
 
+
+
 		lc2[i] = log(c2[i]);
 		
 		dlds[i] = 0;
@@ -446,12 +457,11 @@ int init(double ri,double ro) {
 		d2lds[i] = 0;
 		d2dom[i] = 0;
 		dldom[i] = 0;
-		dldnu[i] = 0;
-		
-#ifndef ISOTHERMAL
+		dldnu[i] = 0;		
 		dldpres[i] = 0;
 		d2ldpres[i] = 0;
-#endif		
+
+/* Check for bad values of c^2 and sigma */
 		if (isnan(c2[i]) != 0) {
 			printf("\n\n Detected NaN in c2 at i=%d, r=%.3lg\n\n", i, r[i]);
 			return -1;
@@ -470,6 +480,10 @@ int init(double ri,double ro) {
 
 	}
 
+/* Normalize the density to give the prescribed disk mass, unless using Lin's profile which 
+	is already normalized.
+*/
+
 #ifndef MLIN
 	sigfac=0;
 	for(i=0;i<N;i++) {
@@ -484,13 +498,12 @@ int init(double ri,double ro) {
 #else
 	sigfac = 1;
 #endif	
+	printf("sigfac = %lg\n",sigfac);
 	for(i=0;i<N;i++) {
 		sigma[i] *= sigfac;
 		lsig[i] = log(sigma[i]);
-#ifndef ISOTHERMAL
 		pres[i] *= sigfac;
 		lpres[i] = log(pres[i]);
-#endif
 #ifdef HEEMSKERK
 		c2[i] *= sigfac;
 		lc2[i] = log(c2[i]);
@@ -501,6 +514,8 @@ int init(double ri,double ro) {
 		}
 	}	
 	
+
+/* Initialize Kernels if we're not reading it from a file */
 	
 	printf("Calculating Kernels\n");
 
@@ -540,11 +555,10 @@ int init(double ri,double ro) {
 
 	}
 #endif
-	printf("Finished part 1\n");
 	
 
+	printf("Calculating Derivatives\n");
 	
-	printf("Finished part 2\n");
 	matvec(D,lsig,dlds,1,0,N);
 	matvec(D,lc2,dldc2,1,0,N);
 	
@@ -553,23 +567,38 @@ int init(double ri,double ro) {
 	matvec(D,lnu,dldnu,1,0,N);
 #endif
 
-#ifndef ISOTHERMAL
 	matvec(D,lpres,dldpres,1,0,N);
 	matvec(D2,lpres,d2ldpres,1,0,N);
-#endif
+
+
+
+/* Correct the background rotation for pressure and self gravity.
+	Set epicyclic frequency 
+*/
 
 	for(i=0;i<N;i++) {
+
 	
 #ifdef PRESSURECORRECTION
-#ifdef ISOTHERMAL
+
+
+#ifdef BAROTROPIC
 		omega2[i] += c2[i]*dlds[i]/(r[i]*r[i]);
 #else
 		omega2[i] += dldpres[i] * temp[i]/(r[i]*r[i]);
 #endif
+
+
+
 #endif
+
+
+
 #ifdef GRAVITYCORRECTION
 		omega2[i] += dphi0dr[i]/(r[i]*r[i]);
 #endif
+
+
 		kappa2[i] = 4*omega2[i];
 	}
 	
@@ -710,173 +739,9 @@ double D2ij(int i, int j) {
 
 #endif
 
-#ifdef FOURTHORDER
-
-double Dij(int i, int j) {
-	
-	if (i==0 || i==1) {
-		if (j==i-1) {
-			return 0;
-		}
-		if (j==i) {
-			return -25./12;
-		}
-		if (j==i+1) {
-			return 4.;
-		}
-		if (j==i+2) {
-			return -3.;
-		}
-		if (j==i+3) {
-			return 4./3;
-		
-		}
-		if (j==i+4) {
-			return -1./4;
-		}
-		else {
-			return 0;
-		}
-	
-	}
-	
-	else if (i==N-2 || i==N-1) {
-		if (j==i+1) {
-			return 0;
-		}
-		if (j==i) {
-			return 25./12;
-		}
-		if (j==i-1) {
-			return -4.;
-		}
-		if (j==i-2) {
-			return 3.;
-		}
-		if (j==i-3) {
-			return -4./3;
-		
-		}
-		if (j==i-4) {
-			return 1./4;
-		}
-		else {
-			return 0;
-		}
-	
-	
-	}	
-	else {
-		if (j==i-2) {
-			return 1./12;
-		}
-		if (j==i-1) {
-			return -2./3;
-		}
-		if (j==i+1) {
-			return 2./3;
-		}
-		if (j==i+2) {
-			return -1./12;
-		}
-		else {
-			return 0;
-		}
-	
-	}
-
-}
-
-double D2ij(int i, int j) {
-	if (i==0 || i==1) {
-		if (j==i-1) {
-			return 0;
-		}
-		if (j==i) {
-			return 15./4;
-		}
-		if (j==i+1) {
-			return -77./6;
-		}
-		if (j==i+2) {
-			return 107./6;
-		}
-		if (j==i+3) {
-			return -13.;
-		
-		}
-		if (j==i+4) {
-			return 61./12;
-		}
-		if (j==i+5) {
-			return -5./6;
-		}
-		else {
-			return 0;
-		}
-	
-	
-	}
-	
-	else if (i==N-2 || i==N-1) {
-		if (j==i+1) {
-			return 0;
-		}
-		if (j==i) {
-			return 15./4;
-		}
-		if (j==i-1) {
-			return -77./6;
-		}
-		if (j==i-2) {
-			return 107./6;
-		}
-		if (j==i-3) {
-			return 13.;
-		
-		}
-		if (j==i-4) {
-			return 61./12;
-		}
-		if (j==i-5) {
-			return -5./6;
-		}
-		else {
-			return 0;
-		}
-	
-	
-	}	
-	else {
-		if (j==i-2) {
-			return -1./12;
-		}
-		if (j==i-1) {
-			return 4./3;
-		}
-		if (j==i) {
-			return -5./2;
-		}
-		if (j==i+1) {
-			return 4./3;
-		}
-		if (j==i+2) {
-			return -1./12;
-		}
-		else {
-			return 0;
-		}
-	
-	}
-
-
-}
-
-#endif
-
 
 void calc_weights(void) {
-/* O(N^(-4)) weights */
+/* O(N^(-4)) weights for numerical quadrature*/
 	int i;
 	for(i=0;i<N;i++) {
 		if (i==0 || i==N-1) {
@@ -896,6 +761,8 @@ void calc_weights(void) {
 	return;
 
 }
+
+
 void init_derivatives(void) {
 	int i,j;
 	double dfac = 1.0/dlr;
@@ -910,6 +777,8 @@ void init_derivatives(void) {
 	return;
 
 }
+
+
 int calc_matrices(double complex *mat, double complex *bcmat) {
 	int i,j,indx;
 	
@@ -921,12 +790,13 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 // #pragma omp parallel 
 // #pragma omp for private(i,A,B,C,indx,j,
 // #endif	
+
 	for(i=0;i<N;i++ ) {
 		calc_coefficients(i,&A,&B,&C,&G);
 
 		for(j=0 ; j<N ; j++) {
 			indx = j + N*i;
-			
+		
 			
 			KD[indx] = G*sigma[j]*D[indx];
 //			HL[indx] = G*D[indx];
@@ -958,15 +828,12 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 		
 		}
 	}
-	printf("Done 1\n");
 			
 			
 			
 //	matmat(kernel,D,KD,1,0,N);
-	printf("Done 2\n");
 //	matmat(D,KD,DKD,1,0,N);
 	
-	printf("Done 3\n");
 //	cmatmat(HL,H,DKD,1,0,N);
 	
 
@@ -974,11 +841,12 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 	cmatmat(kernel,KD,DKD,1,0,N);
 	for(i=0;i<N*N;i++) mat[i] += DKD[i];
 #endif
-	printf("Done 4\n");
+
+
+/* Set Boundary Conditions */
+
 	lagrangian_pressure_bc_inner(mat, bcmat);
-	printf("Done 5\n");
 	lagrangian_pressure_bc_outer(mat, bcmat);
-	printf("Done 6\n");
 
 	return 0;
 }
@@ -986,12 +854,51 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 void calc_coefficients(int i, double complex *A, double complex *B, double complex *C, double complex *G) {
 
-#ifdef ISOTHERMAL	
+
+
+#ifdef BAROTROPIC
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i] - kappa[i];
-	*B = (2 + dldc2[i] + dlds[i]) * (*C);
-#else
+	*A = ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i]-kappa[i];
+	*B = (2 + dldc2[i] + dlds[i]) ;
+	
+	*A *= (*C);
+	*B *= (*C);
+
+
+#endif
+
+
+#ifdef ISOTHERMAL
+
+	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
+	
+	*A = 2 * dlds[i] + d2lds[i] + omega[i]-kappa[i];
+	*B = 2 + dlds[i];
+	
+	*A *= (*C);
+	*B *= (*C);
+
+#endif
+
+
+
+
+#ifdef ADIABATIC
+
+	*C = temp[i]/(2*omega[i]*r[i]*r[i]);
+
+	*B = (*C) * adi_gam*(2 + dldpres[i]);
+	
+	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
+
+	*C *= adi_gam;
+
+#endif
+
+
+#ifdef COOLING
+
 	double complex cool_fac = ( 1 + 1j*beta_cool)/(1 + beta_cool*beta_cool);
 	
 	*C = cool_fac *  temp[i]/(2*omega[i]*r[i]*r[i]);
@@ -1002,14 +909,59 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*C *= adi_gam;
 
+
 #endif
+
+
+
+
+
+
+
+// #ifdef BAROTROPIC
+// 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
+// 	
+// 	*A = ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i]-kappa[i];
+// 	*B = (2 + dldc2[i] + dlds[i]) ;
+// 	
+// 	*A *= (*C);
+// 	*B *= (*C);
+// #else
+// 
+// #ifdef ISOTHERMAL
+// 
+// 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
+// 	
+// 	*A = 2 * dlds[i] + d2lds[i] + omega[i]-kappa[i];
+// 	*B = 2 + dlds[i];
+// 	
+// 	*A *= (*C);
+// 	*B *= (*C);
+// 	
+// #else // ADIABATIC OR COOLING
+// 	double complex cool_fac = ( 1 + 1j*beta_cool)/(1 + beta_cool*beta_cool);
+// 	
+// 	*C = cool_fac *  temp[i]/(2*omega[i]*r[i]*r[i]);
+// 
+// 	*B = (*C) * ( adi_gam*(2 + dldpres[i]) + 1j*beta_cool*dldpres[i]);
+// 	
+// 	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
+// 
+// 	*C *= adi_gam;
+// 
+// #endif
+// #endif
+
+
 #ifdef SELFGRAVITY
 	*G = -1.0/(2*omega[i]*r[i]*r[i]);
 #else
 	*G = 0;
 #endif
 
+
 #ifdef VISCOSITY
+#if defined(ISOTHERMAL) || defined(BAROTROPIC)
 	double complex temp, norm;
 	double q = dldom[i];
 	double qp = d2dom[i];
@@ -1028,7 +980,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 	*B += -temp*norm*(nu[i]*omega[i]/(12*r[i]));
 
 	*C += -(nu[i]*omega[i]*norm/(6*r[i]))*(7 + 6*q);
-
+#endif
 #endif
 
 	return; 
@@ -1108,22 +1060,49 @@ double kernel_integrand(int m, double r, double rp, double rs2, double phi) {
 }
 
 void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
+
+/* Set up zero Lagrangian Pressure B.C at inner boundary */
+
 	int j,indx;
 	for(j=0;j<N;j++) {
 		indx = j;
 		mat[indx] = D[indx];
 		bcmat[indx] = 0;		
+		
+		if (j==0) {
+#ifdef COOLING
+			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
+#endif	
+#ifdef ISOTHERMAL
+			mat[indx] -= dldc2[j];
+#endif
+
+		}	
 	}
 	return;
 }
 
 void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
+
+/* Set up zero Lagrangian Pressure B.C at outer boundary */	
+
 	int j,indx;
-	
 	for(j=0;j<N;j++) {
 		indx= j + N*(N-1);
+	
 		mat[indx] = D[indx];
 		bcmat[indx] = 0;
+		
+		if (j==(N-1)) {
+#ifdef COOLING
+			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
+#endif	
+#ifdef ISOTHERMAL
+			mat[indx] -= dldc2[j];
+#endif
+
+		}
+		
 	}
 	return;
 }
@@ -1339,18 +1318,24 @@ void output_globals(void) {
 	
 	
 	for(i=0;i<N;i++) {
-		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\n",
+		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t \
+				   %.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t \
+				   %.12lg\t%.12lg\t%.12lg\n",
 			lr[i],
 			r[i],
 			omega[i],
 			c2[i],
 			sigma[i],
 			scaleH[i]/r[i],
+			pres[i],
+			temp[i],
 			eps*scaleH[i],
 			dldc2[i],
 			dlds[i],
+			dldpres[i],
 			kappa2[i],
 			d2lds[i],
+			d2ldpres[i],
 			dldom[i],
 			d2dom[i],
 			nu[i],
@@ -1512,7 +1497,23 @@ void read_kernel(void) {
 }
 	
 
+#ifdef MLIN
+double bump_function(double rval) {
+	
+	
+	double delta1 = 5.0 * .05 * pow(1.0,1.5-.5*flare_index);
+	double delta2 = 5.0 * .05 * pow(2.0,1.5-.5*flare_index);
 
+	double fac1 = .5*(1-.1)*(1+tanh((rval-1.0)/delta1))+.1;
+	double fac2 = .5*(1-.1)*(1-tanh((rval-2.0)/delta2))+.1;
+	
+	return (fac1*fac2);
+
+}
+#endif
+
+	
+	
 
 
 
