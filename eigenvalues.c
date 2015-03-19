@@ -11,10 +11,10 @@
 #define NPHI 5000
 
 
-//#define ISOTHERMAL
+#define ISOTHERMAL
 //#define BAROTROPIC
 //#define ADIABATIC
-#define COOLING
+//#define COOLING
 
 
 
@@ -27,12 +27,12 @@
 #define MLIN
 
 
-//#define SELFGRAVITY
+#define SELFGRAVITY
 
 #ifdef SELFGRAVITY
 
 
-//#define READKERNEL
+#define READKERNEL
 
 //#define INDIRECT
 #define GRAVITYCORRECTION
@@ -961,7 +961,6 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 
 #ifdef VISCOSITY
-#if defined(ISOTHERMAL) || defined(BAROTROPIC)
 	double complex temp, norm;
 	double q = dldom[i];
 	double qp = d2dom[i];
@@ -980,7 +979,6 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 	*B += -temp*norm*(nu[i]*omega[i]/(12*r[i]));
 
 	*C += -(nu[i]*omega[i]*norm/(6*r[i]))*(7 + 6*q);
-#endif
 #endif
 
 	return; 

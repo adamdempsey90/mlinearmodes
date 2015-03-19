@@ -39,10 +39,30 @@ class Field():
 		
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
-		self.edict = { ev:self.evecs[i,:] for i,ev in enumerate(self.evals)}
-		self.sigp = { ev:-gradient(self.sigma*self.evecs[i,:],self.dlr) for i,ev in enumerate(self.evals)}
-		self.vrp = { ev:self.edict[ev]*self.r*(self.omega-ev)*1j for ev in self.evals }
-		self.vpp = { ev:1j*self.vrp[ev]/2 for ev in self.evals }
+		
+		self.evdict = dict()
+		self.edict= dict()
+		self.sigp = dict()
+		self.vrp = dict()
+		self.vpp = dict()
+				
+		for i,ev in enumerate(self.evals):
+			
+			self.edict[ev] = self.evecs[i,:]
+			if abs(ev) != 0:
+				self.evdict[self.nodes(self.evecs[i,:])] = ev
+				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]
+				self.sigp[ev]  = -gradient(self.sigma*self.evecs[i,:],self.dlr)
+				self.sigp[self.nodes(self.evecs[i,:])] = self.sigp[ev]
+				self.vrp[ev] = self.edict[ev]*self.r*(self.omega-ev)*1j
+				self.vrp[self.nodes(self.evecs[i,:])] = self.vrp[ev]
+				self.vpp[ev] = 1j*self.vrp[ev]/2
+				self.vpp[self.nodes(self.evecs[i,:])] = self.vpp[ev]
+			
+#		self.edict = { ev:self.evecs[i,:] for i,ev in enumerate(self.evals)}
+#		self.sigp = { ev:-gradient(self.sigma*self.evecs[i,:],self.dlr) for i,ev in enumerate(self.evals)}
+#		self.vrp = { ev:self.edict[ev]*self.r*(self.omega-ev)*1j for ev in self.evals }
+#		self.vpp = { ev:1j*self.vrp[ev]/2 for ev in self.evals }
 	
 #		self.bvort = self.kappa2/(2*self.omega)
 #		self.vort = {ev:-.5*gradient(self.omega*self.edict[ev],self.dlr) for ev in self.evals}
@@ -110,9 +130,14 @@ class Field():
 		
 		return
 	
-	def plotuvs(self,ev,logr=False,logy=False):
+	def plotuvs(self,ev=None,node=None,logr=False,logy=False):
 		
-		tstr = '$\\Omega_p$ = %.2e,\t$\\gamma$ = %.2e' % (real(ev), imag(ev))
+		if node == None:
+			tstr = '$\\Omega_p$ = %.2e,\t$\\gamma$ = %.2e' % (real(ev), imag(ev))
+		else:
+			ev = self.evdict[node]
+			tstr = '$\\Omega_p$ = %.2e,\t$\\gamma$ = %.2e' % (real(ev), imag(ev))
+
 		fig,(axu,axv,axs) = subplots(3,sharex=True)
 		
 		axu.plot(self.r,real(self.vrp[ev]),'-k',label=r'Re(u)')
@@ -154,7 +179,7 @@ class Field():
 		return
 		
 	
-	def plotmode(self,ev,logr=False,logy=False,renormalize=False,scale=0):
+	def plotmode(self,ev=None,node=None,logr=False,logy=False,renormalize=False,scale=0):
 		if logr:
 			r = log10(self.r)
 			xstr = '$\ln r$'
@@ -179,38 +204,60 @@ class Field():
 # 		axw.set_xlabel(xstr,fontsize='large')
 # 		axe.set_ylabel('$e(r)$',fontsize='large')
 # 		axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
+
+		if ev != None:
+			if type(ev)==list or type(ev)==numpy.ndarray:
+				keys = ev
+			else:
+				keys = [ev]
 		
-		if type(ev) == list or type(ev)==numpy.ndarray:
-			for x in ev:
-				dat = copy(self.edict[x])
-				if renormalize:
-					dat /= self.sigma
-				if scale != 0:
-					if scale == 'max':
-						dat /= dat.max()
-					else:
-						dat *= scale/dat[0]
-				
-				axex.plot(r,real(dat))
-				axey.plot(r,imag(dat))
-				axe.plot(r,abs(dat))
-				axw.plot(r,angle(self.edict[x])/pi)
+		elif node != None:
+			if type(node)==list or type(node)==numpy.ndarray:
+				keys = node
+			else:
+				keys = [node]
+
 		else:
-			dat = copy(self.edict[ev])
+			print 'No mode specified, plotting the zero node mode'
+			keys = [0]
+			if self.edict[0] == 0:
+				print 'There is no zero mode'
+				return
+		
+	
+		for x in keys:
+			dat = copy(self.edict[x])
 			if renormalize:
-					dat /= self.sigma
+				dat /= self.sigma
 			if scale != 0:
 				if scale == 'max':
 					dat /= dat.max()
 				else:
 					dat *= scale/dat[0]
+		
+			axex.plot(r,real(dat))
+			axey.plot(r,imag(dat))
+			axe.plot(r,abs(dat))
+			axw.plot(r,angle(self.edict[x])/pi)
 			
-			axex.plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
-			axey.plot(r,imag(dat),'-k',label=('$\\gamma = %.2e$' % imag(ev)))
-			axex.legend(loc='best')
-			axey.legend(loc='best')
-			axe.plot(r,abs(dat),'-k')
-			axw.plot(r,angle(self.edict[ev])/pi,'-k')
+			
+# 			else:
+# 				dat = copy(self.edict[ev])
+# 				if renormalize:
+# 						dat /= self.sigma
+# 				if scale != 0:
+# 					if scale == 'max':
+# 						dat /= dat.max()
+# 					else:
+# 						dat *= scale/dat[0]
+# 			
+# 				axex.plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
+# 				axey.plot(r,imag(dat),'-k',label=('$\\gamma = %.2e$' % imag(ev)))
+# 				axex.legend(loc='best')
+# 				axey.legend(loc='best')
+# 				axe.plot(r,abs(dat),'-k')
+# 				axw.plot(r,angle(self.edict[ev])/pi,'-k')
+		
 		
 		subplots_adjust(hspace=.1)
 		return
@@ -331,7 +378,7 @@ class Field():
 		pgrid = linspace(0,2*pi,Nph)
 		# (Np , Nr)		
 		
-		emode = self.edict[ev]
+		emode = copy(self.edict[ev])
 		
 		u = self.r*(self.omega - ev)*1j*emode
 		v = .5*1j*u
@@ -373,8 +420,8 @@ class Field():
 		xlabel('$\\Omega_p$',fontsize='large')
 		ylabel('$\\gamma$',fontsize='large')
 	
-	def nodes(self,ev):
-		ex = real(self.edict[ev])
+	def nodes(self,evec):
+		ex = real(evec)
 		overlap = sign(ex[1:]) - sign(ex[:-1])
 		return len(overlap[overlap != 0])
 	
@@ -817,6 +864,47 @@ def lin_profile(q,r=linspace(.4,4,200)):
 	return r, sigma, c2, Q, H 
 	
 	
+def gamma_test(gamma_vals,flare_ind):
+
 	
+	h0 = .05
+	rs = .1
+	mdisk = .004
+	np = 8
+	sig_ind = -1.5
+	alpha = 0
+	ri = .4
+	ro = 4
+	nr = 512
+	beta_cool = 0
+	
+	
+	
+	flds = dict()
+	
+		
+	call(["./compile"])
+	
+	tot = 0
+	for i in range(len(gamma_vals)):
+		gam = gamma_vals[i]
+			
+		callstr = ['./a.out',str(nr),str(ri),str(ro),str(mdisk),str(rs),str(h0),str(sig_ind),str(flare_ind),str(alpha),str(np),str(gam),str(beta_cool)]
+		print '\n\n\n'
+		print tot, gam
+		print callstr
+		print '\n\n\n'
+		tot += 1
+		res=call(callstr)
+		if res != 0:
+			print '\n\nProblem with', (alpha,beta,flare)
+			return alpha_vals,beta_vals,flare_vals,-1
+		flds[gam] = Field()
+	
+	
+	
+	
+	return gamma_vals, flds
+		
 	
 		
