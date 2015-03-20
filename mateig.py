@@ -906,5 +906,124 @@ def gamma_test(gamma_vals,flare_ind):
 	
 	return gamma_vals, flds
 		
+def cooling_test(beta_vals):	
+	if type(beta_vals) == list:
+		beta_vals = array(beta_vals)
+	if type(beta_vals) == float:
+		beta_vals = array([beta_vals])
 	
+	h0 = .05
+	rs = .1
+	mdisk = .04
+	np = 8
+	sig_ind = -1.5
+	alpha = 0
+	ri = .1
+	ro = 10	
+	nr = 512
+	gam = 2
+	flare_ind = 0;
+	
+	
+	
+	nsgflds_low = dict()
+	sgflds_hi = dict()
+	
+	nsgflds_low = dict()
+	sgflds_hi = dict()
+	
+
+
 		
+	call(["./compile"])
+	
+	tot = 0
+	for i,beta in enumerate(beta_vals.round(2)):
+		callstr = ['./a.out',str(nr),str(ri),str(ro),str(mdisk),str(rs),str(h0),str(sig_ind),str(flare_ind),str(alpha),str(np),str(gam),str(beta)]
+		print '\n\n\n'
+		print tot, beta
+		print callstr
+		print '\n\n\n'
+		tot += 1
+		res=call(callstr)
+		if res != 0:
+			print '\n\nProblem with', (alpha,beta,flare)
+			return -1
+		flds[beta] = Field()
+	return beta_vals.round(2), flds	
+
+
+
+def param_dict():
+	params=dict()
+	params['h0'] = .05
+	params['rs'] = .1
+	params['mdisk'] = .04
+	params['np'] = 8
+	params['sig_ind'] = -1.5
+	params['alpha'] = 0
+	params['ri'] = .1
+	params['ro'] = 10	
+	params['nr'] = 512
+	params['np'] = 8
+	params['flare_ind'] = 0
+	params['beta'] = 0
+	params['gam'] = 2
+	
+	return params
+	
+def run_code(params, defines = None):
+	if defines != None:
+		add_defines(defines)
+		call(['./compile'])
+	
+	callstr = ['./a.out']
+	callstr.append(str(params['nr'])) 
+	callstr.append(str(params['ri'])) 
+	callstr.append(str(params['ro'])) 
+	callstr.append(str(params['mdisk'])) 
+	callstr.append(str(params['rs'])) 
+	callstr.append(str(params['h0'])) 
+	callstr.append(str(params['sig_ind'])) 
+	callstr.append(str(params['flare_ind'])) 
+	callstr.append(str(params['alpha'])) 
+	callstr.append(str(params['np'])) 
+	callstr.append(str(params['gam'])) 
+	callstr.append(str(params['beta'])) 
+
+	res = call(callstr)
+	if res != 0:
+		print '\n\nProblem with '
+		print params
+		return -1
+	else:
+		fld = Field()
+	return fld
+	
+def add_defines(defines_list):
+	if type(defines_list) != list:
+		defines_list = [defines_list]
+	with open("defines.h","r+") as f:
+		lines = f.readlines()
+		for i,line in enumerate(lines):
+			for val in defines_list:
+				if val in line:
+					if line[0:2] == '//':
+						lines[i] = line[2:]
+		f.seek(0,0)
+		f.writelines(lines)
+	return			
+def remove_defines(defines_list):
+	if type(defines_list) != list:
+		defines_list = [defines_list]
+	with open("defines.h","r+") as f:
+		lines = f.readlines()
+		
+		for i,line in enumerate(lines):
+			for val in defines_list:
+				if val in line:
+					if line[0:2] != '//':
+						lines[i] = '//' + line
+		f.seek(0,0)
+		f.writelines(lines)
+	return
