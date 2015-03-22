@@ -209,8 +209,11 @@ void alloc_globals(void) {
 	pres = (double *)malloc(sizeof(double)*N);
 	lpres = (double *)malloc(sizeof(double)*N);
 	temp = (double *)malloc(sizeof(double)*N);
+	ltemp = (double *)malloc(sizeof(double)*N);
 	dldpres = (double *)malloc(sizeof(double)*N);
 	d2ldpres = (double *)malloc(sizeof(double)*N);
+	dldtemp = (double *)malloc(sizeof(double)*N);
+	d2ldtemp = (double *)malloc(sizeof(double)*N);
 
 
 	nu = (double *)malloc(sizeof(double)*N);
@@ -260,6 +263,9 @@ void free_globals(void) {
 	free(temp);
 	free(d2ldpres);
 	free(dldpres);
+	free(ltemp);
+	free(d2ldtemp);
+	free(dldtemp);
 //#endif
 	
 	free(nu); 
@@ -359,6 +365,7 @@ int init(double ri,double ro) {
 
 
 		lc2[i] = log(c2[i]);
+		ltemp[i] = log(temp[i]);
 		
 		dlds[i] = 0;
 		dldc2[i] = 0;
@@ -368,7 +375,8 @@ int init(double ri,double ro) {
 		dldnu[i] = 0;		
 		dldpres[i] = 0;
 		d2ldpres[i] = 0;
-
+		dldtemp[i] = 0;
+		d2ldtemp[i] = 0;
 /* Check for bad values of c^2 and sigma */
 		if (isnan(c2[i]) != 0) {
 			printf("\n\n Detected NaN in c2 at i=%d, r=%.3lg\n\n", i, r[i]);
@@ -415,6 +423,8 @@ int init(double ri,double ro) {
 #ifdef HEEMSKERK
 		c2[i] *= sigfac;
 		lc2[i] = log(c2[i]);
+		temp[i] *= sigfac;
+		ltemp[i] = log(temp[i]);
 #endif
 		if (isnan(sigma[i]) != 0) {
 			printf("\n\n Detected NaN in sigma at i=%d, r=%.3lg\n\n", i, r[i]);
@@ -477,7 +487,8 @@ int init(double ri,double ro) {
 
 	matvec(D,lpres,dldpres,1,0,N);
 	matvec(D2,lpres,d2ldpres,1,0,N);
-
+	matvec(D,ltemp,dldtemp,1,0,N);
+	matvec(D2,ltemp,d2ldtemp,1,0,N);
 
 
 /* Correct the background rotation for pressure and self gravity.
@@ -809,15 +820,23 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	double complex cool_fac = ( 1 + 1j*beta_cool)/(1 + beta_cool*beta_cool);
 	
-	*C = cool_fac *  temp[i]/(2*omega[i]*r[i]*r[i]);
+// 	*C = cool_fac *  temp[i]/(2*omega[i]*r[i]*r[i]);
+// 
+// 	*B = (*C) * ( adi_gam*(2 + dldpres[i]) + 1j*beta_cool*dldpres[i]);
+// 	
+// 	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
+// 
+// 	*C *= adi_gam;
 
-	*B = (*C) * ( adi_gam*(2 + dldpres[i]) + 1j*beta_cool*dldpres[i]);
+	*C = temp[i] * (adi_gam -1)/(2 * omega[i] * r[i] * r[i]);
 	
-	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
-
-	*C *= adi_gam;
-
-
+	*A = omega[i] - kappa[i] + (*C) * ( 2 * dlds[i] + d2lds[i] 
+				  + cool_fac * (d2ldtemp[i] + dldtemp[i]*(2 + dlds[i] + dldtemp[i])));
+				  
+	*B = (*C) * (2 + dlds[i] + cool_fac * ( adi_gam*dldtemp[i] + ( adi_gam - 1)*(dlds[i] + 2)));
+	
+	*C *= 1 + cool_fac * (adi_gam -1);
+	
 #endif
 
 

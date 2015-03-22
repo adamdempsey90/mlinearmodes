@@ -2,10 +2,10 @@
 #define NPHI 5000
 
 
-#define ISOTHERMAL
+//#define ISOTHERMAL
 //#define BAROTROPIC
 //#define ADIABATIC
-//#define COOLING
+#define COOLING
 
 //#define PAPALOIZOU
 //#define HEEMSKERK
@@ -20,6 +20,6 @@
 
 
 //#define SELFGRAVITY
-#define READKERNEL
+//#define READKERNEL
 #define GRAVITYCORRECTION
-//#define INDIRECT
+//#define INDIRECTCTCTCT
