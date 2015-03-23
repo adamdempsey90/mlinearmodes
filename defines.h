@@ -22,4 +22,4 @@
 //#define SELFGRAVITY
 //#define READKERNEL
 #define GRAVITYCORRECTION
-//#define INDIRECTCTCTCT
+//#define INDIRECT
