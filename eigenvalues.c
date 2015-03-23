@@ -996,7 +996,8 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 		
 		if (j==0) {
 #ifdef COOLING
-			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
+//			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
+			mat[indx] -= (beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
 #endif	
 #ifdef ISOTHERMAL
 			mat[indx] -= dldc2[j];
@@ -1020,7 +1021,8 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 		
 		if (j==(N-1)) {
 #ifdef COOLING
-			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
+//			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
+			mat[indx] -= (beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
 #endif	
 #ifdef ISOTHERMAL
 			mat[indx] -= dldc2[j];

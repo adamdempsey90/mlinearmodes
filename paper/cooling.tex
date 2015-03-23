@@ -1,0 +1,126 @@
+\documentclass[apj]{emulateapj}
+\usepackage{amsmath}
+\shorttitle{Unstable $\MakeLowercase{m} = 1$ Eccentric Modes }
+\shortauthors{Dempsey \& Lithwick}
+\begin{document}
+\title{Unstable $\MakeLowercase{m} = 1$ Eccentric Modes in Thermally Cooling, Self Gravitating Disks}
+\author{Adam M. Dempsey \& Yoram Lithwick}
+\affil{Center for Interdisciplinary Exploration and Research in Astrophysics (CIERA)
+and
+Department of Physics and Astronomy
+Northwestern University
+2145 Sheridan Road
+Evanston, IL 60208
+USA}
+\email{adamdempsey2012@u.northwestern.edu}
+
+
+\begin{abstract}
+
+
+\end{abstract}
+
+
+\section{Introduction}
+
+\section{Equations of Motion}
+The equations of motion for a two dimensional, viscous disk are
+\begin{equation}
+(\partial_t + \mathbf{v} \cdot \mathbf{\nabla}) \mathbf{v} = - \frac{ \mathbf{\nabla} P}{\Sigma} - \mathbf{\nabla}\Phi + \frac{1}{\Sigma} \mathbf{\nabla} \cdot ( \nu \Sigma \mathbf{D} )
+\end{equation}
+\begin{equation}
+(\partial_t + \mathbf{v} \cdot \mathbf{\nabla}) \Sigma = - \Sigma \mathbf{\nabla} \cdot \mathbf{v}
+\end{equation}
+\begin{equation}
+T (\partial_t + \mathbf{v} \cdot \mathbf{\nabla} ) s = - \frac{ T - \bar{T}}{t_\text{cool}}
+\end{equation}
+Where all quantities are assumed to be a vertical average of their three dimensional counterparts. Here, $\Sigma$ is the surface density, $s$ is the entropy of the fluid, $T$ is the disk temperature, and $\mathbf{D}$ is the viscous stress tensor. These equations describe a viscous fluid that is thermally heated and or cooled to some "background" temperature profile $\bar{T}$ over a timescale $t_\text{cool}$. To close the system of equations we assume the fluid is ideal and perfect, so that $P =  c_v (\gamma -1 ) \Sigma T $ and $s \equiv c_v \ln \left( P \Sigma^{-\gamma} \right)$. Following \citet{osa92}, we can connect the two dimension adiabatic index $\gamma$ to the true three dimensional adiabatic index $\Gamma$ by assuming that the gas is vertically isothermal and gaussian distributed. 
+
+We consider a disk with a prescribed azimuthally averaged background profile given by $(\bar{v}_r, \bar{v}_\phi, \bar{\Sigma}, \bar{T}) = ( 0, r \Omega(r), \bar{\Sigma} \propto r^\mu, \bar{T} \propto r^\delta) $. We look at linear perturbations to this background state. Denoted linear quantities with a prime and background quantities with a bar, the linearized equations of motion become
+\begin{equation}
+(\partial_t + \Omega \partial_\phi) v_r' - 2\Omega v_\phi' = - \frac{1}{\bar{\Sigma}} \partial_r P' + \frac{\Sigma'}{\bar{\Sigma}^2} \frac{d \bar{P}}{d r} - \partial_r \Phi' + \text{visc.}
+\end{equation}
+\begin{equation}
+(\partial_t + \Omega \partial_\phi) v_\phi' + \frac{\kappa^2}{2\Omega} v_r' = - \frac{1}{r \bar{\Sigma}} \partial_\phi P'  -\frac{1}{r} \partial_\phi \Phi' + \text{visc.}
+\end{equation}
+\begin{equation}
+(\partial_t + \Omega \partial_\phi)  \Sigma'  + v_r' \frac{ d \bar{\Sigma}}{d r }= - \bar{\Sigma} \left( \frac{1}{r} \partial_r ( r v_r') + \frac{1}{r} \partial_\phi(v_\phi' ) \right)
+\end{equation}
+\begin{equation}
+(\partial_t + \Omega \partial_\phi)  s' +  v_r' \frac{d \bar{s}}{d r}  = - \beta \Omega \frac{T'}{\bar{T}}
+\end{equation}
+Where we've parametrized the cooling time as $t_\text{cool}^{-1} = \beta \Omega $ \citep{gam01}. We now Fourier Transform the linear variables in the azimuthal direction as well as in time and write $(v_r',v_\phi',\Sigma', P', s', T' , \Phi') = \sum_m  (u,v,\sigma,p,s,T,\phi) e^{ i  m(\phi -  \Omega_p t) } $. We further work under the assumption that the different $m$ modes only couple to the $m=0$ mode (i.e the background) and not to other $m \neq 0$ modes. The linearized equations of motion are now
+\begin{equation}
+i m (\Omega - \Omega_p) u - 2 \Omega v  = - \frac{1}{\bar{\Sigma}} \frac{d p}{d r} + \frac{\sigma}{\bar{\Sigma}^2} \frac{d \bar{P}}{d r} - \frac{ d \phi}{d r} + \text{visc.}
+\end{equation}
+ \begin{equation}
+i m (\Omega - \Omega_p) v + \frac{\kappa^2}{2 \Omega} u  = - \frac{i m p}{r \bar{\Sigma}}  - \frac{ i m \phi}{ r} + \text{visc.}
+\end{equation}
+\begin{equation}
+i m (\Omega - \Omega_p) \frac{ \sigma }{ \bar{\Sigma}}+ u \frac{d \ln \bar{\Sigma}}{d r} = - \left( \frac{1}{r} \frac{d }{d r} ( r u) + \frac{ i m v}{r } \right)
+\end{equation}
+\begin{eqnarray}
+i m \left[ \left( 1 - i \frac{\beta}{m} \right) \Omega - \Omega_p \right] \frac{T'}{\bar{T} } &+& u \frac{d  \ln \bar{T}}{d r}   \\ 
+&=& -(\gamma -1)  \left( \frac{1}{r} \frac{d }{d r} ( r u) + \frac{ i m v}{r } \right) \nonumber
+\end{eqnarray}
+Where we've replaced the entropy in favor of the temperature through the relations
+\begin{equation}
+s' = \frac{ T'}{ \bar{T}} - (\gamma -1 ) \frac{ \sigma}{ \bar{\Sigma}} 
+\end{equation}
+\begin{equation}
+\frac{d \bar{s}}{d r} = \frac{d \ln \bar{T}}{d r} - (\gamma -1) \frac{ d \ln \bar{\Sigma}}{d r} 
+\end{equation}
+
+
+\section{ $\MakeLowercase{m}=1$ Slow Modes }
+We specialize to $m=1$ modes and to the low pattern speed limit $\Omega_p \ll \Omega$. We can simplify the 4 dimensional set of equations to just one equation describing the global structure and evolution of an eccentricity vector, $e(r)$ \citep{og01,go06,papa02}. The eccentricity is defined through the Lagrangian displacement $\xi_r$ as 
+\begin{equation}
+e \equiv \frac{ \xi_r} {r} 
+\end{equation}
+ 
+
+
+\subsection{Boundary Condition} 
+We adopt a zero Lagrangian pressure boundary condition at both the inner and outer boundaries. Using the equations of motion it can be shown that this is equivalent to satisfying 
+\begin{equation}
+r \frac{d e(r) }{d r} = \left[ \frac{ \beta^2}{\gamma^2 + \beta^2} - i \frac{ \gamma \beta}{\gamma^2 + \beta^2} \right] e(r)
+\end{equation}
+at each boundary in the slow mode approximation. 
+
+\section{Methods}
+
+
+\section{Results}
+We studied the growth rates of unstable modes in the slow mode ($\Omega_p \ll \Omega_k$) approximation. The classical WKB dispersion relation for a self gravitating and isothermal disk (see e.g \citet{bt2}) is
+\begin{equation}
+m^2(\Omega - \Omega_p)^2 = \kappa^2 - 2 \pi G \Sigma |k_r| + c^2 k_r^2 
+\end{equation}
+In the $m=1$ slow mode limit this simplifies to \citep{papa02}
+\begin{equation}
+2 \Omega ( \omega_p - \Omega_p) = - 2 \pi G \Sigma |k_r| + c^2 k_r^2 
+\end{equation}
+Where $\omega_p = \Omega - \kappa$ is the orbital precession frequency of a fluid element. From the dispersion relation it is clear that pressure creates retrograde modes ($\Omega_p < 0$) and self gravity tends to create prograde modes ($\Omega_p > 0$). Additionally, global modes (i.e low $k_r$) also tend to create prograde modes \citep{papa02}. 
+
+\subsection{Lowest Order Mode with No Self Gravity}
+The mode with zero nodes is perhaps the simplest to understand. 
+
+
+
+
+\subsection{Self Gravity}
+\section{Discussion}
+
+
+\section{Conclusions}
+
+\begin{thebibliography}{}
+\bibitem[Binney \& Tremaine(2002)]{bt2} Binney, J., Tremaine, S. \emph{Galactic Dynamics}. Princeton University Press, 2002.
+\bibitem[Gammie 2001]{gam01} Gammie, C. F. (2001). \apj, 553(1), 174-183. 
+\bibitem[Ostriker, Shu, \& Adams (1992)]{osa92} Ostriker, E. C., Shu, F. H., \& Adams, F. C. (1992). \apj, 399, 192-212. 
+\bibitem[Papaloizou (2002)]{papa02} Papaloizou, J. C. B. (2002). Astronomy and Astrophysics, 388(2), 615-631. 
+\bibitem[Goodchild \& Ogilvie (2006)]{go06} Goodchild, S., \& Ogilvie, G. (2006). MNRAS, 368(3), 1123-1131. 
+\bibitem[Ogilvie (2001)]{og01} Ogilvie, G. I. (2001). MNRAS, 325(1), 231-248. 
+\end{thebibliography}
+
+
+\end{document}

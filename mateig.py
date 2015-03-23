@@ -408,15 +408,17 @@ class Field():
 				
 		return 
 		
-	def argand(self,logx=False,logy=False):
+	def argand(self,logx=False,logy=False,linrange=(1e-6,1e-6)):
 	# Plots the Argand diagram for the pattern speed and growthrates
 	
 		figure()
 		plot(real(self.evals),imag(self.evals),'x')
 		
-		xscale('symlog',linthreshx=1e-8)
-		yscale('symlog',linthreshy=1e-8)
-		
+		xscale('symlog',linthreshx=linrange[0])
+		yscale('symlog',linthreshy=linrange[1])
+		xlim(-1e-1,1e-1)
+		ylim(-1,1)
+		grid('on')
 		xlabel('$\\Omega_p$',fontsize='large')
 		ylabel('$\\gamma$',fontsize='large')
 	
@@ -951,4 +953,5 @@ def cooling_test(beta_vals):
 			return -1
 		flds[beta] = Field()
 	return beta_vals.round(2), flds	
+
 

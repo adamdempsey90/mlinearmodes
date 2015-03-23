@@ -1,4 +1,5 @@
 from subprocess import call
+from time import time
 
 def param_dict():
 	params=dict()
@@ -19,6 +20,7 @@ def param_dict():
 	return params
 	
 def run_code(params, defines = None):
+	tic = time()
 	if defines != None:
 		add_defines(defines)
 		call(['./compile'])
@@ -44,6 +46,9 @@ def run_code(params, defines = None):
 		return -1
 	else:
 		fld = Field()
+	
+	toc = time()
+	print 'Final Running Time: %.4 seconds' % (tic - toc)
 	return fld
 	
 def add_defines(defines_list):
