@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.12.18)  23 MAR 2015 17:07
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.12.18)  25 MAR 2015 17:26
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -383,7 +383,7 @@ Underfull \hbox (badness 2229) in paragraph at lines 51--53
  []
 
 
-Overfull \hbox (8.62778pt too wide) in alignment at lines 62--65
+Overfull \hbox (36.76447pt too wide) in alignment at lines 62--65
  [][][] []
  []
 
@@ -391,13 +391,13 @@ Overfull \hbox (8.62778pt too wide) in alignment at lines 62--65
 No file cooling.bbl.
 [2] (./cooling.aux) ) 
 Here is how much of TeX's memory you used:
- 4749 strings out of 494536
- 62387 string characters out of 6167445
- 148605 words of memory out of 5000000
- 7926 multiletter control sequences out of 15000+600000
+ 4757 strings out of 494536
+ 62483 string characters out of 6167445
+ 154650 words of memory out of 5000000
+ 7934 multiletter control sequences out of 15000+600000
  11495 words of font info for 47 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 39i,8n,29p,829b,328s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 39i,10n,29p,912b,328s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2013basic/texmf-dist/fonts/type1/publi
 c/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/p
 ublic/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/ty
@@ -414,7 +414,7 @@ basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/
 2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texli
 ve/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/t
 exlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti8.pfb>
-Output written on cooling.pdf (2 pages, 181616 bytes).
+Output written on cooling.pdf (2 pages, 190888 bytes).
 PDF statistics:
  71 PDF objects out of 1000 (max. 8388607)
  51 compressed objects within 1 object stream

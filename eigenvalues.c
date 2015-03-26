@@ -778,11 +778,9 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 #ifdef BAROTROPIC
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i]-kappa[i];
-	*B = (2 + dldc2[i] + dlds[i]) ;
+	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i]-kappa[i];
+	*B = (*C) * (2 + dldc2[i] + dlds[i]) ;
 	
-	*A *= (*C);
-	*B *= (*C);
 
 
 #endif
@@ -792,11 +790,10 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = 2 * dlds[i] + d2lds[i] + omega[i]-kappa[i];
-	*B = 2 + dlds[i];
+	*A = (*C) *( 2 * dlds[i] + d2lds[i]) + omega[i]-kappa[i];
+	*B = (*C) *( 2 + dlds[i]);
 	
-	*A *= (*C);
-	*B *= (*C);
+
 
 #endif
 
@@ -818,7 +815,8 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 #ifdef COOLING
 
-	double complex cool_fac = ( 1 + 1j*beta_cool)/(1 + beta_cool*beta_cool);
+//	double complex cool_fac = ( 1 + 1j*beta_cool)/(1 + beta_cool*beta_cool);
+	double complex cool_fac = ( 1 + 1j*beta_cool*(adi_gam-1))/(1 + beta_cool*beta_cool*(adi_gam-1)*(adi_gam-1));
 	
 // 	*C = cool_fac *  temp[i]/(2*omega[i]*r[i]*r[i]);
 // 
@@ -828,7 +826,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 // 
 // 	*C *= adi_gam;
 
-	*C = temp[i] * (adi_gam -1)/(2 * omega[i] * r[i] * r[i]);
+	*C = temp[i]/(2 * omega[i] * r[i] * r[i]);
 	
 	*A = omega[i] - kappa[i] + (*C) * ( 2 * dlds[i] + d2lds[i] 
 				  + cool_fac * (d2ldtemp[i] + dldtemp[i]*(2 + dlds[i] + dldtemp[i])));
@@ -989,6 +987,10 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 /* Set up zero Lagrangian Pressure B.C at inner boundary */
 
 	int j,indx;
+#ifdef COOLING
+	double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
+	eta_fac /= (1 - eta_fac);
+#endif
 	for(j=0;j<N;j++) {
 		indx = j;
 		mat[indx] = D[indx];
@@ -997,7 +999,8 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 		if (j==0) {
 #ifdef COOLING
 //			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
-			mat[indx] -= (beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
+//			mat[indx] -= dldtemp[j]*(beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
+			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
 #endif	
 #ifdef ISOTHERMAL
 			mat[indx] -= dldc2[j];
@@ -1011,7 +1014,10 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 
 /* Set up zero Lagrangian Pressure B.C at outer boundary */	
-
+#ifdef COOLING
+	double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
+	eta_fac /= (1 - eta_fac);
+#endif
 	int j,indx;
 	for(j=0;j<N;j++) {
 		indx= j + N*(N-1);
@@ -1022,7 +1028,8 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 		if (j==(N-1)) {
 #ifdef COOLING
 //			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
-			mat[indx] -= (beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
+//			mat[indx] -= dldtemp[j] * (beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
+			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
 #endif	
 #ifdef ISOTHERMAL
 			mat[indx] -= dldc2[j];

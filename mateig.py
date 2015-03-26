@@ -457,7 +457,7 @@ def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
 	return
 	
 	
-def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
+def compare(flds, evnum, labels=None,logr=False,scale=0,logy=False):
 	
 	if type(evnum) != list and type(evnum) != array: 
 		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
@@ -465,8 +465,8 @@ def compare(flds, evnum, nustr=None,logr=False,scale=0,logy=False):
 		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum[i]]),imag(fld.evals[evnum[i]])) for i,fld in enumerate(flds)]
 	
 	
-	if nustr != None:
-		fldstr = [nustr[i] + ', ' + evstr[i] for i in range(len(flds))]
+	if labels != None:
+		fldstr = [labels[i] + ', ' + evstr[i] for i in range(len(flds))]
 	else:
 		fldstr = evstr
 	
@@ -955,3 +955,39 @@ def cooling_test(beta_vals):
 	return beta_vals.round(2), flds	
 
 
+def predicted_rate(fld,params):
+	mu = params['sig_ind']
+	delta = 2*params['flare_ind'] - 1
+	beta = params['beta']
+	gamma = params['gam']
+	l = params['ro'] - params['ri']
+	k = pi/l
+	
+	
+	if gamma != 1:
+		fac = 1.+1j*beta/(1.+ beta**2)
+	
+	
+		C = fld.temp*(gamma -1)/(2 * fld.omega * fld.r**2)
+	
+		A = fld.omega - fld.kappa + C*(2*mu + fac*(2 + mu + delta)*delta)
+		
+		B = C * (2 + mu + fac*(gamma * delta + (gamma -1) *( mu + 2)))
+		
+		C = C*( 1 + fac*(gamma -1))
+		dedr = delta*beta * ( beta - 1j*gamma)/float((gamma**2 + beta**2))
+		
+		
+	else:
+		print 'Isothermal'
+		C = fld.c2/(2*fld.omega*fld.r*fld.r)
+		A = fld.omega - fld.kappa + C*mu*(2 + delta)
+		B = C*(2 + delta + mu)
+		dedr = 0
+	
+#	omp = A[-1] + dedr * (B[-1] + C[-1]*dedr)
+#	omp = A[-1] + B[-1] * dedr + C[-1] * -1	
+
+	omp = A[-1] + (B[-1] + C[-1])*dedr - C[-1]*k*k*fld.r[-1]**2
+
+	return omp

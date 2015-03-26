@@ -3,9 +3,9 @@
 
 
 //#define ISOTHERMAL
-//#define BAROTROPIC
+#define BAROTROPIC
 //#define ADIABATIC
-#define COOLING
+//#define COOLING
 
 //#define PAPALOIZOU
 //#define HEEMSKERK
