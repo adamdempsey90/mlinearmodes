@@ -1,6 +1,7 @@
 #define OPENMP
 #define NPHI 5000
 
+#define TESTFUNCTION
 
 //#define ISOTHERMAL
 #define BAROTROPIC
@@ -14,7 +15,7 @@
 
 
 
-#define PRESSURECORRECTION
+//#define PRESSURECORRECTION
 #define VISCOSITY
 #define SECONDORDER
 
@@ -23,4 +24,5 @@
 //#define READKERNEL
 #define GRAVITYCORRECTION
 //#define INDIRECT
+
 

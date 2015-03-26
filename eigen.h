@@ -13,6 +13,7 @@
 
 
 
+
 //#define INDIRECT
 
 
@@ -87,4 +88,9 @@ void read_kernel(void);
 
 #ifdef MLIN
 double bump_function(double rval);
+#endif
+
+#ifdef TESTFUNCTION
+double complex test_function(double rval);
+void fill_mat(double complex *mat, double complex *bcmat);
 #endif

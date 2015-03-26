@@ -90,17 +90,17 @@ Which follow from \eqref{eq:dtsigma} \& \eqref{eq:dtT} to zeroth order in $\Omeg
 \end{equation}
 Where the coefficients are,
 \begin{equation}
-A = \omega_p  + \mathcal{H} \left[ 2 \mu + \mu'  + \eta ( \delta' + \delta (2 + \mu + \delta) \right]
+A = \omega_p  + \mathcal{H} \left[ 2 \mu + \mu'  + \frac{1}{1 - i  \tilde{\beta}} ( \delta' + \delta (2 + \mu + \delta) \right]
 \end{equation}
 \begin{equation}
-B = \mathcal{H} \left[ 3 + \mu + \eta \left( \gamma \delta + (\gamma -1 ) (3 + \mu) \right) \right]
+B = \mathcal{H} \left[ 3 + \mu + \frac{1}{1 - i \tilde{\beta}} ( \left( \gamma \delta + (\gamma -1 ) (3 + \mu) \right) \right]
 \end{equation}
 \begin{equation}
-C = \mathcal{H} \left[ 1 + (\gamma - 1) \eta \right]
+C = \mathcal{H} \left[ 1 +  \frac{(\gamma - 1)}{1 - i  \tilde{\beta}} \right]
 \end{equation}
 Where,
 \begin{equation}
-\eta \equiv \frac{1 + i \beta (\gamma -1)}{1 + \beta^2 (\gamma -1)^2} 
+\tilde{ \beta} \equiv \beta ( \gamma - 1)
 \end{equation}
 \begin{equation}
 \mathcal{H} \equiv \frac{  \bar{T}}{ 2 \Omega r^2}
@@ -127,9 +127,9 @@ The matrices $\mathbf{Q}$, and $\mathbf{M}$ are the boundary condition matrix an
 We adopt a zero Lagrangian pressure boundary condition at both the inner and outer boundaries. Using the equations of motion it can be shown that this is equivalent to satisfying 
 \begin{equation}
 %\left. r \frac{d e(r) }{d r}\right|_{r_i, r_o} = \left. \left[ \frac{ \beta^2}{\gamma^2 + \beta^2} - i \frac{ \gamma \beta}{\gamma^2 + \beta^2} \right] \frac{d \ln \bar{T}}{d \ln r } e(r) \right|_{r_i, r_o}
-\left. r \frac{d e(r) }{d r}\right|_{r_i, r_o} = \left. \left[\frac{1}{1 + \left( \frac{\eta}{1- \eta} \right) \gamma } \right] \frac{d \ln \bar{T}}{d \ln r } e(r) \right|_{r_i, r_o}
+\left. r \frac{d e(r) }{d r}\right|_{r_i, r_o} = \left. \tilde{\beta} \left[ \frac{ \tilde{\beta} - i \gamma }{ \tilde{\beta}^2 + \gamma^2 } \right] \frac{d \ln \bar{T}}{d \ln r } e(r) \right|_{r_i, r_o}
 \end{equation}
-at each boundary in the slow mode approximation. In the isothermal ($\beta \rightarrow \infty$, $\eta \rightarrow 0$) and adiabatic ($\beta \rightarrow 0$, $\eta \rightarrow 1$) limits the boundary condition reduces to,
+at each boundary in the slow mode approximation. In the isothermal ($\beta \rightarrow \infty$) and adiabatic ($\beta \rightarrow 0$) limits the boundary condition reduces to,
 \begin{equation}
 \left. r \frac{d e(r)}{d r} \right|_{r_i, r_o} = 
 \begin{cases}
@@ -145,13 +145,40 @@ at each boundary in the slow mode approximation. In the isothermal ($\beta \righ
 \section{Results}
 We studied the growth rates of unstable modes in the slow mode ($\Omega_p \ll \Omega_k$) approximation. The classical WKB dispersion relation for a self gravitating and isothermal disk (see e.g \citet{bt2}) is
 \begin{equation}
-m^2(\Omega - \Omega_p)^2 = \kappa^2 - 2 \pi G \Sigma |k_r| + c^2 k_r^2 
+ \kappa^2  - m^2 \varpi^2 - 2 \pi G \Sigma |k_r| + c^2 k_r^2  = 0
 \end{equation}
-In the $m=1$ slow mode limit this simplifies to \citep{papa02}
+Where $\varpi \equiv \Omega - \Omega_p$. In the $m=1$ slow mode limit this simplifies to \citep{papa02}
 \begin{equation}
-2 \Omega ( \omega_p - \Omega_p) = - 2 \pi G \Sigma |k_r| + c^2 k_r^2 
+2 \Omega ( \Omega_p - \omega_p) =  2 \pi G \Sigma |k_r| - c^2 k_r^2 
 \end{equation}
 Where $\omega_p = \Omega - \kappa$ is the orbital precession frequency of a fluid element. From the dispersion relation it is clear that pressure creates retrograde modes ($\Omega_p < 0$) and self gravity tends to create prograde modes ($\Omega_p > 0$). Additionally, global modes (i.e low $k_r$) also tend to create prograde modes \citep{papa02}. 
+
+To understand the implications of cooling on the disk, we write the the WKB dispersion relation for a disk which has consonant cooling $\beta$ and constant background profiles. After some algebra, we obtain
+\begin{equation}
+ \kappa^2  - m^2 \varpi^2 - 2 \pi G \Sigma |k_r| + k_r^2 c_\text{cool}^2= 0
+\end{equation}
+\begin{equation}
+c_\text{cool}^2 =  \frac{ m \varpi}{ m \varpi - i \tilde{\beta} \Omega} c_\text{adi}^2 - \frac{ i \tilde{\beta} \Omega }{ m \varpi - i \tilde{\beta} \Omega} c_\text{iso}^2
+\end{equation}
+In the $m=1$, slow mode limit we obtain
+\begin{equation}
+2 \Omega ( \Omega_p - \omega_p) = 2 \pi G \Sigma |k_r| - k_r^2 c_\text{cool}^2  
+\end{equation}
+\begin{equation}
+c_\text{cool}^2 = \frac{1}{1 - i \tilde{\beta}} c_\text{adi}^2 + \frac{ i \tilde{\beta}}{i \tilde{\beta} -1 } c_\text{iso}^2
+\end{equation}
+Where $c_\text{adi}^2 = \gamma c_\text{iso}^2$ is the sound speed in the adiabatic ($\beta = 0$) limit. Figure  shows the dependence of the decay rate with $\beta$. 
+
+\begin{figure}[h]
+\includegraphics[width=.5\textwidth]{growth_wkb}
+\caption{}
+\end{figure}
+
+
+
+
+
+
 
 \subsection{Lowest Order Mode with No Self Gravity}
 The mode with zero nodes is perhaps the simplest to understand. 

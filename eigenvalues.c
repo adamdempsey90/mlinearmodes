@@ -23,6 +23,9 @@ int main(int argc, char *argv[]) {
 	}
 #endif
 
+#ifdef TESTFUNCTION
+	printf("\n\n\n\n\n\n RUNNING IN TEST FUNCTION MODE \n\n\n\n\n\n");
+#endif
 
 	N = atoi(argv[1]);
 	
@@ -107,6 +110,7 @@ int main(int argc, char *argv[]) {
   	init_derivatives();
   	output_derivatives();
   	calc_weights();
+  	 	
   	printf("Initializing Variables...\n");
   	int nanflag = init(ri,ro);
 
@@ -124,6 +128,10 @@ int main(int argc, char *argv[]) {
   	output_kernel();
 #endif
   	printf("Populating Matrix...\n");
+
+#ifdef TESTFUNCTION 
+	fill_mat(mat,bcmat);
+#else
   	nanflag = calc_matrices(mat,bcmat);
   	if (nanflag == -1) {
   		printf("Aborting...\n");
@@ -131,13 +139,15 @@ int main(int argc, char *argv[]) {
 		free(mat); free(evecs); free(evals); free(bcmat);
 		return nanflag;
 	}
+#endif
   	printf("Outputting Matrix...\n");
   	output_matrix(mat,bcmat);
   	printf("Solving For Eigenvalues and Eigenvectors...\n");
   	reigenvalues(mat,bcmat,evals,evecs,N);
-  	
+
+#ifndef TESTFUNCTION  	
   	calc_sigmap(sigmap, evecs);
-  	
+#endif
   	printf("Outputting Results...\n");
   	output(evals,evecs,sigmap);
 
@@ -513,7 +523,7 @@ int init(double ri,double ro) {
 
 
 
-#ifdef GRAVITYCORRECTION
+#if defined(SELFGRAVITY) && defined(GRAVITYCORRECTION)
 		omega2[i] += dphi0dr[i]/(r[i]*r[i]);
 #endif
 
@@ -524,7 +534,15 @@ int init(double ri,double ro) {
 	matvec(D,omega2,kappa2,1,1,N);
 	
 	for(i=0;i<N;i++) {
+	
+#ifdef PRESSURECORRECTION
+
 		kappa[i] = csqrt(kappa2[i]);
+#else	
+
+		kappa[i] = omega[i];
+		kappa2[i] = kappa[i]*kappa[i];
+#endif
 		omega[i] = sqrt(omega2[i]);
 		lom[i] = log(omega[i]);
 		if (isnan(kappa[i]) != 0) {
@@ -1448,9 +1466,49 @@ double bump_function(double rval) {
 
 	
 	
+#ifdef TESTFUNCTION
 
+double complex test_function(double rval) {
+	double complex result;
+	
+	result = 1 / pow(rval,2);
+		
+	return result;
+}
 
+void fill_mat(double complex *mat, double complex *bcmat) {
+	int i,j,indx;
 
+#ifdef OPENMP
+#pragma omp parallel private(indx,i,j) shared(D2,r,mat)
+#pragma omp for schedule(static)
+#endif	
+	for(indx=0;indx<N*N;indx++) {
+		i = indx/N;
+		j = indx - i*N;
+		mat[indx] = D2[indx] * test_function(r[i]);
+		if (i==j) {
+			bcmat[indx] = 1;
+		}
+		else {
+			bcmat[indx] = 0;
+		}
+	}
+	
+	for(j=0;j<N;j++) {
+		indx= j;
+	
+		mat[indx] = D[indx];
+		bcmat[indx] = 0;
+		indx +=  N*(N-1);
+		mat[indx] = D[indx];
+		bcmat[indx] = 0;
+	}
+	
+	return;
+}
+
+#endif
 
 
 
