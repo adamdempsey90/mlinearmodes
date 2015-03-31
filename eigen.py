@@ -25,7 +25,7 @@ def run_code(params, defines = None):
 		add_defines(defines)
 		call(['./compile'])
 	
-	callstr = ['./a.out']
+	callstr = ['./eigen']
 	callstr.append(str(params['nr'])) 
 	callstr.append(str(params['ri'])) 
 	callstr.append(str(params['ro'])) 
@@ -48,7 +48,7 @@ def run_code(params, defines = None):
 		fld = Field()
 	
 	toc = time()
-	print 'Final Running Time: %.4 seconds' % (tic - toc)
+#	print 'Final Running Time: %.4f seconds' % (tic - toc)
 	return fld
 	
 def add_defines(defines_list):

@@ -1,7 +1,7 @@
 #define OPENMP
 #define NPHI 5000
 
-#define TESTFUNCTION
+//#define TESTFUNCTION
 
 //#define ISOTHERMAL
 #define BAROTROPIC
@@ -12,10 +12,11 @@
 //#define HEEMSKERK
 //#define MLIN
 
+#define EXACTKAPPA
 
 
 
-//#define PRESSURECORRECTION
+#define PRESSURECORRECTION
 #define VISCOSITY
 #define SECONDORDER
 

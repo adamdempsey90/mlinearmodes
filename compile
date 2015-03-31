@@ -1,3 +1,34 @@
 #!/bin/bash
 
-gcc-4.9 -g -O3 -Wall eigenvalues.c -lblas -llapack -lm -fopenmp
+
+SOURCE=eigenvalues.c
+#LIBS=-lblas -llapack -lm -fopenmp
+#FLAGS=-g -O3 -Wall
+
+LDFLAGS=-llapack -lblas -lm -lgomp
+
+CFLAGS=-fopenmp -Wall -O3 -g 
+
+
+UNAME=`uname`
+
+ifeq ($(UNAME),Linux)
+CC=gcc
+endif
+
+ifeq ($(UNAME),Darwin)
+CC=gcc-4.9
+endif
+
+
+#if [[ "$unamestr" == 'Linux' ]]; then
+#	CC=gcc
+#	LIBS=$LIBS" -lgfortran"
+#elif [[ "$unamestr" == 'OSX' ]]; then
+
+#	CC=gcc-4.9
+#fi
+
+$CC $CFLAGS $SOURCE $LDFLAGS
+
+#$CC -g -O3 -Wall eigenvalues.c -lblas -llapack -lm -fopenmp

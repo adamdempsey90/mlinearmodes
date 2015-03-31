@@ -30,7 +30,7 @@ double complex *H, *HL, *KD,*DKD, *kernel, *cwork;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
-double *omega,*omega2,*kappa2;
+double *omega,*omega2,*kappa2, *omegap2;
 double complex *kappa;
 double *dphi0dr;
 

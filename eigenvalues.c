@@ -203,6 +203,7 @@ void alloc_globals(void) {
 	sigma = (double *)malloc(sizeof(double)*N);
 	omega = (double *)malloc(sizeof(double)*N);
 	omega2 = (double *)malloc(sizeof(double)*N);
+	omegap2 = (double *)malloc(sizeof(double)*N);
 	kappa = (double complex *)malloc(sizeof(double complex)*N);
 	kappa2 = (double *)malloc(sizeof(double)*N);
 	scaleH = (double *)malloc(sizeof(double)*N);
@@ -255,6 +256,7 @@ void free_globals(void) {
 	free(omega);
 	free(kappa);
 	free(omega2);
+	free(omegap2);
 	free(kappa2);
 	free(scaleH);
 	free(dlds);
@@ -344,15 +346,15 @@ int init(double ri,double ro) {
 #else
 		sigma[i] = pow(r[i],sigma_index);
 		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
-#endif // Mlin
+#endif // MLIN
 #endif // HEEMSKERK
 #endif // PAPALOIZOU
 
 
 /*	Set pressure and temperature */
 
-	temp[i] = c2[i];
-	pres[i] = sigma[i] * temp[i];
+		temp[i] = c2[i];
+		pres[i] = sigma[i] * temp[i];
 
 	
 /*	Set viscosity if enabled, if not then make sure it's zero */
@@ -512,13 +514,19 @@ int init(double ri,double ro) {
 
 
 #ifdef BAROTROPIC
-		omega2[i] += c2[i]*dlds[i]/(r[i]*r[i]);
+#ifdef EXACTKAPPA
+		omegap2[i] = c2[i]*sigma_index/(r[i]*r[i]);
 #else
-		omega2[i] += dldpres[i] * temp[i]/(r[i]*r[i]);
+		omegap2[i] = c2[i]*dlds[i]/(r[i]*r[i]);
 #endif
-
-
-
+#else
+#ifdef EXACTKAPPA
+		omegap2[i] = (sigma_index + 2*flare_index - 1)*temp[i]/(r[i]*r[i]);
+#else
+		omegap2[i] = dldpres[i] * temp[i]/(r[i]*r[i]);
+#endif
+#endif
+		omega2[i] += omegap2[i];
 #endif
 
 
@@ -527,12 +535,16 @@ int init(double ri,double ro) {
 		omega2[i] += dphi0dr[i]/(r[i]*r[i]);
 #endif
 
-
+#ifdef EXACTKAPPA
+		kappa2[i] = omega2[i] + (2*flare_index +1)*omegap2[i];
+#else
 		kappa2[i] = 4*omega2[i];
+#endif
 	}
-	
+
+#ifndef EXACTKAPPA	
 	matvec(D,omega2,kappa2,1,1,N);
-	
+#endif	
 	for(i=0;i<N;i++) {
 	
 #ifdef PRESSURECORRECTION
