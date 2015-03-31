@@ -48,6 +48,8 @@ int main(int argc, char *argv[]) {
 #if  defined(COOLING) || defined(ADIABATIC) 
 	adi_gam = atof(argv[11]);
 	beta_cool = atof(argv[12]);
+#else
+	adi_gam = 1;
 #endif
 
 #ifdef ADIABATIC 
@@ -353,7 +355,7 @@ int init(double ri,double ro) {
 
 /*	Set pressure and temperature */
 
-		temp[i] = c2[i];
+		temp[i] = adi_gam * c2[i];
 		pres[i] = sigma[i] * temp[i];
 
 	
@@ -536,7 +538,7 @@ int init(double ri,double ro) {
 #endif
 
 #ifdef EXACTKAPPA
-		kappa2[i] = omega2[i] + (2*flare_index +1)*omegap2[i];
+		kappa2[i] = omega2[i] + 2*flare_index*omegap2[i];
 #else
 		kappa2[i] = 4*omega2[i];
 #endif

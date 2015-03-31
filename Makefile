@@ -2,12 +2,12 @@ EXECUTABLE=eigen
 SOURCES=eigenvalues.c
 HEADER=eigen.h defines.h
 
-LDFLAGS=-llapack -lblas -lm -lgomp -lgfortran
+LDFLAGS=-llapack -lblas -lm -lgomp
 
 CFLAGS=-c -fopenmp -Wall -O3 -g 
 
 
-UNAME=`uname`
+UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
 CC=gcc

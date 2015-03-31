@@ -991,3 +991,45 @@ def predicted_rate(fld,params):
 	omp = A[-1] + (B[-1] + C[-1])*dedr - C[-1]*k*k*fld.r[-1]**2
 
 	return omp
+	
+def fit_zn_power_law(fld):
+	emode = copy(abs(fld.edict[fld.evals[-3]]))
+	r  = copy(fld.r)
+	lr = log10(r)
+	
+	lower_bound = lr[0] + .25*(lr[-1] - lr[0])
+	upper_bound = lr[-1] - .25*(lr[-1] - lr[0])
+	
+	ind = (lr >= lower_bound) & (lr <= upper_bound)
+	
+	s = polyfit(lr[ind],log10(emode[ind]),1)
+	
+	figure()
+	loglog(r,emode,'--k')
+	loglog(r[ind],pow(10,s[0]*lr[ind] + s[1]),'-k',label='$ e \sim r^{%.4f}$' % s[0])
+	xlabel('r',fontsize='large')
+	ylabel('|e|',fontsize='large')
+	legend(loc='best')
+
+	return s
+
+def predicted_omegap(params,eos):
+	h = params['h0']
+	mu = params['sig_ind']
+	f = params['flare_ind']
+	ro = params['ro']
+	ri = params['ri']
+	beta = params['beta']
+	gamma = params['gam']
+	d = 2*f -1
+	k2 = (pi/log10(ro/ri))**2
+	
+	if eos == 'Barotropic':
+		return .5*h**2*(mu - k2)*pow(ro,.5*(4*f -3))
+	elif eos == 'Isothermal':
+		return .5*h**2*(2*mu - k2 - f*(2*f-1+mu))*pow(ro,.5*(4*f-3)) 
+	elif eos == 'Cooling':
+		return gamma*.5*h**2*pow(ro,.5*(4*f-3)) * (-2*f*(mu + d)+2*mu+d*(2+mu+d)-gamma*k2)
+	else:
+		return 0
+	
