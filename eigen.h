@@ -37,7 +37,7 @@ double *dphi0dr;
 double *D, *D2;
 
 double *nu, *dldnu, *lnu;
-double alpha_s;
+double alpha_s, alpha_b;
 
 double *pres, *lpres, *temp, *d2ldpres, *dldpres, *ltemp, *dldtemp, *d2ldtemp;
 double adi_gam, beta_cool;

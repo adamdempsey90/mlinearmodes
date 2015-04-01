@@ -12,12 +12,12 @@ int main(int argc, char *argv[]) {
 	}
 
 #ifdef ISOTHERMAL	
-	if (argc < 11) {
+	if (argc < 12) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
 #else 
-	if (argc < 13) {
+	if (argc < 14) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -41,13 +41,15 @@ int main(int argc, char *argv[]) {
 
 #ifdef VISCOSITY
 	alpha_s = atof(argv[9]);
+	alpha_b = atof(argv[10]);
 #else
 	alpha_s = 0;
+	alpha_b = 0;
 #endif
 
 #if  defined(COOLING) || defined(ADIABATIC) 
-	adi_gam = atof(argv[11]);
-	beta_cool = atof(argv[12]);
+	adi_gam = atof(argv[12]);
+	beta_cool = atof(argv[13]);
 #else
 	adi_gam = 1;
 #endif
@@ -92,8 +94,8 @@ int main(int argc, char *argv[]) {
 #endif
 	
 #ifdef OPENMP
-	omp_set_num_threads(atoi(argv[10]));
-	printf("\t\t\tOpenMP threads = %d\n", atoi(argv[10]));
+	omp_set_num_threads(atoi(argv[11]));
+	printf("\t\t\tOpenMP threads = %d\n", atoi(argv[11]));
 #endif	
 	
 	double complex *mat = (double complex *)malloc(sizeof(double complex)*N*N);	
@@ -320,12 +322,13 @@ int init(double ri,double ro) {
 #ifdef PAPALOIZOU		
 		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
 		sigma[i] = pow(c2[i],1.5);
+		temp[i] = c2[i];
 #else
 #ifdef HEEMSKERK
 
 		sigma[i] = pow(r[i]-ri + .05,2)*pow(ro - r[i] +.05,2.5);
 		c2[i] = sigma[i]*h0*h0;
-
+		temp[i] = c2[i];
 
 #else
 #ifdef MLIN
@@ -343,11 +346,12 @@ int init(double ri,double ro) {
 		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-(1.5 + .5*flare_index));
 	
 		
-		
+		temp[i] = c2[i];
 
 #else
 		sigma[i] = pow(r[i],sigma_index);
 		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
+		temp[i] = c2[i];
 #endif // MLIN
 #endif // HEEMSKERK
 #endif // PAPALOIZOU
@@ -362,8 +366,8 @@ int init(double ri,double ro) {
 /*	Set viscosity if enabled, if not then make sure it's zero */
 		
 #ifdef VISCOSITY		
-		nu[i] = alpha_s * scaleH[i]*scaleH[i]*omega[i];
-		
+//		nu[i] = alpha_s * scaleH[i]*scaleH[i]*omega[i];
+		nu[i] = alpha_s * temp[i]/omega[i];		
 		if (alpha_s == 0) {
 			lnu[i] = 0;
 		}
@@ -918,24 +922,37 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 
 #ifdef VISCOSITY
-	double complex temp, norm;
-	double q = dldom[i];
-	double qp = d2dom[i];
-	double beta = dlds[i];
-	double gam = dldnu[i];
-	double betap = d2lds[i];
+	double complex norm;
+// 	double q = dldom[i];
+// 	double qp = d2dom[i];
+// 	double beta = dlds[i];
+// 	double gam = dldnu[i];
+// 	double betap = d2lds[i];
 	
-	norm = I/(r[i]*omega[i]);
-	
-	temp = -2.*(12.+9.*beta + 9.*gam + 7.*qp) + q*(-31.+4.*beta*(-2.+3*beta)-14.*gam-12.*betap);
+// 	norm = I/(r[i]*omega[i]);
+// 	
+// 	temp = -2.*(12.+9.*beta + 9.*gam + 7.*qp) + q*(-31.+4.*beta*(-2.+3*beta)-14.*gam-12.*betap);
+// 
+// 	*A += temp*(nu[i]*omega[i]*norm/(12*r[i]));
+// 	
+// 	temp = 31. + 14.*beta + 2*q*(11. + 6*beta) + 14.*gam;
+// 	
+// 	*B += -temp*norm*(nu[i]*omega[i]/(12*r[i]));
+// 
+// 	*C += -(nu[i]*omega[i]*norm/(6*r[i]))*(7 + 6*q);
 
-	*A += temp*(nu[i]*omega[i]*norm/(12*r[i]));
-	
-	temp = 31. + 14.*beta + 2*q*(11. + 6*beta) + 14.*gam;
-	
-	*B += -temp*norm*(nu[i]*omega[i]/(12*r[i]));
+	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
+/* Shear Viscosity */
 
-	*C += -(nu[i]*omega[i]*norm/(6*r[i]))*(7 + 6*q);
+	*A -= I * (alpha_s / 6.) * norm * (33.5 + dldtemp[i] - 2*dlds[i] + 18*d2lds[i]);
+	*B -= I * (alpha_s / 3.) * norm * (-9.5 - 7*dldtemp[i] + 2*dlds[i]);
+	*C -= I * (2 *alpha_s / 3.) * norm;
+
+/* Bulk Viscosity */
+
+	*B += I * alpha_b * norm * (2.5 + dldtemp[i] + dlds[i]);
+	*C -= I * alpha_b * norm;
+
 #endif
 
 	return; 

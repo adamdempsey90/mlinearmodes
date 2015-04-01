@@ -1024,6 +1024,8 @@ def predicted_omegap(params,eos):
 	d = 2*f -1
 	k2 = (pi/log10(ro/ri))**2
 	
+	
+	
 	if eos == 'Barotropic':
 		return .5*h**2*(mu - k2)*pow(ro,.5*(4*f -3))
 	elif eos == 'Isothermal':

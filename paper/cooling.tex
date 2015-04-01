@@ -94,14 +94,14 @@ p = \sigma \bar{T} + \bar{\Sigma} T'
 
 Which follow from \eqref{eq:dtsigma} \& \eqref{eq:dtT} to zeroth order in $\Omega_p$ and with $\Omega \approx \Omega_K$. We obtain the evolution equation 
 \begin{equation} \label{eq:coeff_eqn}
-\Omega_p e  = A e + B r \frac{d e}{d r} + C r^2 \frac{d^2 e}{ d r^2}
+\Omega_p e  = A e + B \frac{d e}{d \ln r} + C  \frac{d^2 e}{ d \ln r^2}
 \end{equation}
 Where the coefficients are,
 \begin{equation}
 A = \omega_p  + \mathcal{H} \left[ 2 \mu + \mu'  + \frac{1}{1 - i  \tilde{\beta}} ( \delta' + \delta (2 + \mu + \delta) \right]
 \end{equation}
 \begin{equation}
-B = \mathcal{H} \left[ 3 + \mu + \frac{1}{1 - i \tilde{\beta}} ( \left( \gamma \delta + (\gamma -1 ) (3 + \mu) \right) \right]
+B = \mathcal{H} \left[ 2 + \mu + \frac{1}{1 - i \tilde{\beta}} ( \left( \gamma \delta + (\gamma -1 ) (2 + \mu) \right) \right]
 \end{equation}
 \begin{equation}
 C = \mathcal{H} \left[ 1 +  \frac{(\gamma - 1)}{1 - i  \tilde{\beta}} \right]
@@ -118,6 +118,19 @@ Where,
 \qquad \qquad
 \delta' = \frac{d ^2 \bar{T}}{d \ln r^2}
 \end{equation}
+To add in the effects of viscosity we first use the alpha parametrization of viscosity and take $\nu = \alpha \frac{T}{\Omega}$ \citep{ss73}. The corrections due to shear ($\alpha_s$) and bulk ($\alpha_b$) viscosities are, 
+\begin{equation}
+A_\nu = -\frac{i \alpha_s}{6} \mathcal{H} \left( \frac{65}{2} + \delta - 2 \mu + 18 \mu' \right)
+\end{equation}
+\begin{equation}
+B_\nu = -\frac{ i \alpha_s}{3} \mathcal{H} \left( -\frac{19}{2} - 7 \delta + 2 \mu \right) +  i \alpha_b \mathcal{H} \left( \frac{5}{2} + \delta + \mu \right)
+\end{equation}
+\begin{equation}
+C_\nu = - \frac{ i 2\alpha_s}{3} \mathcal{H}  - i \alpha_b \mathcal{H}
+\end{equation}
+
+
+
 We solve \eqref{eq:coeff_eqn} as a generalized eigenvalue problem by discretizing the eccentricity on a logarithmic grid in radius. 
 \begin{equation}
 \Omega_p \mathbf{Q} \mathbf{e} = \mathbf{M} \mathbf{e}
@@ -203,10 +216,11 @@ The mode with zero nodes is perhaps the simplest to understand.
 \begin{thebibliography}{}
 \bibitem[Binney \& Tremaine(2002)]{bt2} Binney, J., Tremaine, S. \emph{Galactic Dynamics}. Princeton University Press, 2002.
 \bibitem[Gammie 2001]{gam01} Gammie, C. F. (2001). \apj, 553(1), 174-183. 
-\bibitem[Ostriker, Shu, \& Adams (1992)]{osa92} Ostriker, E. C., Shu, F. H., \& Adams, F. C. (1992). \apj, 399, 192-212. 
-\bibitem[Papaloizou (2002)]{papa02} Papaloizou, J. C. B. (2002). Astronomy and Astrophysics, 388(2), 615-631. 
 \bibitem[Goodchild \& Ogilvie (2006)]{go06} Goodchild, S., \& Ogilvie, G. (2006). MNRAS, 368(3), 1123-1131. 
 \bibitem[Ogilvie (2001)]{og01} Ogilvie, G. I. (2001). MNRAS, 325(1), 231-248. 
+\bibitem[Ostriker, Shu, \& Adams (1992)]{osa92} Ostriker, E. C., Shu, F. H., \& Adams, F. C. (1992). \apj, 399, 192-212. 
+\bibitem[Papaloizou (2002)]{papa02} Papaloizou, J. C. B. (2002). Astronomy and Astrophysics, 388(2), 615-631. 
+\bibitem[Shakura \& Sunyaev (1973)]{ss73} Shakura, N. I., \& Sunyaev, R. A. (1973). Astronomy and Astrophysics, 24, 337?355.
 \end{thebibliography}
 
 

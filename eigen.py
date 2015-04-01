@@ -8,10 +8,11 @@ def param_dict():
 	params['mdisk'] = .04
 	params['np'] = 8
 	params['sig_ind'] = -1.5
-	params['alpha'] = 0
+	params['alpha_s'] = 0
+	params['alpha_b'] = 0
 	params['ri'] = .1
 	params['ro'] = 10	
-	params['nr'] = 512
+	params['nr'] = 400
 	params['np'] = 8
 	params['flare_ind'] = 0
 	params['beta'] = 0
@@ -34,7 +35,8 @@ def run_code(params, defines = None):
 	callstr.append(str(params['h0'])) 
 	callstr.append(str(params['sig_ind'])) 
 	callstr.append(str(params['flare_ind'])) 
-	callstr.append(str(params['alpha'])) 
+	callstr.append(str(params['alpha_s'])) 
+	callstr.append(str(params['alpha_b'])) 
 	callstr.append(str(params['np'])) 
 	callstr.append(str(params['gam'])) 
 	callstr.append(str(params['beta'])) 
