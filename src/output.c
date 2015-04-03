@@ -45,30 +45,7 @@ void output_globals(void) {
 }
 
 
-void output_kernel(void) {
-	int i,j;
-	FILE *f = fopen("kernel.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",creal(kernel[j+i*N]));
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
-	
-	f = fopen("kernel0.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",kernel0[j+i*N]);
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
 
-	return;
-}
 
 
 void output_matrix(double complex *mat, double complex *bcmat) {

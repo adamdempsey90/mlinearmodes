@@ -1,8 +1,70 @@
 #include "eigen.h"
 
 
+void set_papaloizou_profile(void) {
+	int i;
+	
+	for(i=0;i<N;i++) {
+		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+		sigma[i] = pow(c2[i],1.5);
+		temp[i] = c2[i];
+	}
 
-#ifdef MLIN
+	return;
+
+}
+
+
+void set_heemskerk_profile(void) {
+	int i;
+	
+	for(i=0;i<N;i++) {
+		sigma[i] = pow(r[i]-ri + .05,2)*pow(ro - r[i] +.05,2.5);
+
+#ifndef INPUTMASS
+		sigma[i] *= sigma0;
+#endif
+
+		c2[i] = sigma[i]*h0*h0;
+		temp[i] = c2[i];
+	}
+
+	return;
+
+}
+
+
+
+
+
+void set_mlin_profile(void) {
+	int i;
+	
+	for(i=0;i<N;i++) {
+		
+		c2[i] = h0 * pow(r[i],-.5*flare_index);
+	
+		scaleH[i] = c2[i]/omega[i];
+		c2[i] *= c2[i];
+
+	
+//		sigfac = .05 * pow(2.0,2 - .5*flare_index - 1.5)/(2 * M_PI * bump_function(2.0));
+//		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-2.0);
+		sigfac = h0 /(2 * M_PI * bump_function(2.0));
+		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-(1.5 + .5*flare_index));
+	
+		
+		temp[i] = c2[i];
+	}
+
+	return;
+
+}
+
+
+
+
+
 double bump_function(double rval) {
 	
 	
@@ -15,7 +77,6 @@ double bump_function(double rval) {
 	return (fac1*fac2);
 
 }
-#endif
 
 	
 	
@@ -63,28 +124,65 @@ void fill_mat(double complex *mat, double complex *bcmat) {
 
 #endif
 
-#ifdef EXACTKAPPA 
+
+
 
 double sigma_function(double rval) {
-//	return pow(rval,sigma_index);
-//	return pow(rval,sigma_index) * exp(-rval/rdecay);
-	return pow(rval,sigma_index) * exp(-pow(rval/rdecay,2));
+
+	ans = 0;
+
+#ifdef EXPDECAY
+	ans = pow(rval,sigma_index) * exp(-rval/rdecay);
+#else
+
+#ifdef EXPDECAY2
+	ans = pow(rval,sigma_index) * exp(-pow(rval/rdecay,2));
+#else
+	ans = pow(rval,sigma_index);
+
+#endif
+
+#endif
+
+
+	return ans;
 }
 
 double dlogsigma_dlogr(double rval) {
 	
-//	return sigma_index;	
-//	return sigma_index - rval/r_decay;
-	return sigma_index - 2*pow(rval/rdecay,2);
+	ans = 0;
+#ifdef EXPDECAY
+	ans = sigma_index - rval/r_decay;
+#else
+#ifdef EXPDECAY2
+	ans = sigma_index - 2*pow(rval/rdecay,2);
+#else
+	ans = sigma_index;	
+#endif
+#endif
+
+
+	return ans;
+
 }
 
 double dlogsigma2_dlogr2(double rval) {
 
-//	return 0;	
-//	return -rval/r_decay;
-	return -4*pow(rval/rdecay,2);
+	ans = 0;
+#ifdef EXPDECAY
+	ans = -rval/r_decay;
+#else
+#ifdef EXPDECAY2
+	ans = -4*pow(rval/rdecay,2);
+#else
+	ans =  0;	
+#endif
+#endif
+
+
+	return ans;
+
 }
 
 
-#endif
 

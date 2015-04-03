@@ -27,3 +27,5 @@
 //#define INDIRECT
 
 //#define INPUTMASS
+//#define EXPDECAY
+//#define EXPDECAY2

@@ -4,8 +4,7 @@ void alloc_globals(void) {
 	
 	D = (double *)malloc(sizeof(double)*N*N);
 	D2 = (double *)malloc(sizeof(double)*N*N);
-	kernel = (double complex *)malloc(sizeof(double complex)*N*N);
-	kernel0 = (double *)malloc(sizeof(double)*N*N);
+	
 	weights = (double *)malloc(sizeof(double)*N);
 	KD = (double complex*)malloc(sizeof(double complex)*N*N);
 	DKD = (double complex*)malloc(sizeof(double complex)*N*N);
@@ -20,7 +19,7 @@ void alloc_globals(void) {
 	sigma = (double *)malloc(sizeof(double)*N);
 	omega = (double *)malloc(sizeof(double)*N);
 	omega2 = (double *)malloc(sizeof(double)*N);
-	omegap2 = (double *)malloc(sizeof(double)*N);
+	
 	kappa = (double complex *)malloc(sizeof(double complex)*N);
 	kappa2 = (double *)malloc(sizeof(double)*N);
 	scaleH = (double *)malloc(sizeof(double)*N);
@@ -28,7 +27,6 @@ void alloc_globals(void) {
 	dldc2 = (double *)malloc(sizeof(double)*N);
 	lsig = (double *)malloc(sizeof(double)*N);
 	lc2 = (double *)malloc(sizeof(double)*N);
-	dphi0dr=(double *)malloc(sizeof(double)*N);
 	d2lds = (double *)malloc(sizeof(double)*N);
 	lom = (double *)malloc(sizeof(double)*N);
 	dldom = (double *)malloc(sizeof(double)*N);
