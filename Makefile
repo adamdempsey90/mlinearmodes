@@ -2,7 +2,7 @@ EXECUTABLE=eigen
 SOURCES=eigenvalues.c
 HEADER=eigen.h defines.h
 
-LDFLAGS=-llapack -lblas -lm -lgomp
+LDFLAGS=-llapack -lblas -lm -lgomp -lgsl
 
 CFLAGS=-c -fopenmp -Wall -O3 -g 
 

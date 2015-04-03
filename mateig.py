@@ -35,7 +35,9 @@ class Field():
 				
 		inds = argsort(evals)
 		
-		self.Q = self.kappa * self.omega/(pi*self.sigma)
+		self.Q = self.kappa * sqrt(self.temp)/(pi*self.sigma)
+		
+#		self.Q = self.kappa * self.omega/(pi*self.sigma)
 		
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
@@ -278,26 +280,38 @@ class Field():
 	def predicted_k(self,ev,sg=True,bt2=False,logr=False,logy=False):
 	
 	
-		if bt2:
-			kt2 = self.kappa2 -(self.omega - ev)**2
-		else:
-			kt2 = 2*self.omega*(self.kappa-self.omega - ev)
-			
-		kt2 /= self.c2
+# 		if bt2:
+# 			kt2 = self.kappa2 -(self.omega - ev)**2
+# 		else:
+# 			kt2 = 2*self.omega*(self.kappa-self.omega - ev)
+# 			
+# 		kt2 /= self.c2
+# 		
+# 		if sg:
+# 			kc = pi*fld.sigma/fld.c2
+# 		else:
+# 			kc = 0
+# 			
+# 		kp = kc + sqrt(kc*kc + kt2)
+# 		km = kc - sqrt(kc*kc + kt2)
+# 		
+# 		
+# 		kpr = cumtrapz(kp,x=self.r,initial=0)
+# 		kmr = cumtrapz(km,x=self.r,initial=0)
+# 		
+# 		
+	
+		kc = pi*self.sigma/self.c2
+		v = (ev.real - self.omega)/self.kappa
 		
-		if sg:
-			kc = pi*fld.sigma/fld.c2
-		else:
-			kc = 0
-			
-		kp = kc + sqrt(kc*kc + kt2)
-		km = kc - sqrt(kc*kc + kt2)
-		
-		
-		kpr = cumtrapz(kp,x=self.r,initial=0)
-		kmr = cumtrapz(km,x=self.r,initial=0)
-		
-		
+		k_short_trail = kc*(1 + sqrt( 1- (self.Q**2*(1-v**2)))
+		k_long_trail = kc*(1 - sqrt( 1- (self.Q**2*(1-v**2))) 
+	
+		k_short_lead = - k_short_trail
+		k_long_lead = - k_long_trail 
+	
+		kp = k_short_trail
+		km = k_short_lead
 	
 # 		a = self.c2/(self.r*self.r)
 # 		if sg:

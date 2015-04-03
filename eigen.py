@@ -45,6 +45,7 @@ def run_code(params, defines = None):
 	if res != 0:
 		print '\n\nProblem with '
 		print params
+		print ' '.join(callstr)
 		return -1
 	else:
 		fld = Field()

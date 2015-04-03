@@ -1,5 +1,2 @@
 #!/bin/bash
-#!/bin/bash
-#!/bin/bash
-
-gcc-4.9 -g -O3 -Wall eigenvalues.c -lblas -llapack -lm -fopenmp 
+gcc-4.9 -g -O3 -Wall $1 -lgsl -lblas -llapack -lm -fopenmp 

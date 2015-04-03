@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
+#include <gsl/gsl_sf_ellint.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -23,14 +24,14 @@
 int N;
 
 double poly_n;
-double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index; 
+double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index, sigma0; 
 
-double *weights,*kernel0, *work;
+double *weights,*kernel0, *kernel02, *work;
 double complex *H, *HL, *KD,*DKD, *kernel, *cwork;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
-double *omega,*omega2,*kappa2, *omegap2;
+double *omega,*omega2,*kappa2, *omegap2, *kappap2, *omegag2, *kappag2;
 double complex *kappa;
 double *dphi0dr;
 
@@ -41,6 +42,10 @@ double alpha_s, alpha_b;
 
 double *pres, *lpres, *temp, *d2ldpres, *dldpres, *ltemp, *dldtemp, *d2ldtemp;
 double adi_gam, beta_cool;
+
+#ifdef EXACTKAPPA
+double rdecay = 5;
+#endif
 
 
 void print_time(double t);
@@ -85,6 +90,7 @@ void cmatmat(double complex *A, double complex *B, double complex *C,
 double sigma_profile(double rval, double h, double rc,double beta);
 
 void read_kernel(void);
+void compute_kernels(void);
 
 #ifdef MLIN
 double bump_function(double rval);
@@ -93,4 +99,10 @@ double bump_function(double rval);
 #ifdef TESTFUNCTION
 double complex test_function(double rval);
 void fill_mat(double complex *mat, double complex *bcmat);
+#endif
+
+#ifdef EXACTKAPPA 
+double sigma_function(double rval);
+double dlogsigma_dlogr(double rval);
+double dlogsigma2_dlogr2(double rval);
 #endif

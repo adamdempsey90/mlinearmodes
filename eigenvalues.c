@@ -1,5 +1,4 @@
 #include "eigen.h"
-
 					
 int main(int argc, char *argv[]) {
 	int i,j;
@@ -32,8 +31,15 @@ int main(int argc, char *argv[]) {
 	ri = atof(argv[2]);
 	
 	ro = atof(argv[3]);
-	
+
+#ifdef INPUTMASS	
 	Mdisk = atof(argv[4]);
+	sigma0 = 1;
+#else
+	sigma0 = atof(argv[4]);
+	Mdisk = 1;
+#endif
+
 	eps = atof(argv[5]);
 	h0 = atof(argv[6]);
 	sigma_index = atof(argv[7]);
@@ -193,6 +199,7 @@ void alloc_globals(void) {
 	D2 = (double *)malloc(sizeof(double)*N*N);
 	kernel = (double complex *)malloc(sizeof(double complex)*N*N);
 	kernel0 = (double *)malloc(sizeof(double)*N*N);
+	kernel02 = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
 	KD = (double complex*)malloc(sizeof(double complex)*N*N);
 	DKD = (double complex*)malloc(sizeof(double complex)*N*N);
@@ -208,8 +215,11 @@ void alloc_globals(void) {
 	omega = (double *)malloc(sizeof(double)*N);
 	omega2 = (double *)malloc(sizeof(double)*N);
 	omegap2 = (double *)malloc(sizeof(double)*N);
+	omegag2 = (double *)malloc(sizeof(double)*N);
 	kappa = (double complex *)malloc(sizeof(double complex)*N);
 	kappa2 = (double *)malloc(sizeof(double)*N);
+	kappap2 = (double *)malloc(sizeof(double)*N);
+	kappag2 = (double *)malloc(sizeof(double)*N);
 	scaleH = (double *)malloc(sizeof(double)*N);
 	dlds = (double *)malloc(sizeof(double)*N);
 	dldc2 = (double *)malloc(sizeof(double)*N);
@@ -245,6 +255,7 @@ void free_globals(void) {
 	free(D2);
 	free(kernel);
 	free(kernel0);
+	free(kernel02);
 	free(weights);
 	free(KD);
 	free(DKD);
@@ -261,7 +272,10 @@ void free_globals(void) {
 	free(kappa);
 	free(omega2);
 	free(omegap2);
+	free(omegag2);
 	free(kappa2);
+	free(kappap2);
+	free(kappag2);
 	free(scaleH);
 	free(dlds);
 	free(dldc2);
@@ -299,7 +313,7 @@ int init(double ri,double ro) {
 	int i,j,indx;
 	double sigfac;
 	double phifac = 0;
-
+	
 	
 	for(i=0;i<N;i++) {
 
@@ -316,8 +330,13 @@ int init(double ri,double ro) {
 		
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
-
-
+		sigma[i] = sigma_function(r[i]);
+#ifndef INPUTMASS
+		sigma[i] *= sigma0;
+#endif
+		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
+		temp[i] = c2[i]/adi_gam;
+		
 /* Set up special sigma and c^2 profiles */
 #ifdef PAPALOIZOU		
 		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
@@ -327,6 +346,11 @@ int init(double ri,double ro) {
 #ifdef HEEMSKERK
 
 		sigma[i] = pow(r[i]-ri + .05,2)*pow(ro - r[i] +.05,2.5);
+
+#ifndef INPUTMASS
+		sigma[i] *= sigma0;
+#endif
+
 		c2[i] = sigma[i]*h0*h0;
 		temp[i] = c2[i];
 
@@ -348,10 +372,6 @@ int init(double ri,double ro) {
 		
 		temp[i] = c2[i];
 
-#else
-		sigma[i] = pow(r[i],sigma_index);
-		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
-		temp[i] = c2[i];
 #endif // MLIN
 #endif // HEEMSKERK
 #endif // PAPALOIZOU
@@ -425,14 +445,21 @@ int init(double ri,double ro) {
 
 	}
 	
-	printf("sig tot = %lg\n", 2*M_PI*sigfac);
-	sigfac = Mdisk/(2*M_PI*sigfac);
 	
-	printf("sig tot = %lg\n", sigfac);
+#ifdef INPUTMASS
+	sigfac = Mdisk/(2*M_PI*sigfac);	
+#else
+	Mdisk = 2*M_PI*sigfac;
+	sigfac = 1;
+	printf("Total Disk Mass = %lg\n", Mdisk);
+#endif
+	
+	
 #else
 	sigfac = 1;
 #endif	
-	printf("sigfac = %lg\n",sigfac);
+
+
 	for(i=0;i<N;i++) {
 		sigma[i] *= sigfac;
 		lsig[i] = log(sigma[i]);
@@ -467,22 +494,24 @@ int init(double ri,double ro) {
 
 #else
 
-#ifdef OPENMP
-#pragma omp parallel private(indx,i,j) shared(kernel,kernel0,N)
-#pragma omp for schedule(static)
-#endif
-	for(indx=0;indx<N*N;indx++) {
-		i = indx/N;
-		j = indx - i*N;
-		
-		kernel[indx] = Kij(i,j);
-		kernel0[indx] = K0ij(i,j);
-	}
+// #ifdef OPENMP
+// #pragma omp parallel private(indx,i,j) shared(kernel,kernel0,N)
+// #pragma omp for schedule(static)
+// #endif
+// 	for(indx=0;indx<N*N;indx++) {
+// 		i = indx/N;
+// 		j = indx - i*N;
+// 		
+// 		kernel[indx] = Kij(i,j);
+// 		kernel0[indx] = K0ij(i,j);
+// 	}
+	compute_kernels();
 #endif	
 	for(i=0;i<N;i++) {
 		dphi0dr[i] = 0;
 		for(j=0;j<N;j++) {
-			dphi0dr[i] -= weights[j]*kernel0[j+N*i]*sigma[j];
+//			dphi0dr[i] -= weights[j]*kernel0[j+N*i]*sigma[j];
+			dphi0dr[i] -= kernel0[j+N*i]*sigma[j];
 		}
 		if (isnan(dphi0dr[i]) != 0) {
 			printf("\n\n Detected NaN in dphi0dr at i=%d, r=%.3lg\n\n", i, r[i]);
@@ -494,7 +523,28 @@ int init(double ri,double ro) {
 	
 
 	printf("Calculating Derivatives\n");
+
+
+#ifdef EXACTKAPPA
+	for(i=0;i<N;i++) {
 	
+		dlds[i] = dlogsigma_dlogr(r[i]);
+		d2lds[i] = dlogsigma2_dlogr2(r[i]);
+	
+		dldc2[i] = 2 * flare_index - 1;
+		dldtemp[i] = dldc2[i];
+		d2ldtemp[i] = 0;
+#ifdef VISCOSITY
+		dldnu[i] = 2 * flare_index + .5;
+#endif
+		
+		dldpres[i] = dlds[i] + dldtemp[i];	
+		d2ldpres[i] = d2lds[i];
+		
+	}
+	
+
+#else	
 	matvec(D,lsig,dlds,1,0,N);
 	matvec(D,lc2,dldc2,1,0,N);
 	
@@ -508,41 +558,40 @@ int init(double ri,double ro) {
 	matvec(D,ltemp,dldtemp,1,0,N);
 	matvec(D2,ltemp,d2ldtemp,1,0,N);
 
+#endif
+
 
 /* Correct the background rotation for pressure and self gravity.
 	Set epicyclic frequency 
 */
 
 	for(i=0;i<N;i++) {
-
+	
+		kappa2[i] = pow(r[i],-3);
 	
 #ifdef PRESSURECORRECTION
 
-
 #ifdef BAROTROPIC
-#ifdef EXACTKAPPA
-		omegap2[i] = c2[i]*sigma_index/(r[i]*r[i]);
-#else
 		omegap2[i] = c2[i]*dlds[i]/(r[i]*r[i]);
-#endif
-#else
-#ifdef EXACTKAPPA
-		omegap2[i] = (sigma_index + 2*flare_index - 1)*temp[i]/(r[i]*r[i]);
 #else
 		omegap2[i] = dldpres[i] * temp[i]/(r[i]*r[i]);
 #endif
-#endif
 		omega2[i] += omegap2[i];
+
 #endif
 
 
 
 #if defined(SELFGRAVITY) && defined(GRAVITYCORRECTION)
-		omega2[i] += dphi0dr[i]/(r[i]*r[i]);
+		omega2[i] += dphi0dr[i]/(r[i]);
 #endif
 
 #ifdef EXACTKAPPA
-		kappa2[i] = omega2[i] + 2*flare_index*omegap2[i];
+#ifdef BAROTROPIC
+		kappa2[i] += c2[i]*((2 + dldc2[i]) * dlds[i] + d2lds[i])/(r[i]*r[i]);
+#else
+		kappa2[i] += temp[i]*((2 + dldtemp[i]) * dldpres[i] + d2ldpres[i])/(r[i]*r[i]);
+#endif
 #else
 		kappa2[i] = 4*omega2[i];
 #endif
@@ -559,7 +608,6 @@ int init(double ri,double ro) {
 #else	
 
 		kappa[i] = omega[i];
-		kappa2[i] = kappa[i]*kappa[i];
 #endif
 		omega[i] = sqrt(omega2[i]);
 		lom[i] = log(omega[i]);
@@ -582,6 +630,83 @@ int init(double ri,double ro) {
 	return 0;
 }
 
+
+void calc_epycyclic(void) {
+	int i,j;
+
+
+	for(i=0;i<N;i++) {
+	
+#ifdef PRESSURECORRECTION	
+
+#ifdef BAROTROPIC
+
+		omegap2[i] = c2[i]*dlds[i]/(r[i]*r[i]);
+		
+		
+#ifdef EXACTKAPPA
+		kappap2[i] = c2[i]*((2 + dldc2[i]) * dlds[i] + d2lds[i])/(r[i]*r[i]);
+#else
+		kappap2[i] = 4*omegap2[i];
+#endif
+
+
+#else
+
+		omegap2[i] = dldpres[i] * temp[i]/(r[i]*r[i]);
+		
+		
+#ifdef EXACTKAPPA
+		kappap2[i] = temp[i]*((2 + dldtemp[i]) * dldpres[i] + d2ldpres[i])/(r[i]*r[i]);
+#else
+		kappap2[i] = 4*omegap2[i];
+#endif
+
+#endif // BAROTROPIC
+
+#else
+		omegap2[i] = 0;
+		kappap2[i] = 0;
+		
+#endif // PRESSURECORRECTION
+
+
+#if defined(SELFGRAVITY) && defined(GRAVITYCORRECTION)
+		
+		omegag2[i] = 0;
+		kappag2[i] = 0;
+		for(j=0;j<N;j++) {
+			omegag2[i] += kernel0[j+i*N]*sigma[j];
+			kappag2[i] += kernel02[j+i*N]*sigma[j];
+		}
+		omegag2[i] /= r[i];
+		kappag2[i] *= pow(r[i],-3);
+#else
+		omegag2[i] = 0;
+		kappag2[i] = 0;		
+
+#endif
+		
+		
+	
+	}
+	
+#ifndef EXACTKAPPA
+	matvec(D,omegap2,kappap2,1,1,N);
+#endif
+
+	for(i=0;i<N;i++) {
+	
+		omega2[i] += omegap2[i] + omegag2[i];
+		kappa2[i] += kappap2[i] + kappag2[i];
+		
+		kappa[i] = sqrt(kappa2[i]);
+		omega[i] = sqrt(omega2[i]);
+	}
+	
+	return;
+
+}
 
 double sigma_profile(double rval, double h, double rc, double beta) {
 	double sigma_min, index, width,result, x;
@@ -915,7 +1040,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 
 #ifdef SELFGRAVITY
-	*G = -1.0/(2*omega[i]*r[i]*r[i]);
+	*G = -1.0/(2*omega[i]*r[i]*r[i]*r[i]);
 #else
 	*G = 0;
 #endif
@@ -961,7 +1086,6 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 
 double K0ij(int i, int j) {
-//	printf("start\n");
 	int indx;
 	double dp = M_PI/NPHI;
 
@@ -979,7 +1103,6 @@ double K0ij(int i, int j) {
 	
 	result *= dp*2*r[j]*r[j];
 	
-//	printf("%d\t%d\t%lg\n",i,j,result);
 	return result;
 
 
@@ -1013,6 +1136,64 @@ double Kij(int i, int j) {
 
 
 }
+
+void compute_kernels(void) {
+	int i,j, indx;
+	double r1,r2,r4,rp1,rp2,rp3,rp4,eps1,eps2,eps4,eps6,r_p_rp,r_m_rp,kval,ek,ee; 
+	
+#ifdef OPENMP
+#pragma omp parallel private(indx,i,j,r1,r2,r4,rp1,rp2,rp3,rp4,eps1,eps2,eps4,eps6,r_p_rp,r_m_rp,kval,ek,ee) shared(kernel,kernel0,kernel02,N,r,scaleH,weights)
+#pragma omp for schedule(static)
+#endif
+	for(indx=0;indx<N*N;indx++) {
+		i = indx/N;
+		j = indx - i*N;
+		
+		
+		
+		r1 = r[i];
+		r2 = r1*r1;
+		r4 = r2*r2;
+		rp1 = r[j];
+		rp2 = rp1*rp1;
+		rp3 = rp2*r[j];
+		rp4 = rp2*rp2;
+		eps1 = eps * scaleH[j];
+		eps2 = eps1*eps1;
+		eps4 = eps2*eps2;
+		eps6 = eps4 * eps2;
+		r_p_rp = r[i] + r[j];
+		r_p_rp *= r_p_rp;
+		r_m_rp = r[i] - r[j];
+		r_m_rp *= r_m_rp;
+		
+		kval = 4*r1*rp1/(r_p_rp + eps2);
+		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+			
+		kernel[indx] = -(eps4 + 2*r4 - 3*r2*rp2 + rp4 + eps2*(3*r2 + 2*rp2))*ee;
+		kernel[indx] += (eps2 + r_m_rp)*(eps2 + 2*r2 + rp2)*ek;
+		kernel[indx] /= ((eps2 + r_m_rp)*rp1*sqrt(eps2 +r_p_rp));
+		kernel[indx] *= 2;
+		
+		kernel0[indx] = 2*((eps2 - r2+rp2)*ee - (eps2 + r_m_rp)*ek);
+		kernel0[indx] /= (r1*(eps2 + r_m_rp)*sqrt(eps2 + r_p_rp));
+		
+		kernel02[indx] = -ee*(eps6 + eps4*(-2*r2+3*rp2)+pow(rp3-rp1*r2,2)+eps2*(-3*r4-4*r2*rp2+3*rp4));
+		kernel02[indx] += ek*(eps2+r_m_rp)*(eps4+r_m_rp*r_p_rp + eps2*(r2+2*rp2));
+		kernel02[indx] *= 4*r1;
+		kernel02[indx] /= ( pow(eps2+r_m_rp,2) * pow(eps2+r_p_rp,1.5));
+		
+		kernel[indx] *= weights[j]*r[j]*r[j];
+		kernel0[indx] *= weights[j]*r[j]*r[j];
+		kernel02[indx] *= weights[j]*r[j]*r[j];
+		
+		
+	}	
+
+	return;
+}
+
 
 double kernel_integrand(int m, double r, double rp, double rs2, double phi) {
 	double numerator, denominator;
@@ -1541,5 +1722,29 @@ void fill_mat(double complex *mat, double complex *bcmat) {
 
 #endif
 
+#ifdef EXACTKAPPA 
+
+double sigma_function(double rval) {
+//	return pow(rval,sigma_index);
+//	return pow(rval,sigma_index) * exp(-rval/rdecay);
+	return pow(rval,sigma_index) * exp(-pow(rval/rdecay,2));
+}
+
+double dlogsigma_dlogr(double rval) {
+	
+//	return sigma_index;	
+//	return sigma_index - rval/r_decay;
+	return sigma_index - 2*pow(rval/rdecay,2);
+}
+
+double dlogsigma2_dlogr2(double rval) {
+
+//	return 0;	
+//	return -rval/r_decay;
+	return -4*pow(rval/rdecay,2);
+}
+
+
+#endif
 
 

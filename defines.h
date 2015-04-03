@@ -21,9 +21,9 @@
 #define SECONDORDER
 
 
-//#define SELFGRAVITY
+#define SELFGRAVITY
 //#define READKERNEL
-//#define GRAVITYCORRECTION
+#define GRAVITYCORRECTION
 //#define INDIRECT
 
-
+//#define INPUTMASS
