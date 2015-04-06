@@ -3,8 +3,8 @@
 
 //#define TESTFUNCTION
 
-//#define ISOTHERMAL
-#define BAROTROPIC
+#define ISOTHERMAL
+//#define BAROTROPIC
 //#define ADIABATIC
 //#define COOLING
 
@@ -23,7 +23,12 @@
 
 #define SELFGRAVITY
 //#define READKERNEL
-#define GRAVITYCORRECTION
+//#define GRAVITYCORRECTION
 //#define INDIRECT
 
 //#define INPUTMASS
+
+//#define EXPDECAY
+//#define EXPDECAY2
+
+#define COMPTRAPZ

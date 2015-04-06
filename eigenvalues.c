@@ -379,7 +379,7 @@ int init(double ri,double ro) {
 
 /*	Set pressure and temperature */
 
-		temp[i] = adi_gam * c2[i];
+//		temp[i] = adi_gam * c2[i];
 		pres[i] = sigma[i] * temp[i];
 
 	
@@ -820,6 +820,8 @@ double D2ij(int i, int j) {
 #endif
 
 
+
+#ifndef COMPTRAPZ
 void calc_weights(void) {
 /* O(N^(-4)) weights for numerical quadrature*/
 	int i;
@@ -841,7 +843,23 @@ void calc_weights(void) {
 	return;
 
 }
+#else
+void calc_weights(void) {
+/* Composite Trapezoid numerical quadrature*/
+	int i;
+	weights[0] = .5*dlr;
+	weights[N-1] = .5*dlr;
+	
+	for(i=1;i<N-1;i++) {
+		weights[i] = dlr;
+	}
 
+	return;
+
+}
+
+
+#endif
 
 void init_derivatives(void) {
 	int i,j;
@@ -878,9 +896,9 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 			indx = j + N*i;
 		
 			
-			KD[indx] = G*sigma[j]*D[indx];
-//			HL[indx] = G*D[indx];
-			HL[indx] = 0;
+//			KD[indx] = G*sigma[j]*D[indx];
+
+
 			mat[indx] = 0;
 			bcmat[indx] = 0;
 			
@@ -888,23 +906,13 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 			if (i==j) {
 				mat[indx] += A;
 				bcmat[indx] += 1;
-//				KD[indx] = -sigma[j]* ( dlds[j] + D[indx]);
-//				HL[indx] = G*(2. + D[indx]);
-				KD[indx] += G*sigma[j]*dlds[j];
-//				HL[indx] += 2*G;
+
+//				KD[indx] += G*sigma[j]*dlds[j];
+
 			}
-// 			else {
-// 				mat[indx] = 0;
-// 				bcmat[indx] = 0;
-// 				KD[indx] = -D[indx]*sigma[j];
-// 				HL[indx] = G*D[indx];
-// 			}
 			
 			mat[indx] += B*D[indx] + C*D2[indx];
-			
-			H[indx] = 0;
-			DKD[indx] = 0;
-			
+	
 		
 		}
 	}
@@ -916,12 +924,30 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 	
 //	cmatmat(HL,H,DKD,1,0,N);
 	
-
+	
 #ifdef SELFGRAVITY	
-	cmatmat(kernel,KD,DKD,1,0,N);
-	for(i=0;i<N*N;i++) mat[i] += DKD[i];
+	int l;
+//	cmatmat(kernel,KD,DKD,1,0,N);
+//	for(i=0;i<N*N;i++) mat[i] += DKD[i];
+	for(i=0;i<N;i++) {
+		G = -1.0/(omega[i]*r[i]*r[i]*r[i]);
+		for(j=0;j<N;j++) {
+			indx = j + N*i;
+			KD[indx] = 0;
+			for(l=0;l<N;l++) {
+				KD[indx] += -sigma[j]*kernel[l + N*i]*D[l*N+j];
+				if (l==j) {
+					KD[indx] += -sigma[j]*kernel[l+N*i]*dlds[j];
+				}	
+			}
+			mat[indx] += G * KD[indx];
+		}
+		
+	}
+
 #endif
 
+	
 
 /* Set Boundary Conditions */
 
@@ -1080,6 +1106,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 #endif
 
+
 	return; 
 
 }
@@ -1233,7 +1260,7 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
 #endif	
 #ifdef ISOTHERMAL
-			mat[indx] -= dldc2[j];
+			mat[indx] -= dldtemp[j];
 #endif
 
 		}	
@@ -1262,7 +1289,7 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
 #endif	
 #ifdef ISOTHERMAL
-			mat[indx] -= dldc2[j];
+			mat[indx] -= dldtemp[j];
 #endif
 
 		}
@@ -1725,23 +1752,63 @@ void fill_mat(double complex *mat, double complex *bcmat) {
 #ifdef EXACTKAPPA 
 
 double sigma_function(double rval) {
-//	return pow(rval,sigma_index);
-//	return pow(rval,sigma_index) * exp(-rval/rdecay);
-	return pow(rval,sigma_index) * exp(-pow(rval/rdecay,2));
+
+	double ans = 0;
+
+#ifdef EXPDECAY
+
+	ans = pow(rval,sigma_index) * exp(-rval/rdecay);
+
+#else
+#ifdef EXPDECAY2
+
+	ans = pow(rval,sigma_index) * exp(-pow(rval/rdecay,2));
+
+#else
+	
+	ans = pow(rval,sigma_index);
+
+#endif
+#endif
+	return ans;
+
 }
 
 double dlogsigma_dlogr(double rval) {
+	double ans = 0;
+#ifdef EXPDECAY
+
+	ans = sigma_index - rval/rdecay;
+#else
+#ifdef EXPDECAY2
+
+	ans = sigma_index - 2*pow(rval/rdecay,2);
+#else
+
+	ans = sigma_index;	
+
+#endif
+#endif
 	
-//	return sigma_index;	
-//	return sigma_index - rval/r_decay;
-	return sigma_index - 2*pow(rval/rdecay,2);
+	return ans ;
+	
 }
 
 double dlogsigma2_dlogr2(double rval) {
+	double ans = 0;
+#ifdef EXPDECAY
+	ans = -rval/rdecay;
+#else
+#ifdef EXPDECAY2
 
-//	return 0;	
-//	return -rval/r_decay;
-	return -4*pow(rval/rdecay,2);
+	ans = -4*pow(rval/rdecay,2);
+#else
+
+	ans = 0;	
+#endif
+#endif
+	return ans;
+	
 }
 
 
