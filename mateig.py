@@ -1,10 +1,12 @@
 from scipy.integrate import cumtrapz
+from scipy.special import ellipe,ellipk
 from subprocess import call
 
 class Field():
-	def __init__(self):
+	def __init__(self,params):
 		dat=loadtxt('globals.dat')
 		emat=loadtxt('eigen.dat')
+		self.params = params
 		self.matrix=loadtxt('matrix.dat')
 		self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
 		self.lr = dat[:,0]
@@ -444,7 +446,86 @@ class Field():
 		overlap = sign(ex[1:]) - sign(ex[:-1])
 		return len(overlap[overlap != 0])
 	
-
+	def generate_kernels(self):
+		rp,rr = meshgrid(fld.r,fld.r)
+		
+		b = fld.params['rs'] * fld.params['h0'] * pow(rp,fld.params['flare_ind']+1)
+		
+		
+		kval = 4*rr*rp/(b**2 + (rr+rp)**2)
+		
+		ee = ellipe(kval)
+		ek = ellipk(kval)
+		
+		
+		kern0 = 2*(b**2 - rr**2 + rp**2)*ee - 2*(b**2 + (rr-rp)**2)*ek
+		kern0 /= (rr * (b**2 + (rr-rp)**2)*sqrt(b**2 + (rr+rp)**2))
+		
+		
+		kern02 = 4*rr*(b**6 + b**4 * (-2*rr**2 + 3*rp**2) + (-rr**2 * rp + rp**3)**2 + b**2 * (-3*rr**4 - 4*rr**2 *rp**2 + 3*rp**4))*ee
+		kern02 += -4*rr*(b**2 + (rr-rp)**2)*(b**4 + (rr**2-rp**2)**2 + b**2 * (rr**2 + 2*rp**2))*ek
+		kern02 *= pow(b**2 + (rr-rp)**2,-2) * pow(b**2 + (rr+rp)**2,-1.5) 
+		
+		
+		kern1 = -2*(b**4 + 2*rr**4 - 3*rr**2 * rp**2 + rp**4 + b**2*(3*rr**2 + 2*rp**2))*ee
+		kern1 += 2*(b**2 + (rr-rp)**2)*(b**2 + 2*rr**2 + rp**2)*ek
+		kern1 /= ((b**2 + (rr-rp)**2)*rp*sqrt(b**2 + (rr+rp)**2))
+		
+		
+		kern0dat = loadtxt('kernel0.dat')
+		kern1dat = loadtxt('kernel.dat')
+		kern02dat = loadtxt('kernel02.dat')
+		
+		err0 = abs( (kern0 - kern0dat)/kern0 )
+		err1 = abs( (kern1 - kern1dat)/kern1 )
+		err02 = abs( (kern02 - kern02dat)/kern02 )
+		
+		
+		figure(); imshow(log10(err0)); colorbar(); title('Kernel 0')
+		figure(); imshow(log10(err02)); colorbar(); title('Kernel 02')
+		figure(); imshow(log10(err1)); colorbar(); title('Kernel 1')
+		
+		
+		omg2 = zeros(fld.r.shape)
+		kapg2 = zeros(fld.r.shape)
+		phi1 = zeros(fld.r.shape)
+		
+		for i in range(fld.nr):
+			omg2[i] = - trapz(fld.r**2*fld.sigma*kern0[i,:],x=fld.lr)/fld.r[i]
+			kapg2[i] = - trapz(fld.r**2*fld.sigma*kern02[i,:],x=fld.lr)/(fld.r[i]**3)
+#			phi1[i] = trapz(fld.r**2*fld.sigma*kern1[i,:],x=fld.lr)
+		
+		dat=loadtxt('omegacorrecs.dat')
+		omg2dat = dat[:,3]
+		kapg2dat = dat[:,-1]
+		
+		# fakedat = loadtxt('fakepotential.dat')
+# 		phi1dat= fakedat[:,1]
+# 		
+# 		errph = abs((phi1-phi1dat)/phi1);
+		
+		errom = abs( (omg2 - omg2dat)/omg2)
+		errkap = abs((kapg2 - kapg2dat)/kapg2)
+		
+		figure(); loglog(fld.r,errom,label='$ \\frac{ \\Delta \\Omega^2}{\\Omega^2}$')
+		loglog(fld.r,errkap,label='$\\frac{ \\Delta \\kappa^2}{ \\kappa^2} $')
+		xlabel('r',fontsize='large');
+		legend(loc='best')
+		
+		figure(); semilogx(fld.r,omg2,'-',fld.r,omg2dat,'--'); 
+		xlabel('r',fontsize='large');
+		ylabel('$\\Omega^2$',fontsize='large');
+		
+		figure(); semilogx(fld.r,kapg2,'-',fld.r,kapg2dat,'--'); 
+		xlabel('r',fontsize='large');
+		ylabel('$\\kappa^2$',fontsize='large');
+ 		
+# 		figure(); loglog(fld.r,errph)
+# 		xlabel('r',fontsize='large');
+# 		title('$\\Phi$')
+# 		
+		return kern0, kern02, kern1, err0,err02,err1, omg2,kapg2, errom,errkap
+	
 
 def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
 		

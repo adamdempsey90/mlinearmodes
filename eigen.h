@@ -12,7 +12,7 @@
 #include <omp.h>
 #endif
 
-
+#define RDECAY 5
 
 
 //#define INDIRECT
@@ -26,8 +26,8 @@ int N;
 double poly_n;
 double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index, sigma0; 
 
-double *weights,*kernel0, *kernel02, *work;
-double complex *H, *HL, *KD,*DKD, *kernel, *cwork;
+double *weights,*kernel0, *kernel02, *kernel,*work;
+double complex *H, *HL, *KD,*DKD, *cwork;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
@@ -43,9 +43,7 @@ double alpha_s, alpha_b;
 double *pres, *lpres, *temp, *d2ldpres, *dldpres, *ltemp, *dldtemp, *d2ldtemp;
 double adi_gam, beta_cool;
 
-#ifdef EXACTKAPPA
-double rdecay = 5;
-#endif
+
 
 
 void print_time(double t);
@@ -91,7 +89,7 @@ double sigma_profile(double rval, double h, double rc,double beta);
 
 void read_kernel(void);
 void compute_kernels(void);
-
+void add_edge_sg(double complex *mat);
 #ifdef MLIN
 double bump_function(double rval);
 #endif
@@ -101,8 +99,9 @@ double complex test_function(double rval);
 void fill_mat(double complex *mat, double complex *bcmat);
 #endif
 
-#ifdef EXACTKAPPA 
 double sigma_function(double rval);
 double dlogsigma_dlogr(double rval);
 double dlogsigma2_dlogr2(double rval);
-#endif
+
+void calc_epicyclic(void);
+void output_omega_corrections(double *omegap2, double *omegag2, double *kappap2, double *kappag2) ;

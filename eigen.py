@@ -48,7 +48,7 @@ def run_code(params, defines = None):
 		print ' '.join(callstr)
 		return -1
 	else:
-		fld = Field()
+		fld = Field(params)
 	
 	toc = time()
 #	print 'Final Running Time: %.4f seconds' % (tic - toc)

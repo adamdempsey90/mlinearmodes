@@ -10,9 +10,9 @@
 
 //#define PAPALOIZOU
 //#define HEEMSKERK
-//#define MLIN
+#define MLIN
 
-#define EXACTKAPPA
+//#define EXACTKAPPA
 
 
 
@@ -22,6 +22,7 @@
 
 
 #define SELFGRAVITY
+//#define EDGEGRAVITY
 //#define READKERNEL
 //#define GRAVITYCORRECTION
 //#define INDIRECT
