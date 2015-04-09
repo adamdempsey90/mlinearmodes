@@ -4,6 +4,7 @@
 #include <math.h>
 #include <complex.h>
 #include <gsl/gsl_sf_ellint.h>
+#include <gsl/gsl_integration.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -24,14 +25,14 @@
 int N;
 
 double poly_n;
-double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index, sigma0; 
+double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index, sigma0, tol; 
 
 double *weights,*kernel0, *kernel02, *kernel,*work;
 double complex *H, *HL, *KD,*DKD, *cwork;
 
 
 double *c2, *sigma, *scaleH,  *r, *lr, *dlds, *dldc2, *lsig, *lc2, *d2lds, *lom, *dldom, *d2dom;
-double *omega,*omega2,*kappa2, *omegap2, *kappap2, *omegag2, *kappag2;
+double *omega,*omega2,*kappa2, *omegap2, *kappap2, *omegag2, *kappag2, *omega_prec;
 double complex *kappa;
 double *dphi0dr;
 
@@ -105,3 +106,12 @@ double dlogsigma2_dlogr2(double rval);
 
 void calc_epicyclic(void);
 void output_omega_corrections(double *omegap2, double *omegag2, double *kappap2, double *kappag2) ;
+
+
+double sigma_func(double x);
+double temp_func(double x);
+double omk_func(double x); 
+double scaleH_func(double x); 
+void calc_omega_prec_grav(void);
+void calc_omega_prec_pres(void);
+

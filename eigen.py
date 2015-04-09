@@ -17,6 +17,7 @@ def param_dict():
 	params['flare_ind'] = 0
 	params['beta'] = 0
 	params['gam'] = 2
+	params['tol'] = 1e-8
 	
 	return params
 	
@@ -40,6 +41,7 @@ def run_code(params, defines = None):
 	callstr.append(str(params['np'])) 
 	callstr.append(str(params['gam'])) 
 	callstr.append(str(params['beta'])) 
+	callstr.append(str(params['tol'])) 
 
 	res = call(callstr)
 	if res != 0:

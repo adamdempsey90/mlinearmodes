@@ -11,12 +11,12 @@ int main(int argc, char *argv[]) {
 	}
 
 #ifdef ISOTHERMAL	
-	if (argc < 12) {
+	if (argc < 13) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
 #else 
-	if (argc < 14) {
+	if (argc < 15) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 	beta_cool = 0;
 #endif
 
-	
+	tol = atof(argv[14]);
 	dlr = (log(ro) - log(ri))/((float) N);
 	
 	rout = 100;
@@ -245,6 +245,7 @@ void alloc_globals(void) {
 	dldnu = (double *)malloc(sizeof(double)*N);
 	lnu = (double *)malloc(sizeof(double)*N);
 
+	omega_prec =  (double *)malloc(sizeof(double)*N);
 
 	return;
 
@@ -302,6 +303,7 @@ void free_globals(void) {
 	free(dldnu);
 	free(lnu);
 
+	free(omega_prec);
 
 
 	return;
@@ -622,8 +624,13 @@ int init(double ri,double ro) {
 // 	}
 	
 	
-	calc_epicyclic();
-	
+//	calc_epicyclic();
+
+#ifndef INFINITEDISK
+	calc_omega_prec_grav();
+#endif
+	calc_omega_prec_pres();
+		
 	matvec(D,lom,dldom,1,0,N);
 	matvec(D2,lom,d2dom,1,0,N);
 	
@@ -1000,7 +1007,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 #ifdef BAROTROPIC
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i]-kappa[i];
+	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega_prec[i];
 	*B = (*C) * (2 + dldc2[i] + dlds[i]) ;
 	
 
@@ -1012,7 +1019,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = (*C) *( 2 * dlds[i] + d2lds[i]) + omega[i]-kappa[i];
+	*A = (*C) *( 2 * dlds[i] + d2lds[i]) + omega_prec[i];
 	*B = (*C) *( 2 + dlds[i]);
 	
 
@@ -1028,7 +1035,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*B = (*C) * adi_gam*(2 + dldpres[i]);
 	
-	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
+	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega_prec[i];
 
 	*C *= adi_gam;
 
@@ -1050,7 +1057,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*C = temp[i]/(2 * omega[i] * r[i] * r[i]);
 	
-	*A = omega[i] - kappa[i] + (*C) * ( 2 * dlds[i] + d2lds[i] 
+	*A = omega_prec[i] + (*C) * ( 2 * dlds[i] + d2lds[i] 
 				  + cool_fac * (d2ldtemp[i] + dldtemp[i]*(2 + dlds[i] + dldtemp[i])));
 				  
 	*B = (*C) * (2 + dlds[i] + cool_fac * ( adi_gam*dldtemp[i] + ( adi_gam - 1)*(dlds[i] + 2)));
@@ -1239,17 +1246,17 @@ void compute_kernels(void) {
 		kernel[indx] += 2*(eps2 + r_m_rp)*(eps2 + 2*r2 + rp2)*ek;
 		kernel[indx] /= ((eps2 + r_m_rp)*rp1*sqrt(eps2 +r_p_rp));
 		
-		kernel0[indx] = 2*((eps2 - r2+rp2)*ee - (eps2 + r_m_rp)*ek);
-		kernel0[indx] /= (r1*(eps2 + r_m_rp)*sqrt(eps2 + r_p_rp));
-		
-		kernel02[indx] = -ee*(eps6 + eps4*(-2*r2+3*rp2)+pow(rp3-rp1*r2,2)+eps2*(-3*r4-4*r2*rp2+3*rp4));
-		kernel02[indx] += ek*(eps2+r_m_rp)*(eps4+r_m_rp*r_p_rp + eps2*(r2+2*rp2));
-		kernel02[indx] *= -4*r1;
-		kernel02[indx] /= ( pow(eps2+r_m_rp,2) * pow(eps2+r_p_rp,1.5));
+// 		kernel0[indx] = 2*((eps2 - r2+rp2)*ee - (eps2 + r_m_rp)*ek);
+// 		kernel0[indx] /= (r1*(eps2 + r_m_rp)*sqrt(eps2 + r_p_rp));
+// 		
+// 		kernel02[indx] = -ee*(eps6 + eps4*(-2*r2+3*rp2)+pow(rp3-rp1*r2,2)+eps2*(-3*r4-4*r2*rp2+3*rp4));
+// 		kernel02[indx] += ek*(eps2+r_m_rp)*(eps4+r_m_rp*r_p_rp + eps2*(r2+2*rp2));
+// 		kernel02[indx] *= -4*r1;
+// 		kernel02[indx] /= ( pow(eps2+r_m_rp,2) * pow(eps2+r_p_rp,1.5));
 		
 		kernel[indx] *=  weights[j]*rp2;
-		kernel0[indx] *=  -weights[j]*rp2/r1;
-		kernel02[indx] *=  -weights[j]*rp2/r3;
+// 		kernel0[indx] *=  -weights[j]*rp2/r1;
+// 		kernel02[indx] *=  -weights[j]*rp2/r3;
 
 
 		
@@ -1583,7 +1590,7 @@ void output_globals(void) {
 	for(i=0;i<N;i++) {
 		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t \
 				   %.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t \
-				   %.12lg\t%.12lg\t%.12lg\n",
+				   %.12lg\t%.12lg\t%.12lg\t%.12lg\n",
 			lr[i],
 			r[i],
 			omega[i],
@@ -1593,6 +1600,7 @@ void output_globals(void) {
 			pres[i],
 			temp[i],
 			eps*scaleH[i],
+			omega_prec[i],
 			dldc2[i],
 			dlds[i],
 			dldpres[i],
@@ -1891,5 +1899,123 @@ double dlogsigma2_dlogr2(double rval) {
 }
 
 
+double integrand(double x, void *params) {
+	double r1,r2,r3,r4,rp1,rp2,rp3,rp4,eps1,eps2,eps4,eps6,r_p_rp,r_m_rp,kval,ek,ee; 
+	double ans;
+	int i=  *(int *)params;
+	
+	r1 = r[i];
+	r2 = r1*r1;
+	r3 = r2*r1;
+	r4 = r2*r2;
+	rp1 = exp(x);
+	rp2 = rp1*rp1;
+	rp3 = rp2*rp1;
+	rp4 = rp2*rp2;
+	eps1 = eps * scaleH_func(r1);
+	eps2 = eps1*eps1;
+	eps4 = eps2*eps2;
+	eps6 = eps4 * eps2;
+	r_p_rp = r1 + rp1;
+	r_p_rp *= r_p_rp;
+	r_m_rp = r1 - rp1;
+	r_m_rp *= r_m_rp;
+	
+	kval = sqrt(4*r1*rp1/(r_p_rp + eps2));
+	ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+	ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+		
+	ans=2*(eps2 - 2 *eps1 *r1 - r2 + rp2)*(eps2 + 2 *eps1*r1 - r2 + rp2)*(eps2 + r2 + rp2)*ee; 
+	ans -= 2*(eps2 + (r1 - rp1)*(r1-rp1))*(eps4 + r4 + 2*(eps1 - r1)*(eps1 + r1)*rp2 + rp4)*ek;
+	ans /= (pow(eps2 + (r1 - rp1)*(r1-rp1),2) *pow(eps2 + (r1 + rp1)*(r1+rp1),1.5));
+	
+	ans *= -rp2*sigma_func(rp1);
+	
+	return ans;
+
+}
+
+double sigma_func(double x) {
+
+	return sigma0 * pow(x, sigma_index);
+
+}
+
+double temp_func(double x) {
+	return h0*h0*pow(x,2*flare_index-1);
+}
+
+double omk_func(double x) {
+	return pow(x,-1.5);
+}
+double scaleH_func(double x) {
+
+	return h0*x*pow(x,flare_index);
+
+}
+
+void calc_omega_prec_grav(void) {
+	int nsubintervals = 1000;
+	double error;
+	gsl_integration_workspace *workspace = gsl_integration_workspace_alloc( nsubintervals );
+	int i,j;
+
+	
+	
+	gsl_function func;
+	func.function = &integrand;
+	
+	for(i=0;i<N;i++) {
+	
+		func.params = &i;
+		gsl_integration_qags(&func, log(r[0]),log(r[N-1]),0,tol, nsubintervals , workspace,&omega_prec[i],&error);
+		
+		omega_prec[i] *= (-.5/sqrt(r[i]));
+		
+	}
+
+	gsl_integration_workspace_free(workspace);
+	
+	
+	
+	
+	return; 
+
+}
+
+void calc_omega_prec_pres(void) {
+	int i;
+	double norm, fac;
+	double delta = 2*flare_index - 1;
+	double mu = sigma_index;
+	
+	for(i=0;i<N;i++) {
+		norm = -.5/sqrt(r[i]);
+#ifdef ISOTHERMAL
+	
+		fac = (mu+delta)*(delta+1)*temp[i];
+
+#endif
+
+#ifdef COOLING
+		
+		fac =  (mu+delta)*(delta+1)*temp[i];
+
+#endif
+
+#ifdef BAROTROPIC
+	
+		fac = mu*(delta + 1)*c2[i];
+
+#endif		
+	
+#ifdef INFINITEDISK
+		fac -= sigma[i]*(1+mu)*(2+mu)*r[i]*27.5;
+#endif	
+		omega_prec[i] += fac*norm;
+	
+	}
 
 
+	return;
+}

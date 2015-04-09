@@ -18,17 +18,18 @@ class Field():
 		self.pres = dat[:,6]
 		self.temp = dat[:,7]
 		self.soft = dat[:,8]
-		self.dldc2 = dat[:,9]
-		self.dlds = dat[:,10]
-		self.dldpres = dat[:,11]
-		self.kappa2 = dat[:,12]
+		self.wp = dat[:,9]
+		self.dldc2 = dat[:,10]
+		self.dlds = dat[:,11]
+		self.dldpres = dat[:,12]
+		self.kappa2 = dat[:,13]
 		self.kappa = sqrt(self.kappa2)
-		self.d2lds = dat[:,13]
-		self.d2ldpres = dat[:,14]
-		self.dldom = dat[:,15]
-		self.d2dom = dat[:,16]
-		self.nu = dat[:,17]
-		self.dldnu = dat[:,18]
+		self.d2lds = dat[:,14]
+		self.d2ldpres = dat[:,15]
+		self.dldom = dat[:,16]
+		self.d2dom = dat[:,17]
+		self.nu = dat[:,18]
+		self.dldnu = dat[:,19]
 		self.dlr = diff(self.lr)[0]
 		self.nr = len(self.r)
 		
@@ -40,7 +41,7 @@ class Field():
 				
 		inds = argsort(evals)
 		
-		self.Q = self.kappa * sqrt(self.temp)/(pi*self.sigma)
+		self.Q = self.omega * sqrt(self.temp)/(pi*self.sigma)
 		self.mdisk = trapz(self.r*self.sigma,x=self.r)*2*pi
 		
 		self.evals = evals[inds]
