@@ -10,13 +10,13 @@
 
 //#define PAPALOIZOU
 //#define HEEMSKERK
-#define MLIN
+//#define MLIN
 
-//#define EXACTKAPPA
+#define EXACTKAPPA
 
 
 
-#define PRESSURECORRECTION
+//#define PRESSURECORRECTION
 #define VISCOSITY
 #define SECONDORDER
 
@@ -33,3 +33,5 @@
 //#define EXPDECAY2
 
 #define COMPTRAPZ
+
+//#define INFINITEDISK
