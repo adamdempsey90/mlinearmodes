@@ -137,6 +137,40 @@ class Field():
 		
 		return
 	
+	def plotreal(self,ev,logx=False,logy=False,rlims=None):
+	
+		phi = linspace(0,2*pi,6*self.nr)
+		rr,pp = meshgrid(fld.r,phi)
+		xx = rr*cos(pp)
+		yy = rr*sin(pp)
+		
+		if xx.shape[0] == self.nr:
+			ind = 0
+		else:
+			ind = 1
+			
+		sigp = self.sigp[ev]
+		
+		ss = zeros(xx.shape)
+		
+		for i in range(self.nr):
+			if ind == 0:
+				ss[i,:] = real(sigp[i]*exp(1j*phi))
+			else:
+				ss[:,i] = real(sigp[i]*exp(1j*phi))
+		
+			
+		
+		figure();
+		pcolormesh(xx,yy,ss,cmap='hot')
+		colorbar()
+		
+		if rlims != None:
+			xlim(rlims); ylim(rlims)
+	
+		return
+		
+		
 	def plotuvs(self,ev=None,node=None,logr=False,logy=False):
 		
 		if node == None:

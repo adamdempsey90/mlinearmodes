@@ -1,137 +1,6 @@
 #include "eigen.h"
 
 
-double *kernel,*kernel0, *kernel02;
-
-void init_sg(void) {
-
-	alloc_sg();
-
-#ifdef READKERNEL
-	read_kernel();
-#else	
-	compute_kernels();
-	output_kernels();
-#endif
-		
-	return;
-
-
-}
-
-void alloc_sg(void) {
-
-	
-
-	kernel = (double complex *)malloc(sizeof(double complex)*N*N);
-	kernel0 = (double *)malloc(sizeof(double)*N*N);
-	kernel02 = (double *)malloc(sizeof(double)*N*N);
-	
-	return;
-}
-
-
-void free_sg(void) {
-	
-	free(kernel);
-	free(kernel0);
-	free(kernel02);
-
-	return;
-}
-void compute_kernels(void) {
-	int i,j, indx;
-	double r1,r2,r4,rp1,rp2,rp3,rp4,eps1,eps2,eps4,eps6,r_p_rp,r_m_rp,kval,ek,ee; 
-	
-#ifdef OPENMP
-#pragma omp parallel private(indx,i,j,r1,r2,r4,rp1,rp2,rp3,rp4,eps1,eps2,eps4,eps6,r_p_rp,r_m_rp,kval,ek,ee) shared(kernel,kernel0,kernel02,N,r,scaleH,weights)
-#pragma omp for schedule(static)
-#endif
-	for(indx=0;indx<N*N;indx++) {
-		i = indx/N;
-		j = indx - i*N;
-		
-		
-		
-		r1 = r[i];
-		r2 = r1*r1;
-		r4 = r2*r2;
-		rp1 = r[j];
-		rp2 = rp1*rp1;
-		rp3 = rp2*r[j];
-		rp4 = rp2*rp2;
-		eps1 = eps * scaleH[j];
-		eps2 = eps1*eps1;
-		eps4 = eps2*eps2;
-		eps6 = eps4 * eps2;
-		r_p_rp = r[i] + r[j];
-		r_p_rp *= r_p_rp;
-		r_m_rp = r[i] - r[j];
-		r_m_rp *= r_m_rp;
-		
-		kval = 4*r1*rp1/(r_p_rp + eps2);
-		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
-		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
-			
-		kernel[indx] = -(eps4 + 2*r4 - 3*r2*rp2 + rp4 + eps2*(3*r2 + 2*rp2))*ee;
-		kernel[indx] += (eps2 + r_m_rp)*(eps2 + 2*r2 + rp2)*ek;
-		kernel[indx] /= ((eps2 + r_m_rp)*rp1*sqrt(eps2 +r_p_rp));
-		kernel[indx] *= 2;
-		
-		kernel0[indx] = 2*((eps2 - r2+rp2)*ee - (eps2 + r_m_rp)*ek);
-		kernel0[indx] /= (r1*(eps2 + r_m_rp)*sqrt(eps2 + r_p_rp));
-		
-		kernel02[indx] = -ee*(eps6 + eps4*(-2*r2+3*rp2)+pow(rp3-rp1*r2,2)+eps2*(-3*r4-4*r2*rp2+3*rp4));
-		kernel02[indx] += ek*(eps2+r_m_rp)*(eps4+r_m_rp*r_p_rp + eps2*(r2+2*rp2));
-		kernel02[indx] *= 4*r1;
-		kernel02[indx] /= ( pow(eps2+r_m_rp,2) * pow(eps2+r_p_rp,1.5));
-		
-		kernel[indx] *= weights[j]*r[j]*r[j];
-		kernel0[indx] *= weights[j]*r[j]*r[j];
-		kernel02[indx] *= weights[j]*r[j]*r[j];
-		
-		
-	}	
-
-	return;
-}
-
-
-void output_kernel(void) {
-	int i,j;
-	FILE *f = fopen("kernel.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",creal(kernel[j+i*N]));
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
-	
-	f = fopen("kernel0.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",kernel0[j+i*N]);
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
-	
-	f = fopen("kernel02.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",kernel02[j+i*N]);
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
-
-	return;
-}
-
 void read_kernel(void) {
 	int i,j;
 	FILE *f;
@@ -158,48 +27,107 @@ void read_kernel(void) {
 	}
 	fclose(f);
 	
-	f=fopen("kernel02.dat","r");
-	
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			if (!fscanf(f, "%lg", &kernel02[j+N*i])) 
-          		break;
-			
-		}
-	}
-	fclose(f);
-	
 	return;
 
 }
+	
 
-
-void sg_omega_correction(void) {
+void add_edge_sg(double complex *mat) {
 	int i,j;
+	double x1,x2,x4,kval,kern,rd,eps2,ee,ek, G;
 	
-	double *omegag2 = (double *)malloc(sizeof(double)*N);
-	double *kappag2 = (double *)malloc(sizeof(double)*N);
+	rd = r[N-1];
 	
+	j = N-1;
+	
+#ifdef OPENMP
+#pragma omp parallel private(i,x1,x2,x4,kval, kern,eps2,ee,ek, G) shared(r,scaleH,eps,rd,mat,N)
+#pragma omp for schedule(static)
+#endif
 	for(i=0;i<N;i++) {
-
+		G = 1.0/(2*omega[i]*pow(r[i],3));
+		x1 = r[i]/rd;
+		x2 = x1*x1;
+		x4 = x2*x2;
+		eps2 = eps*scaleH[N-1]/rd;
+		eps2 *= eps2;
 		
-		omegag2[i] = 0;
-		kappag2[i] = 0;
-		for(j=0;j<N;j++) {
-			omegag2[i] += kernel0[j+i*N]*sigma[j];
-			kappag2[i] += kernel02[j+i*N]*sigma[j];
-		}
-		omegag2[i] /= r[i];
-		kappag2[i] *= pow(r[i],-3);
-
-		omega2[i] += omegag2[i];
-		kappa2[i] += kappag2[i];
+		kval = sqrt(4*x1/(eps2 + (1+x1)*(1+x1)));
+		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
 		
+		kern = -2*( ((1+eps2)*(1+eps2)+ 3*(eps2-1)*x2 + 2*x4)*ee - (eps2+(x1-1)*(x1-1))*(1+eps2+2*x2)*ek);
+		kern /= ((eps2 + (x1-1)*(x1-1))*sqrt(eps2+(1+x1)*(1+x1)));
+		
+		mat[j+N*i] += G*rd*rd*sigma[N-1]*kern;
 	}
-
-	free(omegag2);
-	free(kappag2);
+	
+	
 	return;
 
 }
+
+double integrand(double x, void *params) {
+	double r1,r2,r3,r4,rp1,rp2,rp3,rp4,eps1,eps2,eps4,eps6,r_p_rp,r_m_rp,kval,ek,ee; 
+	double ans;
+	int i=  *(int *)params;
 	
+	r1 = r[i];
+	r2 = r1*r1;
+	r3 = r2*r1;
+	r4 = r2*r2;
+	rp1 = exp(x);
+	rp2 = rp1*rp1;
+	rp3 = rp2*rp1;
+	rp4 = rp2*rp2;
+	eps1 = eps * scaleH_func(r1);
+	eps2 = eps1*eps1;
+	eps4 = eps2*eps2;
+	eps6 = eps4 * eps2;
+	r_p_rp = r1 + rp1;
+	r_p_rp *= r_p_rp;
+	r_m_rp = r1 - rp1;
+	r_m_rp *= r_m_rp;
+	
+	kval = sqrt(4*r1*rp1/(r_p_rp + eps2));
+	ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+	ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+		
+	ans=2*(eps2 - 2 *eps1 *r1 - r2 + rp2)*(eps2 + 2 *eps1*r1 - r2 + rp2)*(eps2 + r2 + rp2)*ee; 
+	ans -= 2*(eps2 + (r1 - rp1)*(r1-rp1))*(eps4 + r4 + 2*(eps1 - r1)*(eps1 + r1)*rp2 + rp4)*ek;
+	ans /= (pow(eps2 + (r1 - rp1)*(r1-rp1),2) *pow(eps2 + (r1 + rp1)*(r1+rp1),1.5));
+	
+	ans *= -rp2*sigma_func(rp1);
+	
+	return ans;
+
+}
+
+void calc_omega_prec_grav(void) {
+	int nsubintervals = 1000;
+	double error;
+	gsl_integration_workspace *workspace = gsl_integration_workspace_alloc( nsubintervals );
+	int i,j;
+
+	
+	
+	gsl_function func;
+	func.function = &integrand;
+	
+	for(i=0;i<N;i++) {
+	
+		func.params = &i;
+		gsl_integration_qags(&func, log(r[0]),log(r[N-1]),0,tol, nsubintervals , workspace,&omega_prec[i],&error);
+		
+		omega_prec[i] *= (-.5/sqrt(r[i]));
+		
+	}
+
+	gsl_integration_workspace_free(workspace);
+	
+	
+	
+	
+	return; 
+
+}

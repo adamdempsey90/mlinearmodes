@@ -1134,17 +1134,21 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 // 
 // 	*C += -(nu[i]*omega[i]*norm/(6*r[i]))*(7 + 6*q);
 
-	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
+	norm = temp[i]/(omega[i]*r[i]*r[i]);
 /* Shear Viscosity */
 
-	*A -= I * (alpha_s / 6.) * norm * (33.5 + dldtemp[i] - 2*dlds[i] + 18*d2lds[i]);
-	*B -= I * (alpha_s / 3.) * norm * (-9.5 - 7*dldtemp[i] + 2*dlds[i]);
-	*C -= I * (2 *alpha_s / 3.) * norm;
+// 	*A -= I * (alpha_s / 6.) * norm * (33.5 + dldtemp[i] - 2*dlds[i] + 18*d2lds[i]);
+// 	*B -= I * (alpha_s / 3.) * norm * (-9.5 - 7*dldtemp[i] + 2*dlds[i]);
+// 	*C -= I * (2 *alpha_s / 3.) * norm;
+
+	*A -= I*alpha_s*(norm/4)*(9 + 8*dldtemp[i]  + dlds[i] + 6*d2lds[i]); 
+	*B += I*(norm/6)*(3*alpha_b*(2 + 2*dldtemp[i] + dlds[i])+alpha_s*(32+24*dldtemp[i]+3*dlds[i]));
+	*C += I*(norm/6)*(3*alpha_b - 8*alpha_s);
 
 /* Bulk Viscosity */
 
-	*B += I * alpha_b * norm * (2.5 + dldtemp[i] + dlds[i]);
-	*C -= I * alpha_b * norm;
+// 	*B += I * alpha_b * norm * (2.5 + dldtemp[i] + dlds[i]);
+// 	*C -= I * alpha_b * norm;
 
 #endif
 
@@ -1780,8 +1784,8 @@ void read_kernel(void) {
 double bump_function(double rval) {
 	
 	
-	double delta1 = 5.0 * .05 * pow(1.0,1.5-.5*flare_index);
-	double delta2 = 5.0 * .05 * pow(2.0,1.5-.5*flare_index);
+	double delta1 = 5.0 * h0 * pow(1.0,1.5-.5*flare_index);
+	double delta2 = 5.0 * h0 * pow(2.0,1.5-.5*flare_index);
 
 	double fac1 = .5*(1-.1)*(1+tanh((rval-1.0)/delta1))+.1;
 	double fac2 = .5*(1-.1)*(1-tanh((rval-2.0)/delta2))+.1;

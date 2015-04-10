@@ -11,12 +11,12 @@ int main(int argc, char *argv[]) {
 	}
 
 #ifdef ISOTHERMAL	
-	if (argc < 12) {
+	if (argc < 13) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
 #else 
-	if (argc < 14) {
+	if (argc < 15) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 	beta_cool = 0;
 #endif
 
-	
+	tol = atof(argv[14]);
 	dlr = (log(ro) - log(ri))/((float) N);
 	
 	rout = 100;

@@ -3,8 +3,8 @@
 
 //#define TESTFUNCTION
 
-#define ISOTHERMAL
-//#define BAROTROPIC
+//#define ISOTHERMAL
+#define BAROTROPIC
 //#define ADIABATIC
 //#define COOLING
 
@@ -12,7 +12,7 @@
 //#define HEEMSKERK
 //#define MLIN
 
-#define EXACTKAPPA
+//#define EXACTKAPPA
 
 
 
@@ -30,7 +30,7 @@
 //#define INPUTMASS
 
 //#define EXPDECAY
-//#define EXPDECAY2
+#define EXPDECAY2
 
 #define COMPTRAPZ
 

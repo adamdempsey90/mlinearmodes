@@ -1,13 +1,14 @@
 #include "eigen.h"
 
+
 int init(double ri,double ro) {
 
-	int i,indx;
+	int i,j,indx;
 	double sigfac;
+	double phifac = 0;
 	
 	
 	for(i=0;i<N;i++) {
-
 		lr[i] = log(ri) + i*dlr;
 		r[i] = exp(lr[i]);
 		
@@ -22,31 +23,108 @@ int init(double ri,double ro) {
 		omega[i] = pow(r[i],-1.5);
 		omega2[i] = omega[i]*omega[i];
 		sigma[i] = sigma_function(r[i]);
+#ifndef INPUTMASS
+		sigma[i] *= sigma0;
+#endif
+		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
+		temp[i] = c2[i]/adi_gam;
 		
-		
+/* Set up special sigma and c^2 profiles */
+#ifdef PAPALOIZOU		
+		c2[i] = scaleH[i] * scaleH[i] / (r[i]*r[i]*r[i])*(1 - pow(r[i],-10))*(1-pow(r[i]/rout,10));
+		sigma[i] = pow(c2[i],1.5);
+		temp[i] = c2[i];
+#else
+#ifdef HEEMSKERK
+
+		sigma[i] = pow(r[i]-ri + .05,2)*pow(ro - r[i] +.05,2.5);
+
 #ifndef INPUTMASS
 		sigma[i] *= sigma0;
 #endif
 
-		c2[i] = scaleH[i]*scaleH[i] * omega2[i];	
-		temp[i] = c2[i]/adi_gam;
-		pres[i] = temp[i] * sigma[i];
-	}
-		
-/* Set up special sigma and c^2 profiles */
+		c2[i] = sigma[i]*h0*h0;
+		temp[i] = c2[i];
 
-#ifdef PAPALOIZOU
-	set_papaloizou_profile();
-#endif
-
-
-#ifdef HEEEMSKERK
-	set_papaloizou_profile();
-#endif
-
+#else
 #ifdef MLIN
-	set_papaloizou_profile();
+
+	
+		c2[i] = h0 * pow(r[i],-.5*flare_index);
+	
+		scaleH[i] = c2[i]/omega[i];
+		c2[i] *= c2[i];
+
+	
+//		sigfac = .05 * pow(2.0,2 - .5*flare_index - 1.5)/(2 * M_PI * bump_function(2.0));
+//		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-2.0);
+		sigfac = h0 /(2 * M_PI * bump_function(2.0));
+		sigma[i] = sigfac * bump_function(r[i]) * pow(r[i],-(1.5 + .5*flare_index));
+	
+		
+		temp[i] = c2[i];
+
+#endif // MLIN
+#endif // HEEMSKERK
+#endif // PAPALOIZOU
+
+
+/*	Set pressure and temperature */
+
+//		temp[i] = adi_gam * c2[i];
+		pres[i] = sigma[i] * temp[i];
+
+	
+/*	Set viscosity if enabled, if not then make sure it's zero */
+		
+#ifdef VISCOSITY		
+//		nu[i] = alpha_s * scaleH[i]*scaleH[i]*omega[i];
+		nu[i] = alpha_s * temp[i]/omega[i];		
+		if (alpha_s == 0) {
+			lnu[i] = 0;
+		}
+		else { 
+			lnu[i] = log(nu[i]);
+		}
+		
+#else
+		nu[i] = 0;
+		lnu[i] = 0;
 #endif
+
+
+
+		lc2[i] = log(c2[i]);
+		ltemp[i] = log(temp[i]);
+		
+		dlds[i] = 0;
+		dldc2[i] = 0;
+		d2lds[i] = 0;
+		d2dom[i] = 0;
+		dldom[i] = 0;
+		dldnu[i] = 0;		
+		dldpres[i] = 0;
+		d2ldpres[i] = 0;
+		dldtemp[i] = 0;
+		d2ldtemp[i] = 0;
+/* Check for bad values of c^2 and sigma */
+		if (isnan(c2[i]) != 0) {
+			printf("\n\n Detected NaN in c2 at i=%d, r=%.3lg\n\n", i, r[i]);
+			return -1;
+		}
+		
+		if (isnan(lc2[i]) != 0) {
+			printf("\n\n Detected NaN in lc2 at i=%d, r=%.3lg, c2=%lg\n\n", i, r[i],c2[i]);
+			return -1;
+		}
+		
+		if (isnan(lsig[i]) != 0) {
+			printf("\n\n Detected NaN in lsig at i=%d, r=%.3lg, sig=%lg\n\n", i, r[i],sigma[i]);
+			return -1;
+		}
+		
+
+	}
 
 /* Normalize the density to give the prescribed disk mass, unless using Lin's profile which 
 	is already normalized.
@@ -85,32 +163,56 @@ int init(double ri,double ro) {
 		temp[i] *= sigfac;
 		ltemp[i] = log(temp[i]);
 #endif
-	}
-	
-		
-
-	for(i=0;i<N;i++) {
-		lc2[i] = log(c2[i]);
-		ltemp[i] = log(temp[i]);
-		
-		dlds[i] = 0;
-		dldc2[i] = 0;
-		d2lds[i] = 0;
-		d2dom[i] = 0;
-		dldom[i] = 0;
-		dldnu[i] = 0;		
-		dldpres[i] = 0;
-		d2ldpres[i] = 0;
-		dldtemp[i] = 0;
-		d2ldtemp[i] = 0;
-		
-
-	}
-
-	
+		if (isnan(sigma[i]) != 0) {
+			printf("\n\n Detected NaN in sigma at i=%d, r=%.3lg\n\n", i, r[i]);
+			return -1;
+		}
+	}	
 	
 
+/* Initialize Kernels if we're not reading it from a file */
+	
+	printf("Calculating Kernels\n");
 
+#ifdef SELFGRAVITY
+
+
+#ifdef READKERNEL
+
+/* Read the kernel from the kernel.dat and kernel0.dat files written by output_kerenels
+	and found in the execution directory */
+
+	read_kernel();
+
+#else
+
+// #ifdef OPENMP
+// #pragma omp parallel private(indx,i,j) shared(kernel,kernel0,N)
+// #pragma omp for schedule(static)
+// #endif
+// 	for(indx=0;indx<N*N;indx++) {
+// 		i = indx/N;
+// 		j = indx - i*N;
+// 		
+// 		kernel[indx] = Kij(i,j);
+// 		kernel0[indx] = K0ij(i,j);
+// 	}
+	compute_kernels();
+#endif	
+// 	for(i=0;i<N;i++) {
+// 		dphi0dr[i] = 0;
+// 		for(j=0;j<N;j++) {
+// //			dphi0dr[i] -= weights[j]*kernel0[j+N*i]*sigma[j];
+// 			dphi0dr[i] -= kernel0[j+N*i]*sigma[j];
+// 		}
+// 		if (isnan(dphi0dr[i]) != 0) {
+// 			printf("\n\n Detected NaN in dphi0dr at i=%d, r=%.3lg\n\n", i, r[i]);
+// 			return -1;
+// 		}
+// 
+// 	}
+#endif
+	
 
 	printf("Calculating Derivatives\n");
 
@@ -124,7 +226,9 @@ int init(double ri,double ro) {
 		dldc2[i] = 2 * flare_index - 1;
 		dldtemp[i] = dldc2[i];
 		d2ldtemp[i] = 0;
-
+#ifdef VISCOSITY
+		dldnu[i] = 2 * flare_index + .5;
+#endif
 		
 		dldpres[i] = dlds[i] + dldtemp[i];	
 		d2ldpres[i] = d2lds[i];
@@ -137,7 +241,9 @@ int init(double ri,double ro) {
 	matvec(D,lc2,dldc2,1,0,N);
 	
 	matvec(D2,lsig,d2lds,1,0,N);
-
+#ifdef VISCOSITY
+	matvec(D,lnu,dldnu,1,0,N);
+#endif
 
 	matvec(D,lpres,dldpres,1,0,N);
 	matvec(D2,lpres,d2ldpres,1,0,N);
@@ -150,10 +256,72 @@ int init(double ri,double ro) {
 /* Correct the background rotation for pressure and self gravity.
 	Set epicyclic frequency 
 */
+
+// 	for(i=0;i<N;i++) {
+// 	
+// 		kappa2[i] = pow(r[i],-3);
+// 	
+// #ifdef PRESSURECORRECTION
+// 
+// #ifdef BAROTROPIC
+// 		omegap2[i] = c2[i]*dlds[i]/(r[i]*r[i]);
+// #else
+// 		omegap2[i] = dldpres[i] * temp[i]/(r[i]*r[i]);
+// #endif
+// 		omega2[i] += omegap2[i];
+// 
+// #endif
+// 
+// 
+// 
+// #if defined(SELFGRAVITY) && defined(GRAVITYCORRECTION)
+// 		omega2[i] += dphi0dr[i]/(r[i]);
+// #endif
+// 
+// #ifdef EXACTKAPPA
+// #ifdef BAROTROPIC
+// 		kappa2[i] += c2[i]*((2 + dldc2[i]) * dlds[i] + d2lds[i])/(r[i]*r[i]);
+// #else
+// 		kappa2[i] += temp[i]*((2 + dldtemp[i]) * dldpres[i] + d2ldpres[i])/(r[i]*r[i]);
+// #endif
+// #else
+// 		kappa2[i] = 4*omega2[i];
+// #endif
+// 	}
+// 
+// #ifndef EXACTKAPPA	
+// 	matvec(D,omega2,kappa2,1,1,N);
+// #endif	
+// 	for(i=0;i<N;i++) {
+// 	
+// #ifdef PRESSURECORRECTION
+// 
+// 		kappa[i] = csqrt(kappa2[i]);
+// #else	
+// 
+// 		kappa[i] = omega[i];
+// #endif
+// 		omega[i] = sqrt(omega2[i]);
+// 		lom[i] = log(omega[i]);
+// 		if (isnan(kappa[i]) != 0) {
+// 			printf("\n\n Detected NaN in kappa at i=%d, r=%.3lg, kap2=%.3lg\n\n", i, r[i],kappa2[i]);
+// 			return -1;
+// 		}
+// 		if (isnan(omega[i]) != 0) {
+// 			printf("\n\n Detected NaN in omega at i=%d, r=%.3lg, om2=%.3lg\n\n", i, r[i],omega2[i]);
+// 			return -1;
+// 		}
+// 
+// 	}
 	
 	
-	calc_epicyclic();
-	
+//	calc_epicyclic();
+
+#ifndef INFINITEDISK
+	calc_omega_prec_grav();
+#endif
+	calc_omega_prec_pres();
+		
 	matvec(D,lom,dldom,1,0,N);
 	matvec(D2,lom,d2dom,1,0,N);
 	
@@ -161,6 +329,7 @@ int init(double ri,double ro) {
 	
 	return 0;
 }
+
 
 
 void init_derivatives(void) {
@@ -179,31 +348,39 @@ void init_derivatives(void) {
 }
 
 
-void calc_epicyclic(void) {
+void calc_omega_prec_pres(void) {
 	int i;
-
-	for(i=0;i<N;i++) {
-		omega2[i] = pow(r[i],-3);
-		kappa2[i] = omega2[i];
-	}
-
-
-#ifdef PRESSURECORRECTION	
-	pressure_omega_correction();
-#endif
-
-
-#if defined(SELFGRAVITY) && defined(GRAVITYCORRECTION)
-	sg_omega_correction();
-
-#endif
-
-	for(i=0;i<N;i++) {		
-		kappa[i] = sqrt(kappa2[i]);
-		omega[i] = sqrt(omega2[i]);
-		lom[i] = log(omega[i]);
-	}
+	double norm, fac;
+	double delta = 2*flare_index - 1;
+	double mu = sigma_index;
 	
-	return;
+	for(i=0;i<N;i++) {
+		norm = -.5/sqrt(r[i]);
+#ifdef ISOTHERMAL
+	
+		fac = (mu+delta)*(delta+1)*temp[i];
 
+#endif
+
+#ifdef COOLING
+		
+		fac =  (mu+delta)*(delta+1)*temp[i];
+
+#endif
+
+#ifdef BAROTROPIC
+	
+		fac = mu*(delta + 1)*c2[i];
+
+#endif		
+	
+#ifdef INFINITEDISK
+		fac -= sigma[i]*(1+mu)*(2+mu)*r[i]*27.5;
+#endif	
+		omega_prec[i] += fac*norm;
+	
+	}
+
+
+	return;
 }

@@ -1,10 +1,13 @@
 #include "eigen.h"
 
+
 void alloc_globals(void) {
 	
 	D = (double *)malloc(sizeof(double)*N*N);
 	D2 = (double *)malloc(sizeof(double)*N*N);
-	
+	kernel = (double *)malloc(sizeof(double)*N*N);
+	kernel0 = (double *)malloc(sizeof(double)*N*N);
+	kernel02 = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
 	KD = (double complex*)malloc(sizeof(double complex)*N*N);
 	DKD = (double complex*)malloc(sizeof(double complex)*N*N);
@@ -19,14 +22,18 @@ void alloc_globals(void) {
 	sigma = (double *)malloc(sizeof(double)*N);
 	omega = (double *)malloc(sizeof(double)*N);
 	omega2 = (double *)malloc(sizeof(double)*N);
-	
+	omegap2 = (double *)malloc(sizeof(double)*N);
+	omegag2 = (double *)malloc(sizeof(double)*N);
 	kappa = (double complex *)malloc(sizeof(double complex)*N);
 	kappa2 = (double *)malloc(sizeof(double)*N);
+	kappap2 = (double *)malloc(sizeof(double)*N);
+	kappag2 = (double *)malloc(sizeof(double)*N);
 	scaleH = (double *)malloc(sizeof(double)*N);
 	dlds = (double *)malloc(sizeof(double)*N);
 	dldc2 = (double *)malloc(sizeof(double)*N);
 	lsig = (double *)malloc(sizeof(double)*N);
 	lc2 = (double *)malloc(sizeof(double)*N);
+	dphi0dr=(double *)malloc(sizeof(double)*N);
 	d2lds = (double *)malloc(sizeof(double)*N);
 	lom = (double *)malloc(sizeof(double)*N);
 	dldom = (double *)malloc(sizeof(double)*N);
@@ -46,6 +53,7 @@ void alloc_globals(void) {
 	dldnu = (double *)malloc(sizeof(double)*N);
 	lnu = (double *)malloc(sizeof(double)*N);
 
+	omega_prec =  (double *)malloc(sizeof(double)*N);
 
 	return;
 
@@ -56,6 +64,7 @@ void free_globals(void) {
 	free(D2);
 	free(kernel);
 	free(kernel0);
+	free(kernel02);
 	free(weights);
 	free(KD);
 	free(DKD);
@@ -72,7 +81,10 @@ void free_globals(void) {
 	free(kappa);
 	free(omega2);
 	free(omegap2);
+	free(omegag2);
 	free(kappa2);
+	free(kappap2);
+	free(kappag2);
 	free(scaleH);
 	free(dlds);
 	free(dldc2);
@@ -99,6 +111,7 @@ void free_globals(void) {
 	free(dldnu);
 	free(lnu);
 
+	free(omega_prec);
 
 
 	return;

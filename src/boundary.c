@@ -1,6 +1,5 @@
 #include "eigen.h"
 
-
 void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 
 /* Set up zero Lagrangian Pressure B.C at inner boundary */
@@ -22,7 +21,7 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
 #endif	
 #ifdef ISOTHERMAL
-			mat[indx] -= dldc2[j];
+			mat[indx] -= dldtemp[j];
 #endif
 
 		}	
@@ -51,7 +50,7 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
 #endif	
 #ifdef ISOTHERMAL
-			mat[indx] -= dldc2[j];
+			mat[indx] -= dldtemp[j];
 #endif
 
 		}

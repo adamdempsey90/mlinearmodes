@@ -20,9 +20,9 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 			indx = j + N*i;
 		
 			
-			KD[indx] = G*sigma[j]*D[indx];
-//			HL[indx] = G*D[indx];
-			HL[indx] = 0;
+//			KD[indx] = G*sigma[j]*D[indx];
+
+
 			mat[indx] = 0;
 			bcmat[indx] = 0;
 			
@@ -30,23 +30,13 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 			if (i==j) {
 				mat[indx] += A;
 				bcmat[indx] += 1;
-//				KD[indx] = -sigma[j]* ( dlds[j] + D[indx]);
-//				HL[indx] = G*(2. + D[indx]);
-				KD[indx] += G*sigma[j]*dlds[j];
-//				HL[indx] += 2*G;
+
+//				KD[indx] += G*sigma[j]*dlds[j];
+
 			}
-// 			else {
-// 				mat[indx] = 0;
-// 				bcmat[indx] = 0;
-// 				KD[indx] = -D[indx]*sigma[j];
-// 				HL[indx] = G*D[indx];
-// 			}
 			
 			mat[indx] += B*D[indx] + C*D2[indx];
-			
-			H[indx] = 0;
-			DKD[indx] = 0;
-			
+	
 		
 		}
 	}
@@ -58,12 +48,34 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 	
 //	cmatmat(HL,H,DKD,1,0,N);
 	
-
+	
 #ifdef SELFGRAVITY	
-	cmatmat(kernel,KD,DKD,1,0,N);
-	for(i=0;i<N*N;i++) mat[i] += DKD[i];
+	int l;
+//	cmatmat(kernel,KD,DKD,1,0,N);
+//	for(i=0;i<N*N;i++) mat[i] += DKD[i];
+	for(i=0;i<N;i++) {
+		G = 1.0/(2*omega[i]*r[i]*r[i]*r[i]);
+		for(j=0;j<N;j++) {
+			indx = j + N*i;
+			KD[indx] = 0;
+			for(l=0;l<N;l++) {
+				KD[indx] += -sigma[j]*kernel[l + N*i]*D[l*N+j];
+				if (l==j) {
+					KD[indx] += -sigma[j]*kernel[l+N*i]*dlds[j];
+				}	
+			}
+			mat[indx] += G * KD[indx];
+		}
+		
+	}
+
+#ifdef EDGEGRAVITY
+	add_edge_sg(mat);
 #endif
 
+#endif
+
+	
 
 /* Set Boundary Conditions */
 
@@ -81,7 +93,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 #ifdef BAROTROPIC
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega[i]-kappa[i];
+	*A = (*C) * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega_prec[i];
 	*B = (*C) * (2 + dldc2[i] + dlds[i]) ;
 	
 
@@ -93,7 +105,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*C = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-	*A = (*C) *( 2 * dlds[i] + d2lds[i]) + omega[i]-kappa[i];
+	*A = (*C) *( 2 * dlds[i] + d2lds[i]) + omega_prec[i];
 	*B = (*C) *( 2 + dlds[i]);
 	
 
@@ -109,7 +121,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*B = (*C) * adi_gam*(2 + dldpres[i]);
 	
-	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega[i] - kappa[i];
+	*A = (*C) * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega_prec[i];
 
 	*C *= adi_gam;
 
@@ -131,7 +143,7 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 
 	*C = temp[i]/(2 * omega[i] * r[i] * r[i]);
 	
-	*A = omega[i] - kappa[i] + (*C) * ( 2 * dlds[i] + d2lds[i] 
+	*A = omega_prec[i] + (*C) * ( 2 * dlds[i] + d2lds[i] 
 				  + cool_fac * (d2ldtemp[i] + dldtemp[i]*(2 + dlds[i] + dldtemp[i])));
 				  
 	*B = (*C) * (2 + dlds[i] + cool_fac * ( adi_gam*dldtemp[i] + ( adi_gam - 1)*(dlds[i] + 2)));
@@ -221,6 +233,9 @@ void calc_coefficients(int i, double complex *A, double complex *B, double compl
 	*C -= I * alpha_b * norm;
 
 #endif
+
+
+//	A = 0; B= 0; C=0; G=0;
 
 	return; 
 
