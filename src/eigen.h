@@ -79,8 +79,7 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 void compute_kernels(void);
 void add_sg(double complex *mat, double complex *bcmat);
 void calc_omega_prec_grav(void);
+#endif
 int analytic_potential(void);
 double omega_prec_grav_analytic(double x);
-#endif
-
 #endif

@@ -49,7 +49,17 @@ void compute_kernels(void) {
 		rp1 = r[j];
 		rp2 = rp1*rp1;
 		rp4 = rp2*rp2;
-		eps1 = eps * scaleH[j];
+
+#ifdef CONSTSOFT
+		eps1 = eps;
+#else
+#ifdef SYMSOFT
+		eps1 = eps * sqrt(scaleH[i]*scaleH[i] + scaleH[j]*scaleH[j]);
+#else
+		eps1 = eps *scaleH[j];
+#endif
+#endif
+
 		eps2 = eps1*eps1;
 		eps4 = eps2*eps2;
 		r_p_rp = r[i] + r[j];
@@ -123,7 +133,13 @@ void add_edge_sg(double complex *mat) {
 		x1 = r[i]/rd;
 		x2 = x1*x1;
 		x4 = x2*x2;
-		eps2 = eps*scaleH[N-1]/rd;
+
+#ifdef CONSTSOFT
+		eps2 = eps;
+#else
+		eps2 = eps * scaleH[N-1]/rd;
+#endif		
+		
 		eps2 *= eps2;
 		
 		kval = sqrt(4*x1/(eps2 + (1+x1)*(1+x1)));
@@ -152,7 +168,15 @@ double integrand(double x, void *params) {
 	rp1 = exp(x);
 	rp2 = rp1*rp1;
 	rp4 = rp2*rp2;
-	eps1 = eps * scaleH_func(r1);
+#ifdef CONSTSOFT
+	eps1 = eps;
+#else
+#ifdef SYMSOFT
+	eps1 = eps * sqrt(scaleH_func(r1)*scaleH_func(r1) + scaleH_func(rp1)*scaleH_func(rp1));
+#else
+	eps1 = eps * scaleH_func(rp1);
+#endif
+#endif
 	eps2 = eps1*eps1;
 	eps4 = eps2*eps2;
 	r_p_rp = r1 + rp1;

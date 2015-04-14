@@ -27,7 +27,7 @@
 //#define GRAVITYCORRECTION
 //#define INDIRECT
 
-#define INPUTMASS
+//#define INPUTMASS
 
 //#define EXPDECAY
 //#define EXPDECAY2
@@ -35,3 +35,6 @@
 #define COMPTRAPZ
 
 //#define INFINITEDISK
+
+//#define CONSTSOFT
+#define SYMSOFT

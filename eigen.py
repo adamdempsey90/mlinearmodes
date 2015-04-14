@@ -83,3 +83,17 @@ def remove_defines(defines_list):
 		f.seek(0,0)
 		f.writelines(lines)
 	return
+
+def set_profile(prof):
+
+	allowed_profs = [ 'EXPDECAY', 'POWER', 'MLIN','KUZMIN','RING','USER']
+	
+	if prof not in allowed_profs:
+		print 'Not a valid profile name'
+		print 'Choose from'
+		print prof
+	
+	return
+	
+
+

@@ -6,8 +6,11 @@ LDFLAGS=-llapack -lblas -lm -lgomp -lgsl
 
 CFLAGS=-c -fopenmp -Wall -O3  -g
 
-INCLIB=-I/usr/local/include/
-LDLIB=-L/usr/local/lib
+
+INCLIB=
+LDLIB=
+#INCLIB=-I/usr/local/include/
+#LDLIB=-L/usr/local/lib
 
 BIN=bin/
 SRC=src/

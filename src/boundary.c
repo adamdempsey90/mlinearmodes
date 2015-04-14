@@ -62,6 +62,7 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 }
 
 void set_bc(double complex *mat, double complex *bcmat) {
+
 	lagrangian_pressure_bc_inner(mat, bcmat);
 	lagrangian_pressure_bc_outer(mat, bcmat);
 	return;

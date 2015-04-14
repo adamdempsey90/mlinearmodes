@@ -162,7 +162,7 @@ class Field():
 	def plotreal(self,ev,logx=False,logy=False,rlims=None):
 	
 		phi = linspace(0,2*pi,6*self.nr)
-		rr,pp = meshgrid(fld.r,phi)
+		rr,pp = meshgrid(self.r,phi)
 		xx = rr*cos(pp)
 		yy = rr*sin(pp)
 		
@@ -583,6 +583,25 @@ class Field():
 # 		
 		return kern0, kern02, kern1, err0,err02,err1, omg2,kapg2, errom,errkap
 	
+
+def load_coeffs(r):
+	dat = loadtxt('coeffs.dat')
+	A = dat[:,0] + 1j*dat[:,1]
+	B = dat[:,2] + 1j*dat[:,3]
+	C = dat[:,4] + 1j*dat[:,5]
+	
+	fig,(ax1,ax2,ax3) = subplots(3,1,sharex='col')
+	
+	ax1.semilogx(r,A.real,'-b',r,A.imag,'-r')
+	ax2.semilogx(r,B.real,'-b',r,B.imag,'-r')
+	ax3.semilogx(r,C.real,'-b',r,C.imag,'-r')
+	
+	ax3.set_xlabel('$r$',fontsize='large')
+	ax1.set_ylabel('$A$',fontsize='large')
+	ax2.set_ylabel('$B$',fontsize='large')
+	ax3.set_ylabel('$C$',fontsize='large')
+	
+	return A,B,C 
 
 def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
 		

@@ -1,15 +1,19 @@
 #include "eigen.h"
 
+double sig_param;
+
 double sigma_func(double x) {
-	return sigma0 * pow(x, sigma_index);
+	sig_param = Mdisk/(pow(2*M_PI,1.5)*sigma_index*exp(-.5*sigma_index*sigma_index));
+	
+	return sig_param/x * exp(-log(x)*log(x)/(2*sigma_index));
 }
 
 double dlogsigma_func(double x) {
-	return sigma_index;
+	return -1 - log(x)/(sigma_index*sigma_index);
 }
 
 double d2logsigma_func(double x) {
-	return 0;
+	return -1.0/(sigma_index*sigma_index);
 }
 
 
@@ -39,4 +43,12 @@ double d2logomk_func(double x) {
 
 double scaleH_func(double x) {
 	return h0*x*pow(x,flare_index);
+}
+
+int analytic_potential(void) {
+	return 0;
+}
+
+double omega_prec_grav_analytic(double x) {
+	return 0;
 }
