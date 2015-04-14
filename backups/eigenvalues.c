@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 	
 	rout = 100;
 
-
+	temp_index = 2*flare_index - 1;
 
 #if defined(ISOTHERMAL) || defined(BAROTROPIC)	
 	printf("\nUsing the Parameters:\n \
@@ -143,6 +143,7 @@ int main(int argc, char *argv[]) {
 	fill_mat(mat,bcmat);
 #else
   	nanflag = calc_matrices(mat,bcmat);
+
   	if (nanflag == -1) {
   		printf("Aborting...\n");
   		free_globals();

@@ -94,42 +94,22 @@ double D2ij(int i, int j) {
 
 
 
-#ifndef COMPTRAPZ
-void calc_weights(void) {
-/* O(N^(-4)) weights for numerical quadrature*/
-	int i;
+
+void init_derivatives(void) {
+	int i,j;
+	double dfac = 1.0/dlr;
+	double d2fac = dfac*dfac;
 	for(i=0;i<N;i++) {
-		if (i==0 || i==N-1) {
-			weights[i] = 3./8 * dlr;
+		for(j=0;j<N;j++) {
+			D[j + N*i] = Dij(i,j)*dfac;
+			D2[j + N*i] = D2ij(i,j)*d2fac;
+			Identity[j + N*i] = 0;
+			if (i==j) {
+				Identity[j+N*i] = 1;
+			}
+		
 		}
-		else if (i==1 || i==N-2) {
-			weights[i] = 7./6 * dlr;
-		}
-		else if (i==2 || i==N-3) {
-			weights[i] = 23./24 * dlr;
-		}
-		else {
-			weights[i] = dlr;
-		}
-	
 	}
 	return;
 
 }
-#else
-void calc_weights(void) {
-/* Composite Trapezoid numerical quadrature*/
-	int i;
-	weights[0] = .5*dlr;
-	weights[N-1] = .5*dlr;
-	
-	for(i=1;i<N-1;i++) {
-		weights[i] = dlr;
-	}
-
-	return;
-
-}
-
-
-#endif

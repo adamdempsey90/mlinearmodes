@@ -9,13 +9,12 @@ void output_globals(void) {
 	FILE *f = fopen("globals.dat","w");
 	
 	
-	fprintf(f,"# lr \t r \t omega \t c2 \t sigma \t H/r \t soft \t dldc2 \t dlds \t kappa^2 \t d2lds \t dldom \t d2dom \t nu \t dldnu\n");
+//	fprintf(f,"# lr \t r \t omega \t c2 \t sigma \t H/r \t soft \t dldc2 \t dlds \t kappa^2 \t d2lds \t dldom \t d2dom \t nu \t dldnu\n");
 	
 	
 	for(i=0;i<N;i++) {
 		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t \
-				   %.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t \
-				   %.12lg\t%.12lg\t%.12lg\t%.12lg\n",
+				   %.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\n",
 			lr[i],
 			r[i],
 			omega[i],
@@ -24,18 +23,14 @@ void output_globals(void) {
 			scaleH[i]/r[i],
 			pres[i],
 			temp[i],
-			eps*scaleH[i],
 			omega_prec[i],
 			dldc2[i],
 			dlds[i],
 			dldpres[i],
-			kappa2[i],
+			dldtemp[i],
 			d2lds[i],
 			d2ldpres[i],
-			dldom[i],
-			d2dom[i],
-			nu[i],
-			dldnu[i]);
+			d2ldtemp[i]);
 	}
 			
 			
@@ -53,33 +48,17 @@ void output_kernel(void) {
 	FILE *f = fopen("kernel.dat","w");
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",creal(kernel[j+i*N]));
+			fprintf(f,"%.12lg\t",kernel[j+i*N]);
 		}
 		fprintf(f,"\n");
 	}
 	
-	fclose(f);
-	
-	f = fopen("kernel0.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",kernel0[j+i*N]);
-		}
-		fprintf(f,"\n");
-	}
-	
-	f = fopen("kernel02.dat","w");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.20lg\t",kernel02[j+i*N]);
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
+ 	fclose(f);
 
 	return;
 }
+
+
 
 
 void output_matrix(double complex *mat, double complex *bcmat) {
@@ -107,7 +86,7 @@ void output_matrix(double complex *mat, double complex *bcmat) {
 	return;
 }
 
-void output(double complex *evals, double complex *evecs, double complex *sigmap) {
+void output(double complex *evals, double complex *evecs) {
 	int i,j;
 	double complex evecij;
 	FILE *f = fopen("eigen.dat","w");
@@ -127,18 +106,7 @@ void output(double complex *evals, double complex *evecs, double complex *sigmap
 	}
 	
 	fclose(f);
-	
-	f = fopen("sigmap.dat","w");
-	
-	fprintf(f,"#sigmap along rows\n");
-	for(i=0;i<N;i++) {
-		for(j=0;j<N;j++) {
-			fprintf(f,"%.12lg\t%.12lg\t",creal(sigmap[j+i*N]),cimag(sigmap[j+i*N]));
-		}
-		fprintf(f,"\n");
-	}
-	
-	fclose(f);
+
 	
 	return;
 }
@@ -168,4 +136,24 @@ void output_derivatives(void) {
 		
 	return;
 }
+
+void output_coefficients(void) {
+	FILE *f;
+	int i;
+	
+	
+	f=fopen("coeffs.dat","w");
+	
+	for(i=0;i<N;i++) {
+		fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\t%.12lg\n",
+		creal(coeffs_A[i]),cimag(coeffs_A[i]),
+		creal(coeffs_B[i]),cimag(coeffs_B[i]),
+		creal(coeffs_C[i]),cimag(coeffs_C[i]));
+	}
+	
+	fclose(f);
+	
+	return;
+}
+		
 

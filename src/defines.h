@@ -21,8 +21,8 @@
 #define SECONDORDER
 
 
-//#define SELFGRAVITY
-//#define EDGEGRAVITY
+#define SELFGRAVITY
+#define EDGEGRAVITY
 //#define READKERNEL
 //#define GRAVITYCORRECTION
 //#define INDIRECT
@@ -30,7 +30,7 @@
 //#define INPUTMASS
 
 //#define EXPDECAY
-#define EXPDECAY2
+//#define EXPDECAY2
 
 #define COMPTRAPZ
 

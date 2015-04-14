@@ -1,10 +1,18 @@
 EXECUTABLE=eigen
-SOURCES=eigenvalues.c
+SOURCES=alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c 
 HEADER=eigen.h defines.h
 
 LDFLAGS=-llapack -lblas -lm -lgomp -lgsl
 
-CFLAGS=-c -fopenmp -Wall -O3 -g 
+CFLAGS=-c -fopenmp -Wall -O3  -g
+
+INCLIB=-I/usr/local/include/
+LDLIB=-L/usr/local/lib
+
+BIN=bin/
+SRC=src/
+IN=inputs/
+PY=src/pyutils/
 
 
 UNAME := $(shell uname)
@@ -26,14 +34,14 @@ CHEADER=$(addprefix $(SRC),$(HEADER))
 
 
 
-all: $(SOURCES) $(EXECUTABLE) 
+all: $(CSOURCES) $(EXECUTABLE) 
 
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC)  $(OBJECTS) $(LDFLAGS) -o $@
+$(EXECUTABLE): $(COBJECTS) 
+	$(CC)  $(COBJECTS) $(LDLIB) $(LDFLAGS) -o $@
 
-%.o: %.c $(HEADER) 
-	$(CC) $(CFLAGS) $< -o $@
+$(BIN)%.o: $(SRC)%.c $(CHEADER) 
+	$(CC) $(INCLIB) $(CFLAGS) $< -o $@
 
 	
 clean:
-	rm $(OBJECTS) $(EXECUTABLE) 
+	rm $(COBJECTS) $(EXECUTABLE) 

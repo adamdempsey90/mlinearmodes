@@ -1,26 +1,24 @@
 #include "eigen.h"
+#include <time.h>
+#include <unistd.h>
+
+void print_time(double t);
 
 int main(int argc, char *argv[]) {
-	int i,j;
+	int i;
 	double ri, ro;
 	clock_t tic, toc;
 	tic = clock();
 	printf("Reading arguments...\n");
 	for(i=1;i<argc;i++) {
-		printf("%s\t",argv[i]);
+		printf("%s ",argv[i]);
 	}
-
-#ifdef ISOTHERMAL	
-	if (argc < 13) {
-		printf("\n\nToo Few Arguments!\n\n");
-		return -1;
-	}
-#else 
+	
 	if (argc < 15) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
-#endif
+
 
 #ifdef TESTFUNCTION
 	printf("\n\n\n\n\n\n RUNNING IN TEST FUNCTION MODE \n\n\n\n\n\n");
@@ -44,6 +42,7 @@ int main(int argc, char *argv[]) {
 	h0 = atof(argv[6]);
 	sigma_index = atof(argv[7]);
 	flare_index = atof(argv[8]);
+	temp_index = 2*flare_index - 1;
 
 #ifdef VISCOSITY
 	alpha_s = atof(argv[9]);
@@ -65,6 +64,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 	tol = atof(argv[14]);
+	
 	dlr = (log(ro) - log(ri))/((float) N);
 	
 	rout = 100;
@@ -109,63 +109,55 @@ int main(int argc, char *argv[]) {
 	double complex *evecs = (double complex *)malloc(sizeof(double complex)*N*N);	
 	double complex *bcmat = (double complex *)malloc(sizeof(double complex)*N*N);	
 	
-	double complex *sigmap = (double complex *)malloc(sizeof(double complex)*N*N);
 	  
   
   
   	printf("Allocating Arrays...\n");
+ 
   	alloc_globals();
-  	
-  	printf("Initializing Derivative Matrices...\n");
-  	init_derivatives();
-  	output_derivatives();
-  	calc_weights();
+
+
   	 	
+  
   	printf("Initializing Variables...\n");
-  	int nanflag = init(ri,ro);
+  	
+  	
+  	init(ri,ro);
 
-
-  	if (nanflag == -1) {
-  		printf("Aborting...\n");
-  		free_globals();
-		free(mat); free(evecs); free(evals); free(bcmat);
-		return nanflag;
-	}
   	
   	printf("Outputting Variables...\n");
   	output_globals();
+  	
+  	printf("Outputting Derivative Matrices...\n");
+  	output_derivatives();
 #ifndef READKERNEL
+	printf("Outputting Kernel...\n");
   	output_kernel();
 #endif
+
+
   	printf("Populating Matrix...\n");
 
-#ifdef TESTFUNCTION 
-	fill_mat(mat,bcmat);
-#else
-  	nanflag = calc_matrices(mat,bcmat);
-  	if (nanflag == -1) {
-  		printf("Aborting...\n");
-  		free_globals();
-		free(mat); free(evecs); free(evals); free(bcmat);
-		return nanflag;
-	}
-#endif
+   calc_matrices(mat,bcmat);
+
+
+	printf("Outputting Coefficients...\n");
+  	output_coefficients();
   	printf("Outputting Matrix...\n");
   	output_matrix(mat,bcmat);
+  	
   	printf("Solving For Eigenvalues and Eigenvectors...\n");
   	reigenvalues(mat,bcmat,evals,evecs,N);
 
-#ifndef TESTFUNCTION  	
-  	calc_sigmap(sigmap, evecs);
-#endif
+
   	printf("Outputting Results...\n");
-  	output(evals,evecs,sigmap);
+  	output(evals,evecs);
 
   	
   	printf("Freeing Arrays...\n");
   	
   	free_globals();
-	free(mat); free(evecs); free(evals); free(bcmat); free(sigmap);
+	free(mat); free(evecs); free(evals); free(bcmat);
 	
 	toc = clock(); 
 	print_time( (double)(toc - tic) / CLOCKS_PER_SEC );

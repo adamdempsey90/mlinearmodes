@@ -1,10 +1,9 @@
 #include "eigen.h"
 
-double bump_function(double rval);
+//#define ANALYTICPOTENTIAL
 
 double sigma_func(double x) {
-	double sigfac = h0 /(2 * M_PI * bump_function(2.0));
-	return sigfac * bump_function(x) * pow(x,-(1.5 + .5*temp_index));
+	return sigma0 * pow(x, sigma_index);
 }
 
 double dlogsigma_func(double x) {
@@ -17,7 +16,7 @@ double d2logsigma_func(double x) {
 
 
 double temp_func(double x) {
-	return  h0*h0 * pow(x,temp_index); 
+	return h0*h0*pow(x,temp_index);
 }
 
 double dlogtemp_func(double x) {
@@ -44,19 +43,6 @@ double scaleH_func(double x) {
 	return h0*x*pow(x,flare_index);
 }
 
-
-double bump_function(double rval) {
-	
-	
-	double delta1 = 5.0 * h0 * pow(1.0,1.5-.5*temp_index);
-	double delta2 = 5.0 * h0 * pow(2.0,1.5-.5*temp_index);
-
-	double fac1 = .5*(1-.1)*(1+tanh((rval-1.0)/delta1))+.1;
-	double fac2 = .5*(1-.1)*(1-tanh((rval-2.0)/delta2))+.1;
-	
-	return (fac1*fac2);
-
-}
 
 int analytic_potential(void) {
 	return 0;
