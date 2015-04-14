@@ -9,6 +9,30 @@ class Field():
 		self.params = params
 		self.matrix=loadtxt('matrix.dat')
 		self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
+# 		self.lr = dat[:,0]
+# 		self.r = dat[:,1]
+# 		self.omega = dat[:,2]
+# 		self.c2 = dat[:,3]
+# 		self.sigma = dat[:,4]
+# 		self.hor = dat[:,5]
+# 		self.pres = dat[:,6]
+# 		self.temp = dat[:,7]
+# 		self.soft = dat[:,8]
+# 		self.wp = dat[:,9]
+# 		self.dldc2 = dat[:,10]
+# 		self.dlds = dat[:,11]
+# 		self.dldpres = dat[:,12]
+# 		self.kappa2 = dat[:,13]
+# 		self.kappa = sqrt(self.kappa2)
+# 		self.d2lds = dat[:,14]
+# 		self.d2ldpres = dat[:,15]
+# 		self.dldom = dat[:,16]
+# 		self.d2dom = dat[:,17]
+# 		self.nu = dat[:,18]
+# 		self.dldnu = dat[:,19]
+# 		self.dlr = diff(self.lr)[0]
+# 		self.nr = len(self.r)
+		
 		self.lr = dat[:,0]
 		self.r = dat[:,1]
 		self.omega = dat[:,2]
@@ -17,23 +41,21 @@ class Field():
 		self.hor = dat[:,5]
 		self.pres = dat[:,6]
 		self.temp = dat[:,7]
-		self.soft = dat[:,8]
-		self.wp = dat[:,9]
-		self.dldc2 = dat[:,10]
-		self.dlds = dat[:,11]
-		self.dldpres = dat[:,12]
-		self.kappa2 = dat[:,13]
-		self.kappa = sqrt(self.kappa2)
-		self.d2lds = dat[:,14]
-		self.d2ldpres = dat[:,15]
-		self.dldom = dat[:,16]
-		self.d2dom = dat[:,17]
-		self.nu = dat[:,18]
-		self.dldnu = dat[:,19]
+		self.wp = dat[:,8]
+		self.dldc2 = dat[:,9]
+		self.dlds = dat[:,10]
+		self.dldpres = dat[:,11]
+		self.dldtemp = dat[:,12]
+		self.d2lds = dat[:,13]
+		self.d2ldpres = dat[:,14]
+		self.d2ldtemp = dat[:,15]
+	
+		self.soft = self.params['rs'] * self.hor*self.r
+		
+		self.nu = self.params['alpha_s'] * self.c2/self.omega
 		self.dlr = diff(self.lr)[0]
 		self.nr = len(self.r)
 		
-	
 		
 		evals = emat[:,0] + 1j*emat[:,1]
 		emat = emat[:,2:]
