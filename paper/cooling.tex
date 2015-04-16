@@ -208,6 +208,37 @@ The mode with zero nodes is perhaps the simplest to understand.
 
 
 \subsection{Self Gravity}
+
+To include the effects of the disk's self gravity, we include the potential due to the perturbed surface density,
+
+\begin{equation}
+\phi' = - G \int dr' \, r' \Sigma'(r') \int d\phi \, \frac{\cos \phi}{\sqrt{ r^2 + r'^2 - 2 r r' \cos \phi}}
+\end{equation}
+The $\phi$ integral is simply the Laplace coefficient, $b_{1/2}^{(1)}$
+\begin{equation}
+b_{1/2}^{(1)} \left( \frac{ r'}{r} \right) = \frac{2}{\pi r} \int_0^\pi d\phi \,  \frac{\cos \phi}{\sqrt{1 + \left( \frac{r'}{r} \right)^2  - 2{\left( \frac{r'}{r} \right) \cos \phi}}}
+\end{equation}
+So that the potential is, 
+\begin{equation} \label{eq:potential_integral_def}
+\phi' = - \frac{ G \pi}{r} \int dr' \, r' \Sigma'(r') b_{1/2}^{(1)} \left( \frac{r'}{r} \right)
+\end{equation}
+There is also an "edge" contribution to the potential due to there being a non-negligable excess of material outside the outer boundary of the disk and a decificit of disk material inside the inner boundary of the disk. At the outer boundary of the disk we have, $\Sigma'(r) dr = \bar{\Sigma}(r_o) \xi_r(r_o) = \bar{\Sigma}(r_o) r_o e(r_o)$. Similarly at the inner boundary we have, $\Sigma'(r) dr' = - \bar{\Sigma}(r_i) \xi_r(r_i) = \bar{\Sigma}(r_i) r_i e(r_i)$. The "edge" potential is thus, 
+\begin{equation}
+\phi_\text{edge} = - \frac{G\pi \bar{\Sigma}(r_o) r_o^2 e(r_o)}{r}   b_{1/2}^{(1)} \left( \frac{r_o}{r} \right)  + \frac{G\pi \bar{\Sigma}(r_i) r_i^2 e(r_i)}{r}   b_{1/2}^{(1)} \left( \frac{r_i}{r} \right)
+\end{equation}
+
+
+The perturbed surface density is related to the eccentricity as $\phi' = - r \frac{d}{dr} \left( \bar{\Sigma} e \right)$. Plugging this in to \eqref{eq:potential_integral_def} and integrating by parts gives, 
+\begin{equation}
+\phi' = -\phi_\text{edge} - \frac{G \pi}{r} \int dr' \,  \bar{\Sigma}(r') e(r') \partial_{r'} \left( r'^2 b_{1/2}^{(1)} \left( \frac{r'}{r} \right) \right)
+\end{equation}
+The "edge" contribution to the potential thus cancels when we take $\phi' \rightarrow \phi' + \phi_\text{edge}$. The potential enters the eccentricity equation via the term,
+\begin{equation}
+- \frac{d}{dr} \left( r^2 \phi' \right)
+\end{equation}
+
+
+
 \section{Discussion}
 
 

@@ -24,7 +24,6 @@ void read_kernel(void) {
 	return;
 
 }
-
 void compute_kernels(void) {
 
 #ifdef READKERNEL
@@ -32,10 +31,10 @@ void compute_kernels(void) {
 #else
 
 	int i,j, indx;
-	double r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee; 
+	double r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,eps6,eps8,r_p_rp,r_m_rp,kval,ek,ee; 
 	
 #ifdef OPENMP
-#pragma omp parallel private(indx,i,j,r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee) shared(kernel,N,r,scaleH,weights)
+#pragma omp parallel private(indx,i,j,r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,eps6,eps8,r_p_rp,r_m_rp,kval,ek,ee) shared(kernel,N,r,scaleH,weights)
 #pragma omp for schedule(static)
 #endif
 	for(indx=0;indx<N*N;indx++) {
@@ -62,20 +61,26 @@ void compute_kernels(void) {
 
 		eps2 = eps1*eps1;
 		eps4 = eps2*eps2;
-		r_p_rp = r[i] + r[j];
-		r_p_rp *= r_p_rp;
-		r_m_rp = r[i] - r[j];
-		r_m_rp *= r_m_rp;
+		eps6 = eps4*eps2;
+		eps8 = eps6*eps2;
+		
+		r_p_rp = (r1+rp1)*(r1+rp1);
+		r_m_rp = (r1-rp1)*(r1-rp1);
+		
 		
 		kval = sqrt(4*r1*rp1/(r_p_rp + eps2));
 		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
 		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+	
+	
+		kernel[indx] = (2*(r2-rp2)*(r2-rp2)*(r4-r2*rp2+rp4)+(r2+rp2)*(7*r4-18*r2*rp2+7*rp4)*eps2
+						+9*(r4+rp4)*eps4+5*(r2+rp2)*eps6+eps8)*-2*ee;
+		kernel[indx] -= ( r_m_rp +eps2)*(2*(r2-rp2)*(r2-rp2)*(r2+rp2)+(5*r4+4*r2*rp2+4*rp4)*eps2
+						+4*(r2+rp2)*eps4+eps6)*-2*ek;
+		kernel[indx] /= (pow(r_m_rp+eps2,2)*pow(r_p_rp+eps2,1.5));
 			
-		kernel[indx] = -2*(eps4 + 2*r4 - 3*r2*rp2 + rp4 + eps2*(3*r2 + 2*rp2))*ee;
-		kernel[indx] += 2*(eps2 + r_m_rp)*(eps2 + 2*r2 + rp2)*ek;
-		kernel[indx] /= ((eps2 + r_m_rp)*rp1*sqrt(eps2 +r_p_rp));
 		
-		kernel[indx] *=  weights[j]*rp2;
+		kernel[indx] *=  weights[j]*rp1*sigma[j];
 
 
 
@@ -87,34 +92,115 @@ void compute_kernels(void) {
 
 void add_sg(double complex *mat, double complex *bcmat) {	
 	int i,j;
-	int l,indx;
-	int il, lj;
-	double complex res,G;
+	int indx;
+	double complex G;
 	
 	
 	for(i=0;i<N;i++) {
-		G = .5/ ( omega[i]*r[i]*r[i]*r[i]);
+		G = -.5/ ( omega[i]*r[i]*r[i]*r[i]);
 		for(j=0;j<N;j++) {
 			indx = j + N*i;
-			res = 0;
-			for(l=0;l<N;l++) {
-				il = l + N*i;
-				lj = j + N*l;
-				res -= sigma[i]*(dlds[l]*Identity[il] + D[il])*kernel[lj];
-			}
-			mat[indx] += G*res;		
+			mat[indx] += G*kernel[indx];		
 		}
 			
 			
 	}			
-
-#ifdef EDGEGRAVITY
-		add_edge_sg(mat);
-#endif
-	
 	return;
-	
-}	
+}
+
+
+
+
+// void compute_kernels(void) {
+// 
+// #ifdef READKERNEL
+// 	read_kernel();
+// #else
+// 
+// 	int i,j, indx;
+// 	double r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee; 
+// 	
+// #ifdef OPENMP
+// #pragma omp parallel private(indx,i,j,r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee) shared(kernel,N,r,scaleH,weights)
+// #pragma omp for schedule(static)
+// #endif
+// 	for(indx=0;indx<N*N;indx++) {
+// 		i = indx/N;
+// 		j = indx - i*N;
+// 		
+// 
+// 		r1 = r[i];
+// 		r2 = r1*r1;
+// 		r4 = r2*r2;
+// 		rp1 = r[j];
+// 		rp2 = rp1*rp1;
+// 		rp4 = rp2*rp2;
+// 
+// #ifdef CONSTSOFT
+// 		eps1 = eps;
+// #else
+// #ifdef SYMSOFT
+// 		eps1 = eps * sqrt(scaleH[i]*scaleH[i] + scaleH[j]*scaleH[j]);
+// #else
+// 		eps1 = eps *scaleH[j];
+// #endif
+// #endif
+// 
+// 		eps2 = eps1*eps1;
+// 		eps4 = eps2*eps2;
+// 		r_p_rp = r[i] + r[j];
+// 		r_p_rp *= r_p_rp;
+// 		r_m_rp = r[i] - r[j];
+// 		r_m_rp *= r_m_rp;
+// 		
+// 		kval = sqrt(4*r1*rp1/(r_p_rp + eps2));
+// 		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+// 		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+// 			
+// 		kernel[indx] = -2*(eps4 + 2*r4 - 3*r2*rp2 + rp4 + eps2*(3*r2 + 2*rp2))*ee;
+// 		kernel[indx] += 2*(eps2 + r_m_rp)*(eps2 + 2*r2 + rp2)*ek;
+// 		kernel[indx] /= ((eps2 + r_m_rp)*rp1*sqrt(eps2 +r_p_rp));
+// 		
+// 		kernel[indx] *=  weights[j]*rp2;
+// 
+// 
+// 
+// 		
+// 	}	
+// #endif
+// 	return;
+// }
+// 
+// void add_sg(double complex *mat, double complex *bcmat) {	
+// 	int i,j;
+// 	int l,indx;
+// 	int il, lj;
+// 	double complex res,G;
+// 	
+// 	
+// 	for(i=0;i<N;i++) {
+// 		G = .5/ ( omega[i]*r[i]*r[i]*r[i]);
+// 		for(j=0;j<N;j++) {
+// 			indx = j + N*i;
+// 			res = 0;
+// 			for(l=0;l<N;l++) {
+// 				il = l + N*i;
+// 				lj = j + N*l;
+// 				res -= sigma[i]*(dlds[l]*Identity[il] + D[il])*kernel[lj];
+// 			}
+// 			mat[indx] += G*res;		
+// 		}
+// 			
+// 			
+// 	}			
+// 
+// #ifdef EDGEGRAVITY
+// 		add_edge_sg(mat);
+// #endif
+// 	
+// 	return;
+// 	
+// }	
 
 void add_edge_sg(double complex *mat) {
 	int i,j;
