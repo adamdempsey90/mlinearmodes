@@ -3,7 +3,15 @@
 
 
 double Dij(int i, int j) {
-	
+// 	if (i == (j+1)) {
+// 		return -.5;
+// 	}
+// 	else if (i==(j-1)) {
+// 		return .5;
+// 	}
+// 	else {
+// 		return 0;
+// 	}	
 	if (i==0) {
 		if (j==0) {
 			return -1.0;
@@ -41,6 +49,21 @@ double Dij(int i, int j) {
 }
 
 double D2ij(int i, int j) {
+
+// 	if (i == (j+1)) {
+// 		return 1.0;
+// 	}
+// 	else if (i==(j-1)) {
+// 		return 1.0;
+// 	}
+// 	else if (i==j) {
+// 	
+// 		return -2.0;
+// 
+// 	}
+// 	else {
+// 		return 0;
+// 	}
 	
 	if (i==0) {
 		if (j==0) {

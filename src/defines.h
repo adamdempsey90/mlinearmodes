@@ -21,7 +21,7 @@
 #define SECONDORDER
 
 
-#define SELFGRAVITY
+//#define SELFGRAVITY
 //#define EDGEGRAVITY
 //#define READKERNEL
 //#define GRAVITYCORRECTION
