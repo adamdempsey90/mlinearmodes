@@ -102,7 +102,7 @@ class Field():
 		arglist = vars(self).keys()
 		if logr:
 			r = log10(self.r)
-			xstr = '$\ln r$'
+			xstr = '$\log_{10} r$'
 		else:
 			r = self.r
 			xstr = '$r$'

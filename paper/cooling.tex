@@ -79,8 +79,12 @@ e \equiv \frac{ \xi_r} {r}
 \end{equation}
  Following \cite{papa02} we can write an evolution equation for the disk eccentricity by an appropriate linear combination of the two momenta equations and using 
  \begin{equation}
-2 \Omega r^3 ( \Omega_p - \omega_p) e = - \frac{d }{dr} \left( r^2 \frac{p}{\bar{\Sigma}} \ + r^2 \phi \right) + \frac{r^2}{\bar{\Sigma}^2} \left[ p \frac{d \bar{\Sigma}}{d r} + \sigma \frac{ d \bar{P}}{d r} \right]
+2 \Omega r^3 ( \Omega_p - \omega_p) e = - \frac{d }{dr} \left( r^2 \frac{p}{\bar{\Sigma}} \ + r^2 \phi \right) + \frac{r^2}{\bar{\Sigma}^2} \left[  \sigma \frac{ d \bar{P}}{d r}-p \frac{d \bar{\Sigma}}{d r} \right]
 \end{equation}
+\begin{equation} \label{eq:wp_def}
+2 \Omega r^3 \omega_p = - r \frac{d}{dr} \left( \frac{r^2}{\bar{\Sigma}} \frac{d \bar{P}}{d r} \right) - r \frac{ d}{dr} \left( r^2 \frac{d \bar{\Phi}}{dr} \right)
+\end{equation}
+
  \begin{equation}
 p = \sigma \bar{T} + \bar{\Sigma} T'
 \end{equation}
@@ -90,6 +94,32 @@ p = \sigma \bar{T} + \bar{\Sigma} T'
 \begin{equation}
 (1- i\tilde{\beta}) \frac{T'}{\bar{T}} = -\frac{d \ln \bar{T}}{d \ln r} e - (\gamma -1) r \frac{d e}{d r}
 \end{equation}
+
+\subsection{No Cooling} 
+
+We define the  adiabatic limit as when $\beta=0$, the eccentricity equation in this limit reduces to,
+\begin{equation}
+2 \Omega r^3 ( \Omega_p - \omega_p) e = - \frac{d}{dr} \left( \frac{r^2 p}{\bar{\Sigma}} + r^2 \phi \right) + \frac{r^2}{\bar{\Sigma}} \left( \sigma \frac{d \bar{P}}{dr} - p \frac{d \bar{\Sigma}}{d r} \right) 
+\end{equation}
+\begin{equation}
+\frac{p}{\bar{P}} = - \frac{ d\ln \bar{P}}{d \ln r } e - \gamma r \frac{ d e}{d r}
+\end{equation}
+This is equivalent to the eccentricity equation of e.g \citet{go06} (their Eq. 21), when we use \eqref{eq:wp_def} to replace $\omega_p$. 
+
+We define the barotropic limit as when $\gamma \rightarrow 1$ and we can write the total pressure as $P = P(\Sigma)$. We then define the sound speed $c^2$, such that, $p = c^2 \sigma$ and $\frac{d \bar{P}}{d \bar{\Sigma}} = c^2 $. The eccentricity equation simplifies in this case to,
+\begin{equation}
+2 \Omega r^3 ( \Omega_p - \omega_p) e = - \frac{d}{dr} \left( r^2 \frac{c^2 \sigma}{\bar{\Sigma}} + r^2 \phi \right) 
+\end{equation}
+This is equivalent to the eccentricity equation of e.g \citet{papa02} (his Eq. 18).
+
+The locally isothermal limit is defined as $\gamma \rightarrow 1$ and $P = \bar{T}(r) \Sigma$. The eccentricty equation in the locally isothermal limit is then,
+\begin{equation}
+2 \Omega r^3 ( \Omega_p - \omega_p) e = - \bar{T} \frac{d}{dr} \left( r^2 \frac{\sigma}{\bar{\Sigma}} \right) - \frac{d}{dr} \left( r^2 \phi \right) 
+\end{equation}
+This is equivalent to the linear system that e.g, \citet{lin15} studied. 
+ 
+\subsection{With Cooling}
+
 
 
 Which follow from \eqref{eq:dtsigma} \& \eqref{eq:dtT} to zeroth order in $\Omega_p$ and with $\Omega \approx \Omega_K$. We obtain the evolution equation 
@@ -238,7 +268,6 @@ The "edge" contribution to the potential thus cancels when we take $\phi' \right
 \end{equation}
 
 
-
 \section{Discussion}
 
 
@@ -248,10 +277,10 @@ The "edge" contribution to the potential thus cancels when we take $\phi' \right
 \bibitem[Binney \& Tremaine(2002)]{bt2} Binney, J., Tremaine, S. \emph{Galactic Dynamics}. Princeton University Press, 2002.
 \bibitem[Gammie 2001]{gam01} Gammie, C. F. (2001). \apj, 553(1), 174-183. 
 \bibitem[Goodchild \& Ogilvie (2006)]{go06} Goodchild, S., \& Ogilvie, G. (2006). MNRAS, 368(3), 1123-1131. 
-\bibitem[Ogilvie (2001)]{og01} Ogilvie, G. I. (2001). MNRAS, 325(1), 231-248. 
+\bibitem[Lin(2015)]{lin15} Lin, M.-K.\ 2015, \mnras, 448, 3806 \bibitem[Ogilvie (2001)]{go01} Ogilvie, G. I. (2001). MNRAS, 325(1), 231-248. 
 \bibitem[Ostriker, Shu, \& Adams (1992)]{osa92} Ostriker, E. C., Shu, F. H., \& Adams, F. C. (1992). \apj, 399, 192-212. 
-\bibitem[Papaloizou (2002)]{papa02} Papaloizou, J. C. B. (2002). Astronomy and Astrophysics, 388(2), 615-631. 
-\bibitem[Shakura \& Sunyaev (1973)]{ss73} Shakura, N. I., \& Sunyaev, R. A. (1973). Astronomy and Astrophysics, 24, 337?355.
+\bibitem[Papaloizou(2002)]{papa02} Papaloizou, J. C. B. (2002). Astronomy and Astrophysics, 388(2), 615-631. 
+\bibitem[Shakura \& Sunyaev(1973)]{ss73} Shakura, N. I., \& Sunyaev, R. A. (1973). Astronomy and Astrophysics, 24, 337?355.
 \end{thebibliography}
 
 

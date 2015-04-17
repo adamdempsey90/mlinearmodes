@@ -5,6 +5,7 @@ void calc_coefficients(void);
 
 int calc_matrices(double complex *mat, double complex *bcmat) {
 	int i,j,indx;
+	
 /* Compute the matrix including all of its component matrices */
 
 
@@ -40,7 +41,7 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 void calc_coefficients(void) {
 	int i;
-	
+	double complex norm;
 	for(i=0;i<N;i++) {
 
 
@@ -102,22 +103,32 @@ void calc_coefficients(void) {
 
 
 
-#ifdef VISCOSITY
-	double complex norm;
+	
 
-	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
-/* Shear Viscosity */
+// 	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
+// /* Shear Viscosity */
+// 
+// 	coeffs_A[i]  -= I * (alpha_s / 6.) * norm * (33.5 + dldtemp[i] - 2*dlds[i] + 18*d2lds[i]);
+// 	coeffs_B[i]  -= I * (alpha_s / 3.) * norm * (-9.5 - 7*dldtemp[i] + 2*dlds[i]);
+// 	coeffs_C[i]  -= I * (2 *alpha_s / 3.) * norm;
 
-	coeffs_A[i]  -= I * (alpha_s / 6.) * norm * (33.5 + dldtemp[i] - 2*dlds[i] + 18*d2lds[i]);
-	coeffs_B[i]  -= I * (alpha_s / 3.) * norm * (-9.5 - 7*dldtemp[i] + 2*dlds[i]);
-	coeffs_C[i]  -= I * (2 *alpha_s / 3.) * norm;
-
+	norm  = -I * alpha_s * temp[i]/(24 * omega[i] *r[i]*r[i]);
+	
+	coeffs_A[i] += 3*norm*(-3+2*dldtemp[i] - 4*dlds[i] + 12*d2lds[i]);
+	coeffs_B[i] -= 2*norm *(25+18*dldtemp[i]);
+	coeffs_C[i] += 8*norm; 
+	
 /* Bulk Viscosity */
 
-	coeffs_B[i]  += I * alpha_b * norm * (2.5 + dldtemp[i] + dlds[i]);
-	coeffs_C[i] -= I * alpha_b * norm;
+	norm = I*alpha_b * temp[i]/(2 * omega[i]*r[i]*r[i]);
+	
+	coeffs_B[i] += norm*(2 + dldtemp[i] + dlds[i]);
+	coeffs_C[i] += norm;
 
-#endif
+// 	coeffs_B[i]  += I * alpha_b * norm * (2.5 + dldtemp[i] + dlds[i]);
+// 	coeffs_C[i] -= I * alpha_b * norm;
+
+
 
 	}
 

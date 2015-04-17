@@ -1,0 +1,6 @@
+#!/bin/bash
+
+
+python config.py
+echo 'Created the defines.h file:'
+cat src/defines.h

@@ -1,0 +1,47 @@
+# This is a comment
+# Options File for planet disk code
+# Comment all but 1 option for each block 
+
+
+# Enable OPENMP parallelization
++OPENMP
+
+# Equation of State Options
+
++ISOTHERMAL
+#+BAROTROPIC
+#+COOLING
+
+# Enable Self Gravity
+
++SELFGRAVITY
+#+READKERNEL
+
+
+# Switch for inputing the total disk mass
+
+#+INPUTMASS
+
+# Profile Options
+
+#+EXPDECAY_PROF
+#+MKLIN_PROF
++POWERLAW_PROF
+#+KUZMIN_PROF
+#+GAUSSIANRING_PROF
+
+#+PAPALOIZOU
+#+HEEMSKERK
+
+
+# Integration Options
+
++COMPTRAPZ
+#+INFINITEDISK
+
+
+# Softening Options
+
+#+CONSTSOFT
++SYMSOFT
+

@@ -12,7 +12,7 @@ const static double R2 = 2;
 #define  delta2  (delta_R * h_p * pow(R2,flare_index + 1))
 	
 	
-double bump_function(double rval);
+double bump_function(double x);
 double f1_func(double x);
 double drf1_func(double x);
 double d2rf1_func(double x);

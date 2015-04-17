@@ -75,12 +75,12 @@ void compute_kernels(void) {
 	
 		kernel[indx] = (2*(r2-rp2)*(r2-rp2)*(r4-r2*rp2+rp4)+(r2+rp2)*(7*r4-18*r2*rp2+7*rp4)*eps2
 						+9*(r4+rp4)*eps4+5*(r2+rp2)*eps6+eps8)*-2*ee;
-		kernel[indx] -= ( r_m_rp +eps2)*(2*(r2-rp2)*(r2-rp2)*(r2+rp2)+(5*r4+4*r2*rp2+4*rp4)*eps2
+		kernel[indx] -= ( r_m_rp +eps2)*(2*(r2-rp2)*(r2-rp2)*(r2+rp2)+(5*r4+4*r2*rp2+5*rp4)*eps2
 						+4*(r2+rp2)*eps4+eps6)*-2*ek;
 		kernel[indx] /= (pow(r_m_rp+eps2,2)*pow(r_p_rp+eps2,1.5));
 			
 		
-		kernel[indx] *=  weights[j]*rp1*sigma[j];
+	//	kernel[indx] *=  weights[j]*rp1*sigma[j];
 
 
 
@@ -97,10 +97,10 @@ void add_sg(double complex *mat, double complex *bcmat) {
 	
 	
 	for(i=0;i<N;i++) {
-		G = -.5/ ( omega[i]*r[i]*r[i]*r[i]);
+		G = .5/ ( omega[i]*r[i]*r[i]*r[i]);
 		for(j=0;j<N;j++) {
 			indx = j + N*i;
-			mat[indx] += G*kernel[indx];		
+			mat[indx] += G*kernel[indx]*weights[j]*r[j]*sigma[j];		
 		}
 			
 			
