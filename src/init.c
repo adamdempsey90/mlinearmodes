@@ -131,32 +131,46 @@ void init_weights(void) {
 
 	int i;
 
-#ifndef COMPTRAPZ
-/* O(N^(-4)) weights for numerical quadrature from Numerical Recipes*/
-	for(i=0;i<N;i++) {
-		if (i==0 || i==N-1) {
-			weights[i] = 3./8 * dlr;
-		}
-		else if (i==1 || i==N-2) {
-			weights[i] = 7./6 * dlr;
-		}
-		else if (i==2 || i==N-3) {
-			weights[i] = 23./24 * dlr;
-		}
-		else {
-			weights[i] = dlr;
-		}
-	
+#ifdef COMPSIMPS
+	for(i=1;i<N/2;i++) {
+		weights[2*i-2] = dlr/3.;
+		weights[2*i] = dlr/3.;
+		weights[2*i-1] = 4*dlr/3.;
 	}
-#else
-/* Composite Trapezoid numerical quadrature*/
+		
+
+#endif
+
+#ifdef COMPTRAPZ
+	
 	weights[0] = .5*dlr;
 	weights[N-1] = .5*dlr;
 	
 	for(i=1;i<N-1;i++) {
 		weights[i] = dlr;
 	}
+
 #endif
+
+// /*O(N^(-4)) weights for numerical quadrature from Numerical Recipes*/
+// 	for(i=0;i<N;i++) {
+// 		if (i==0 || i==N-1) {
+// 			weights[i] = 3./8 * dlr;
+// 		}
+// 		else if (i==1 || i==N-2) {
+// 			weights[i] = 7./6 * dlr;
+// 		}
+// 		else if (i==2 || i==N-3) {
+// 			weights[i] = 23./24 * dlr;
+// 		}
+// 		else {
+// 			weights[i] = dlr;
+// 		}
+// 	
+// 	}
+/* Composite Trapezoid numerical quadrature*/
+
+
 	return;
 
 }

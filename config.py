@@ -9,7 +9,8 @@ def create_defines_file():
 				'MKLIN_PROF':'src/profiles/mklin_profile.c', \
 				'POWERLAW_PROF':'src/profiles/powerlaw_profile.c', \
 				'KUZMIN_PROF':'src/profiles/kuzmin.c', \
-				'GAUSSIANRING_PROF':'src/profiles/gaussian_ring.c'}
+				'GAUSSIANRING_PROF':'src/profiles/gaussian_ring.c', \
+				'GAUSSIANBUMP_PROF':'src/profiles/gaussian_bump.c'}
 	
 	with open('params.opt','r') as f:
 		temp = [x.split('+') for x in f.readlines()]

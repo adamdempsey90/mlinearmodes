@@ -8,9 +8,13 @@
 
 # Equation of State Options
 
-+ISOTHERMAL
-#+BAROTROPIC
+#+ISOTHERMAL
++BAROTROPIC
 #+COOLING
+
+# Disable Pressure
+
++NOPRESSURE
 
 # Enable Self Gravity
 
@@ -29,6 +33,7 @@
 +POWERLAW_PROF
 #+KUZMIN_PROF
 #+GAUSSIANRING_PROF
+#+GAUSSIANBUMP_PROF
 
 #+PAPALOIZOU
 #+HEEMSKERK
@@ -37,11 +42,12 @@
 # Integration Options
 
 +COMPTRAPZ
-#+INFINITEDISK
+#+COMPSIMPS
++INFINITEDISK
 
 
 # Softening Options
 
 #+CONSTSOFT
-+SYMSOFT
+#+SYMSOFT
 

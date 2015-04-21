@@ -2,6 +2,20 @@ from scipy.integrate import cumtrapz
 from scipy.special import ellipe,ellipk
 from subprocess import call
 
+class Mode():
+	def __init__(self,ev,emode,(r,dlr,omega,sigma)):
+		self.ev = ev
+		self.emode = emode
+		self.nodes = self.calc_nodes(emode.real)
+		self.sig  = -gradient(sigma*emode,dlr)
+		self.u = emode*r*(omega-ev)*1j
+		self.v = 1j*self.u/2
+
+
+	def calc_nodes(self,y):
+		overlap = sign(y[1:]) - sign(y[:-1])
+		return len(overlap[overlap != 0])
+
 class Field():
 	def __init__(self,params):
 		dat=loadtxt('globals.dat')
@@ -74,19 +88,21 @@ class Field():
 		self.sigp = dict()
 		self.vrp = dict()
 		self.vpp = dict()
+		
+		self.modes = dict()
 				
 		for i,ev in enumerate(self.evals):
-			
+			self.modes[ev] = Mode(ev,self.evecs[i,:],(self.r,self.dlr,self.omega,self.sigma))
 			self.edict[ev] = self.evecs[i,:]
-			if abs(ev) != 0:
-				self.evdict[self.nodes(self.evecs[i,:])] = ev
-				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]
-				self.sigp[ev]  = -gradient(self.sigma*self.evecs[i,:],self.dlr)
-				self.sigp[self.nodes(self.evecs[i,:])] = self.sigp[ev]
-				self.vrp[ev] = self.edict[ev]*self.r*(self.omega-ev)*1j
-				self.vrp[self.nodes(self.evecs[i,:])] = self.vrp[ev]
-				self.vpp[ev] = 1j*self.vrp[ev]/2
-				self.vpp[self.nodes(self.evecs[i,:])] = self.vpp[ev]
+#			if abs(ev) != 0:
+#				self.evdict[self.nodes(self.evecs[i,:])] = ev
+#				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]
+# 				self.sigp[ev]  = -gradient(self.sigma*self.evecs[i,:],self.dlr)
+# 				self.sigp[self.nodes(self.evecs[i,:])] = self.sigp[ev]
+# 				self.vrp[ev] = self.edict[ev]*self.r*(self.omega-ev)*1j
+# 				self.vrp[self.nodes(self.evecs[i,:])] = self.vrp[ev]
+# 				self.vpp[ev] = 1j*self.vrp[ev]/2
+# 				self.vpp[self.nodes(self.evecs[i,:])] = self.vpp[ev]
 			
 #		self.edict = { ev:self.evecs[i,:] for i,ev in enumerate(self.evals)}
 #		self.sigp = { ev:-gradient(self.sigma*self.evecs[i,:],self.dlr) for i,ev in enumerate(self.evals)}
@@ -97,7 +113,16 @@ class Field():
 #		self.vort = {ev:-.5*gradient(self.omega*self.edict[ev],self.dlr) for ev in self.evals}
 #		self.vortens = {ev: (self.vort[ev]/self.sigma  - self.sigp[ev]*self.bvort/(self.sigma**2)) for ev in self.evals}
 	
-	
+	def loglog(self,q):
+		self.plot(q,True,True)
+		return
+	def semilogx(self,q):
+		self.plot(q,True,False)
+		return
+	def semilogy(self,q):
+		self.plot(q,False,True)
+		
+		return
 	def plot(self,q,logr=False,logy=False):
 		arglist = vars(self).keys()
 		if logr:
@@ -245,7 +270,7 @@ class Field():
 	def plotmode(self,ev=None,node=None,logr=False,logy=False,renormalize=False,scale=0):
 		if logr:
 			r = log10(self.r)
-			xstr = '$\ln r$'
+			xstr = '$\log_{10} r$'
 		else:
 			r = self.r
 			xstr = '$r$'
@@ -302,7 +327,7 @@ class Field():
 			axey.plot(r,imag(dat))
 			axe.plot(r,abs(dat))
 			axw.plot(r,angle(self.edict[x])/pi)
-			
+			axex.set_title('$\\Omega_p = %.2e + %.2ei$' % (real(x),imag(x)))
 			
 # 			else:
 # 				dat = copy(self.edict[ev])
@@ -498,10 +523,17 @@ class Field():
 		xlabel('$\\Omega_p$',fontsize='large')
 		ylabel('$\\gamma$',fontsize='large')
 	
-	def nodes(self,evec):
-		ex = real(evec)
+	def nodes(self,ev):
+		ex =(self.edict[ev]).real
 		overlap = sign(ex[1:]) - sign(ex[:-1])
 		return len(overlap[overlap != 0])
+	
+	def find_node(self,num):
+		for x in self.evals:
+			if self.nodes(x) == num:
+				return x
+		print 'Could not find the mode with %d nodes' % num
+		return -1
 	
 	def generate_kernels(self):
 		rp,rr = meshgrid(fld.r,fld.r)

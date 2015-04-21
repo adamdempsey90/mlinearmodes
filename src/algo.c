@@ -10,13 +10,14 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 
 
+#ifndef NOPRESSURE
 	calc_coefficients();
-	
+#endif	
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
 			indx=  j +N*i;
 			
-			mat[indx] = coeffs_A[i]*Identity[indx] 
+			mat[indx] = ( omega_prec[i] + coeffs_A[i])*Identity[indx] 
 					    + coeffs_B[i]*D[indx] 
 					    + coeffs_C[i]*D2[indx];
 			bcmat[indx] = Identity[indx];
@@ -48,7 +49,7 @@ void calc_coefficients(void) {
 #ifdef BAROTROPIC
 		coeffs_C[i]  = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-		coeffs_A[i]  = coeffs_C[i]  * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]) + omega_prec[i];
+		coeffs_A[i]  = coeffs_C[i]  * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]);
 		coeffs_B[i]  = coeffs_C[i]  * (2 + dldc2[i] + dlds[i]) ;
 	
 
@@ -60,7 +61,7 @@ void calc_coefficients(void) {
 
 		coeffs_C[i]  = c2[i]/(2*omega[i]*r[i]*r[i]);
 	
-		coeffs_A[i]  = coeffs_C[i]  *( 2 * dlds[i] + d2lds[i]) + omega_prec[i];
+		coeffs_A[i]  = coeffs_C[i]  *( 2 * dlds[i] + d2lds[i]) ;
 		coeffs_B[i]  = coeffs_C[i]  *( 2 + dlds[i]);
 	
 
@@ -76,7 +77,7 @@ void calc_coefficients(void) {
 
 		coeffs_B[i]  = coeffs_C[i] * adi_gam*(2 + dldpres[i]);
 	
-		coeffs_A[i] = coeffs_C[i]  * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]) + omega_prec[i];
+		coeffs_A[i] = coeffs_C[i]  * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]);
 
 		coeffs_C[i]  *= adi_gam;
 
@@ -91,7 +92,7 @@ void calc_coefficients(void) {
 
 	coeffs_C[i] = temp[i]/(2 * omega[i] * r[i] * r[i]);
 	
-	coeffs_A[i]  = omega_prec[i] + coeffs_C[i]  * ( 2 * dlds[i] + d2lds[i] 
+	coeffs_A[i]  = coeffs_C[i]  * ( 2 * dlds[i] + d2lds[i] 
 				  + cool_fac * (d2ldtemp[i] + dldtemp[i]*(2 + dlds[i] + dldtemp[i])));
 				  
 	coeffs_B[i]  = coeffs_C[i]  * (2 + dlds[i] + cool_fac * ( adi_gam*dldtemp[i] + ( adi_gam - 1)*(dlds[i] + 2)));

@@ -1,5 +1,6 @@
 #define OPENMP
-#define ISOTHERMAL
+#define BAROTROPIC
+#define NOPRESSURE
 #define SELFGRAVITY
 #define COMPTRAPZ
-#define SYMSOFT
+#define INFINITEDISK
