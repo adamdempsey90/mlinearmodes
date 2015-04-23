@@ -1,7 +1,7 @@
 from subprocess import call
 from time import time
 
-def param_dict():
+def param_dict(prof=None):
 	params=dict()
 	params['h0'] = .05
 	params['rs'] = .1
@@ -10,7 +10,7 @@ def param_dict():
 	params['sig_ind'] = -1.5
 	params['alpha_s'] = 0
 	params['alpha_b'] = 0
-	params['ri'] = .1
+	params['ri'] = .4
 	params['ro'] = 10	
 	params['nr'] = 400
 	params['np'] = 8
@@ -18,7 +18,29 @@ def param_dict():
 	params['beta'] = 0
 	params['gam'] = 2
 	params['tol'] = 1e-8
+
+	if prof=='yoram':
+		params = {'alpha_b': 0, \
+		 'alpha_s': 0, \
+ 		 'beta': 0, \
+		 'flare_ind': 0, \
+		 'gam': 2, \
+		 'h0': 0.05, \
+ 		 'mdisk': 0.01, \
+		 'np': 8, \
+		 'nr': 400, \
+		 'ri': 0.1, \
+		 'ro': 10, \
+		 'rs': 0.1, \
+		 'sig_ind': -1.5, \
+		 'tol': 1e-08}
 	
+	if prof=='tremaine':
+		params['ri'] = 0.00674
+		params['ro'] = 148.41
+		params['rs'] = .01
+		params['mdisk'] = 1
+		
 	return params
 	
 def run_code(params, defines = None):
@@ -86,7 +108,7 @@ def remove_defines(defines_list):
 
 def set_profile(prof):
 
-	allowed_profs = [ 'EXPDECAY', 'POWER', 'MLIN','KUZMIN','RING','USER']
+	allowed_profs = [ 'EXPDECAY', 'POWER', 'MLIN','KUZMIN','RING','USER','INNERTAPER']
 	
 	if prof not in allowed_profs:
 		print 'Not a valid profile name'

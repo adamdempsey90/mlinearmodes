@@ -27,10 +27,9 @@ int init(double ri,double ro) {
 	compute_kernels();
 
 #ifndef INFINITEDISK
-
+#ifndef NOOMEGAPREC
 	calc_omega_prec_grav();
-	
-
+#endif
 #endif
 #endif
 
@@ -99,8 +98,11 @@ void init_globals(double ri, double ro) {
 		pres[i] = sigma[i] * temp[i];
 		dldpres[i] = dlds[i] + dldtemp[i];
 		d2ldpres[i] = d2lds[i] + d2ldtemp[i];
-		
+#ifndef NOOMEGAPREC		
 		omega_prec[i] = omega_prec_pres(r[i]);
+#else
+		omega_prec[i] = 0;
+#endif
 		
 	}
 
@@ -131,11 +133,24 @@ void init_weights(void) {
 
 	int i;
 
+#ifdef CONSTWEIGHTS
+	for(i=0;i<N;i++) weights[i] = dlr;
+#endif
 #ifdef COMPSIMPS
-	for(i=1;i<N/2;i++) {
-		weights[2*i-2] = dlr/3.;
-		weights[2*i] = dlr/3.;
-		weights[2*i-1] = 4*dlr/3.;
+	for(i=0;i<N;i++) {
+		if (i==0 || i==N-1) {
+			weights[i] = 3./8 * dlr;
+		}
+		else if (i==1 || i==N-2) {
+			weights[i] = 7./6 * dlr;
+		}
+		else if (i==2 || i==N-3) {
+			weights[i] = 23./24 * dlr;
+		}
+		else {
+			weights[i] = dlr;
+		}
+	
 	}
 		
 
@@ -152,23 +167,6 @@ void init_weights(void) {
 
 #endif
 
-// /*O(N^(-4)) weights for numerical quadrature from Numerical Recipes*/
-// 	for(i=0;i<N;i++) {
-// 		if (i==0 || i==N-1) {
-// 			weights[i] = 3./8 * dlr;
-// 		}
-// 		else if (i==1 || i==N-2) {
-// 			weights[i] = 7./6 * dlr;
-// 		}
-// 		else if (i==2 || i==N-3) {
-// 			weights[i] = 23./24 * dlr;
-// 		}
-// 		else {
-// 			weights[i] = dlr;
-// 		}
-// 	
-// 	}
-/* Composite Trapezoid numerical quadrature*/
 
 
 	return;

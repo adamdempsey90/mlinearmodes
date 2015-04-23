@@ -61,9 +61,62 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 	return;
 }
 
+
+void zero_e_bc_inner(double complex *mat, double complex *bcmat) {
+
+	int j,indx;
+	for(j=0;j<N;j++) {
+		indx = j;
+		mat[indx] = 0;
+		bcmat[indx] = 0;
+		if (j==0) {
+			mat[indx] = 1;
+		}
+
+	}
+
+	return;
+}
+
+
+void zero_e_bc_outer(double complex *mat, double complex *bcmat) {
+
+	int j,indx;
+	for(j=0;j<N;j++) {
+		indx = j + N*(N-1);
+		mat[indx] = 0;
+		bcmat[indx] = 0;
+		if (j==N-1) {
+			mat[indx] = 1;
+		}
+	}
+
+	return;
+}
+void user_gradient_bc_outer(double complex *mat, double complex *bcmat,double complex val) {
+
+/* Set up zero Lagrangian Pressure B.C at outer boundary */	
+	int j,indx;
+	for(j=0;j<N;j++) {
+		indx= j + N*(N-1);
+	
+		mat[indx] = D[indx];
+		bcmat[indx] = 0;
+		
+		if (j==(N-1)) {
+			mat[indx] -= val;
+		}
+		
+	}
+	return;
+}
 void set_bc(double complex *mat, double complex *bcmat) {
 
+#ifndef NOPRESSURE
 	lagrangian_pressure_bc_inner(mat, bcmat);
+//	zero_e_bc_inner(mat,bcmat);
+//	user_gradient_bc_outer(mat,bcmat,.5);
 	lagrangian_pressure_bc_outer(mat, bcmat);
+#endif
 	return;
 }

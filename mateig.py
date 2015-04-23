@@ -1,6 +1,7 @@
 from scipy.integrate import cumtrapz
 from scipy.special import ellipe,ellipk
 from subprocess import call
+from copy import deepcopy
 
 class Mode():
 	def __init__(self,ev,emode,(r,dlr,omega,sigma)):
@@ -20,7 +21,7 @@ class Field():
 	def __init__(self,params):
 		dat=loadtxt('globals.dat')
 		emat=loadtxt('eigen.dat')
-		self.params = params
+		self.params = deepcopy(params)
 		self.matrix=loadtxt('matrix.dat')
 		self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
 # 		self.lr = dat[:,0]
@@ -184,7 +185,7 @@ class Field():
 		
 		return
 	
-	def plotreal(self,ev,logx=False,logy=False,rlims=None):
+	def plotreal(self,ev,logz=False, logx=False,logy=False,rlims=None):
 	
 		phi = linspace(0,2*pi,6*self.nr)
 		rr,pp = meshgrid(self.r,phi)
@@ -196,8 +197,8 @@ class Field():
 		else:
 			ind = 1
 			
-		sigp = self.sigp[ev]
-		
+#		sigp = self.sigp[ev]
+		sigp = -gradient(self.sigma*self.edict[ev],self.dlr)		
 		ss = zeros(xx.shape)
 		
 		for i in range(self.nr):
@@ -209,7 +210,11 @@ class Field():
 			
 		
 		figure();
-		pcolormesh(xx,yy,ss,cmap='hot')
+		if logz:
+			pcolormesh(xx,yy,log10(ss),cmap='hot')
+		else:
+			pcolormesh(xx,yy,ss,cmap='hot')
+			
 		colorbar()
 		
 		if rlims != None:
@@ -527,6 +532,9 @@ class Field():
 		ex =(self.edict[ev]).real
 		overlap = sign(ex[1:]) - sign(ex[:-1])
 		return len(overlap[overlap != 0])
+	
+	def sort_nodes(self):
+		print sort([self.nodes(x) for x in self.evals])
 	
 	def find_node(self,num):
 		for x in self.evals:

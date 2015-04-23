@@ -41,9 +41,11 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 	}
 
 
-//	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
+#ifdef NOPRESSURE
+	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
+#else
 	zggev_( &JOBVL, &JOBVR, &nA, tA, &LDA, tQ, &LDB, evals_alpha,evals_beta, NULL, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
-	
+#endif
 	for(i=0;i<nA;i++) {
 		if (cabs(evals_beta[i]) != 0) {
 			evals[i] = evals_alpha[i]/evals_beta[i];

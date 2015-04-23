@@ -55,7 +55,11 @@ void compute_kernels(void) {
 #ifdef SYMSOFT
 		eps1 = eps * sqrt(scaleH[i]*scaleH[i] + scaleH[j]*scaleH[j]);
 #else
-		eps1 = eps *scaleH[j];
+#ifdef SYMSOFT2
+	eps1  = eps*sqrt(r1*rp1);
+#else
+	eps1 = eps * scaleH[j];
+#endif
 #endif
 #endif
 
@@ -71,20 +75,19 @@ void compute_kernels(void) {
 		kval = sqrt(4*r1*rp1/(r_p_rp + eps2));
 		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
 		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
-	
-	
+
+
 		kernel[indx] = (2*(r2-rp2)*(r2-rp2)*(r4-r2*rp2+rp4)+(r2+rp2)*(7*r4-18*r2*rp2+7*rp4)*eps2
 						+9*(r4+rp4)*eps4+5*(r2+rp2)*eps6+eps8)*-2*ee;
 		kernel[indx] -= ( r_m_rp +eps2)*(2*(r2-rp2)*(r2-rp2)*(r2+rp2)+(5*r4+4*r2*rp2+5*rp4)*eps2
 						+4*(r2+rp2)*eps4+eps6)*-2*ek;
 		kernel[indx] /= (pow(r_m_rp+eps2,2)*pow(r_p_rp+eps2,1.5));
 			
-		
-	//	kernel[indx] *=  weights[j]*rp1*sigma[j];
+	
 
-
-
-		
+// 		kernel[indx] = 2*(2*pow(r2 - rp2,2)*(r2 + rp2) + (5*r4 + 4*r2 *rp2 + 5*rp4)*eps2 +4*(r2 + rp2) *eps4 + eps6)*ek;
+// 		kernel[indx] -= 2*(2*pow(r2 - rp2,2) *(r4 - r2 *rp2 + rp4) + (r2 + rp2) *(7 *r4 - 18 *r2 *rp2 + 7 *rp4)*eps2 +  9 *(r4 + rp4) *eps4 + 5 *(r2 + rp2) *eps6 + eps8)*ee;
+// 		kernel[indx] /=  ((pow(r1 - rp1,2) + eps2)*pow(pow(r1 + rp1,2) + eps2,1.5));
 	}	
 #endif
 	return;
@@ -98,13 +101,18 @@ void add_sg(double complex *mat, double complex *bcmat) {
 	
 	for(i=0;i<N;i++) {
 		G = .5/ ( omega[i]*r[i]*r[i]*r[i]);
+		
+#ifdef INDIRECT
+		mat[N*i] -= G *3*M_PI*r[i]*r[i]*sigma[0];
+		mat[N-1 + N*i] += G*3*M_PI*r[i]*r[i]*sigma[N-1];
+#endif
 		for(j=0;j<N;j++) {
 			indx = j + N*i;
 			mat[indx] += G*kernel[indx]*weights[j]*r[j]*sigma[j];		
 		}
 			
 			
-	}			
+	}		
 	return;
 }
 
@@ -260,7 +268,11 @@ double integrand(double x, void *params) {
 #ifdef SYMSOFT
 	eps1 = eps * sqrt(scaleH_func(r1)*scaleH_func(r1) + scaleH_func(rp1)*scaleH_func(rp1));
 #else
+#ifdef SYMSOFT2
+	eps1  = eps*sqrt(r1*rp1);
+#else
 	eps1 = eps * scaleH_func(rp1);
+#endif
 #endif
 #endif
 	eps2 = eps1*eps1;

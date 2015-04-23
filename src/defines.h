@@ -2,5 +2,5 @@
 #define BAROTROPIC
 #define NOPRESSURE
 #define SELFGRAVITY
-#define COMPTRAPZ
-#define INFINITEDISK
+#define COMPSIMPS
+#define SYMSOFT
