@@ -40,31 +40,37 @@ int init(double ri,double ro) {
 double omega_prec_pres(double x) {
 	double delta = dlogtemp_func(x);
 	double mu = dlogsigma_func(x);
+	double delta_p = d2logtemp_func(x);
+	double mu_p = d2logsigma_func(x);
 	double fac;
 		
-#ifdef ISOTHERMAL
+#if defined(ISOTHERMAL) || defined(COOLING)
 	
-	fac = (mu+delta)*(delta+1)*temp_func(x);
-
+//	fac = (mu+delta)*(delta+1)*temp_func(x);
+	fac = -temp_func(x) * ( (mu+delta)*(1+delta) + mu_p + delta_p);
 #endif
 
 #ifdef COOLING
-		
-	fac =  (mu+delta)*(delta+1)*temp_func(x);
-
+	fac *= adi_gam;
 #endif
+
+// #ifdef COOLING
+// 		
+// 	fac =  (mu+delta)*(delta+1)*temp_func(x);
+// 
+// #endif
 
 #ifdef BAROTROPIC
 	
-	fac = mu*(delta + 1)*temp_func(x)*adi_gam;
-
+//	fac = mu*(delta + 1)*temp_func(x)*adi_gam;
+	fac = -temp_func(x)*( mu*(1+delta) + mu_p);
 #endif		
 	
 #if defined(INFINITEDISK) && defined(SELFGRAVITY)
-	fac -= sigma_func(x)*(1+mu)*(2+mu)*x*27.5;
+	fac += sigma_func(x)*(1+mu)*(2+mu)*x*27.5;
 #endif	
 	
-	return fac * (-.5/sqrt(x));
+	return fac /(2*omk_func(x)*x*x);
 }
 void init_globals(double ri, double ro) {	
 	int i;

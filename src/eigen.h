@@ -16,7 +16,7 @@
 
 int N;
 
-double Mdisk, eps, h0, dlr,rout, flare_index, sigma_index, temp_index,sigma0, tol; 
+double Mdisk, eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol; 
 
 double *weights, *kernel, *work;
 double complex *cwork;

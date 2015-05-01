@@ -2,7 +2,7 @@
 
 //#define ANALYTICPOTENTIAL
 
-static const double r_max = .2;
+static const double r_max = .4;
 static const double inner_slope = 3;
 
 

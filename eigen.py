@@ -36,11 +36,20 @@ def param_dict(prof=None):
 		 'tol': 1e-08}
 	
 	if prof=='tremaine':
-		params['ri'] = 0.00674
+		params['ri'] = .0009
+#		params['ri'] = 0.00674
 		params['ro'] = 148.41
 		params['rs'] = .01
 		params['mdisk'] = 1
-		
+	
+	if prof in ['papa_a','papa_b']:
+		params['ri'] = 1.1
+		params['ro'] = 99.9
+		if prof == 'papa_a':
+			params['mdisk'] = .04
+		else:
+			params['mdisk'] = .004	
+			
 	return params
 	
 def run_code(params, defines = None):

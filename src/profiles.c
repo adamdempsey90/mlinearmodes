@@ -1,28 +1,19 @@
 #include "eigen.h"
 
-//#define ANALYTICPOTENTIAL
+double sig_param;
 
-static const double r_max = .2;
-static const double inner_slope = 3;
-
-
-
-double sigma_func(double x) {	
-	double outer_slope = sigma_index;
-	return sigma0 /( pow(x/r_max,-inner_slope) + pow(x/r_max,-outer_slope));
+double sigma_func(double x) {
+	sig_param = Mdisk/(pow(2*M_PI,1.5)*sigma_index*exp(-.5*sigma_index*sigma_index));
+	
+	return sig_param/x * exp(-log(x)*log(x)/(2*sigma_index)) + 1e-8;
 }
 
 double dlogsigma_func(double x) {
-	double outer_slope = sigma_index;
-	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
-	return outer_slope + (inner_slope - outer_slope)*pow(x/r_max,outer_slope)/denom;
+	return -1 - log(x)/(sigma_index*sigma_index);
 }
 
 double d2logsigma_func(double x) {
-	double outer_slope = sigma_index;
-	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
-	denom *= denom;
-	return -(outer_slope-inner_slope)*(outer_slope-inner_slope)*pow(x/r_max,inner_slope+outer_slope)/denom;
+	return -1.0/(sigma_index*sigma_index);
 }
 
 
@@ -53,7 +44,6 @@ double d2logomk_func(double x) {
 double scaleH_func(double x) {
 	return h0*x*pow(x,flare_index);
 }
-
 
 int analytic_potential(void) {
 	return 0;

@@ -531,10 +531,23 @@ class Field():
 	def nodes(self,ev):
 		ex =(self.edict[ev]).real
 		overlap = sign(ex[1:]) - sign(ex[:-1])
-		return len(overlap[overlap != 0])
+		return (len(overlap[overlap != 0]),ev)
 	
-	def sort_nodes(self):
-		print sort([self.nodes(x) for x in self.evals])
+	def sort_nodes(self,show_val=False):
+		nodes_list = array([ self.nodes(x)[0] for x in self.evals])
+		ev_list = array([ self.nodes(x)[1] for x in self.evals])
+		ind=argsort(nodes_list)
+		
+		indx_list = [list(self.evals).index(x) for x in ev_list[ind]]
+		sorted_node_list = nodes_list[ind]
+		
+		result = [ (nodes_list[i],ev_list[i]) for i in ind]
+		if show_val==True:
+			print result
+		else:
+			for x in[(sorted_node_list[i],indx_list[i]) for i in range(len(nodes_list))]:
+				print x
+		
 	
 	def find_node(self,num):
 		for x in self.evals:

@@ -11,7 +11,8 @@ def create_defines_file():
 				'KUZMIN_PROF':'src/profiles/kuzmin.c', \
 				'GAUSSIANRING_PROF':'src/profiles/gaussian_ring.c', \
 				'GAUSSIANBUMP_PROF':'src/profiles/gaussian_bump.c', \
-				'INNERTAPER_PROF':'src/profiles/innertaper_profile.c'}
+				'INNERTAPER_PROF':'src/profiles/innertaper_profile.c', \
+				'PAPALOIZOU_PROF': 'src/profiles/papaloizou_profile.c'}
 	
 	with open('params.opt','r') as f:
 		temp = [x.split('+') for x in f.readlines()]

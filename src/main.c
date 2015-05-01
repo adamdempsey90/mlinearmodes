@@ -67,7 +67,6 @@ int main(int argc, char *argv[]) {
 	
 	dlr = (log(ro) - log(ri))/((float) N);
 	
-	rout = 100;
 
 
 

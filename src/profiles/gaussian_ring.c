@@ -5,7 +5,7 @@ double sig_param;
 double sigma_func(double x) {
 	sig_param = Mdisk/(pow(2*M_PI,1.5)*sigma_index*exp(-.5*sigma_index*sigma_index));
 	
-	return sig_param/x * exp(-log(x)*log(x)/(2*sigma_index));
+	return sig_param/x * exp(-log(x)*log(x)/(2*sigma_index)) + 1e-8;
 }
 
 double dlogsigma_func(double x) {

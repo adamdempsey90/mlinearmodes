@@ -56,9 +56,9 @@ void compute_kernels(void) {
 		eps1 = eps * sqrt(scaleH[i]*scaleH[i] + scaleH[j]*scaleH[j]);
 #else
 #ifdef SYMSOFT2
-	eps1  = eps*sqrt(r1*rp1);
+		eps1  = eps*sqrt(scaleH[i]*scaleH[j]);
 #else
-	eps1 = eps * scaleH[j];
+		eps1 = eps * scaleH[j];
 #endif
 #endif
 #endif
@@ -97,10 +97,10 @@ void add_sg(double complex *mat, double complex *bcmat) {
 	int i,j;
 	int indx;
 	double complex G;
-	
+
 	
 	for(i=0;i<N;i++) {
-		G = .5/ ( omega[i]*r[i]*r[i]*r[i]);
+		G = .5/ (omega[i]*r[i]*r[i]*r[i]);
 		
 #ifdef INDIRECT
 		mat[N*i] -= G *3*M_PI*r[i]*r[i]*sigma[0];
@@ -269,7 +269,7 @@ double integrand(double x, void *params) {
 	eps1 = eps * sqrt(scaleH_func(r1)*scaleH_func(r1) + scaleH_func(rp1)*scaleH_func(rp1));
 #else
 #ifdef SYMSOFT2
-	eps1  = eps*sqrt(r1*rp1);
+	eps1  = eps*sqrt(scaleH_func(r1)*scaleH_func(rp1));
 #else
 	eps1 = eps * scaleH_func(rp1);
 #endif
