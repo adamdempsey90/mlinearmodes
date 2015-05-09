@@ -49,7 +49,15 @@ def param_dict(prof=None):
 			params['mdisk'] = .04
 		else:
 			params['mdisk'] = .004	
-			
+	
+	if prof == 'narrow ring':
+		params['ri'] =  0.95122942
+		params['ro'] =  1.0512711
+		params['mdisk']= 1
+		params['rs']=.01
+		params['sig_ind'] = .01
+		
+		
 	return params
 	
 def run_code(params, defines = None):

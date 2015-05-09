@@ -10,6 +10,7 @@
 
 #+ISOTHERMAL
 +BAROTROPIC
+#+POLYTROPE
 #+COOLING
 
 # Disable Pressure
@@ -53,6 +54,7 @@
 # Softening #
 
 #+CONSTSOFT
+#+LINEARSOFT
 #+SYMSOFT
-#+SYMSOFT2
++SYMSOFT2
 

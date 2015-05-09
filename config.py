@@ -29,6 +29,10 @@ def create_defines_file():
 		if defs != []:
 			for x in defs:
 				g.write('#define ' + x + '\n')
+			if 'BAROTROPIC' not in defs:
+				if 'POLYTROPE' in defs:
+					g.write('#define BAROTROPIC\n')
+					
 		else:
 			g.write('\n')
 	

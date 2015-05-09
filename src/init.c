@@ -8,7 +8,7 @@ double calc_total_disk_mass(void);
 double omega_prec_pres(double x);
 
 int init(double ri,double ro) {
-	
+	int i;
 	init_derivatives();
 	
 	
@@ -33,7 +33,13 @@ int init(double ri,double ro) {
 #endif
 #endif
 
-	
+#ifndef NOPRESSURE
+#ifndef NOOMEGAPREC
+	for(i=0;i<N;i++) {
+		omega_prec[i] += omega_prec_pres(r[i]);
+	}
+#endif
+#endif
 	return 0;
 }
 
@@ -79,7 +85,7 @@ void init_globals(double ri, double ro) {
 	
 		lr[i] = log(ri) + i*dlr;
 		r[i] = exp(lr[i]);
-	
+		lr[i] = log(r[i]);	
 		
 		omega[i] = omk_func(r[i]);
 		dldom[i] = dlogomk_func(r[i]);
@@ -104,11 +110,9 @@ void init_globals(double ri, double ro) {
 		pres[i] = sigma[i] * temp[i];
 		dldpres[i] = dlds[i] + dldtemp[i];
 		d2ldpres[i] = d2lds[i] + d2ldtemp[i];
-#ifndef NOOMEGAPREC		
-		omega_prec[i] = omega_prec_pres(r[i]);
-#else
 		omega_prec[i] = 0;
-#endif
+		
+
 		
 	}
 

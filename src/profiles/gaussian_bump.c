@@ -2,9 +2,9 @@
 
 //#define ANALYTICPOTENTIAL
 
-double width = .3;
-double center = 2;
-double amplitude = 2;
+double width = 1;
+double center = 1;
+double amplitude = 5;
 double Qmin = 2;
 
 double h_p = .05;

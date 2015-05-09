@@ -184,7 +184,34 @@ class Field():
 		
 		
 		return
+	def omegap_plot(self,ev,logr=True):
 	
+		ilr = self.r[sign(self.wp-ev.real)[1:] - sign(self.wp-ev.real)[:-1] != 0]
+		num_ilr = len(ilr)
+		min_wp = self.wp.min()
+		max_wp = self.wp.max()
+		
+		fig, ax1=subplots()
+		if logr:
+			ax1.semilogx(self.r,self.wp,'-k')
+			ax1.semilogx(self.r,ones(self.r.shape)*ev.real,'--')
+			for lr in ilr:
+				ax1.semilogx([lr,lr],[min_wp,max_wp],'--k')
+			
+		else:
+			ax1.plot(self.r,self.wp,'-k')
+			ax1.plot(self.r,ones(self.r.shape)*ev.real,'--')
+			for lr in ilr:
+				ax1.plot([lr,lr],[min_wp,max_wp],'--k')
+		
+		ax2 = ax1.twinx()
+		
+		if logr:
+			ax2.semilogx(self.r, self.edict[ev].real,'-r')
+		else:
+			ax2.plot(self.r,self.edict[ev].real,'-r')
+		
+		
 	def plotreal(self,ev,logz=False, logx=False,logy=False,rlims=None):
 	
 		phi = linspace(0,2*pi,6*self.nr)
@@ -542,13 +569,14 @@ class Field():
 		sorted_node_list = nodes_list[ind]
 		
 		result = [ (nodes_list[i],ev_list[i]) for i in ind]
+		sorted_res = [(sorted_node_list[i],indx_list[i]) for i in range(len(nodes_list))]
 		if show_val==True:
 			print result
 		else:
-			for x in[(sorted_node_list[i],indx_list[i]) for i in range(len(nodes_list))]:
+			for x in sorted_res:
 				print x
 		
-	
+		return sorted_res
 	def find_node(self,num):
 		for x in self.evals:
 			if self.nodes(x) == num:
@@ -1261,4 +1289,6 @@ def predicted_omegap(params,eos):
 		return gamma*.5*h**2*pow(ro,.5*(4*f-3)) * (-2*f*(mu + d)+2*mu+d*(2+mu+d)-gamma*k2)
 	else:
 		return 0
-	
+
+def kuzmin_veff(r,gam):
+	return 3*(r**4 * ( 5 - 4*gam + 3*gam*gam)+r**2 * (6-8*gam) + 1)/(8*sqrt(r)*(1+r**2)**(.5*(3*gam+1)))
