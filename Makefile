@@ -1,5 +1,5 @@
 EXECUTABLE=eigen
-SOURCES=alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c 
+SOURCES=alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c
 HEADER=eigen.h defines.h
 
 LDFLAGS=-llapack -lblas -lm -lgomp -lgsl
@@ -7,10 +7,10 @@ LDFLAGS=-llapack -lblas -lm -lgomp -lgsl
 CFLAGS=-c -fopenmp -Wall -O3  -g
 
 
-INCLIB=
-LDLIB=
-#INCLIB=-I/usr/local/include/
-#LDLIB=-L/usr/local/lib
+#INCLIB=
+#LDLIB=
+INCLIB=-I/usr/local/include/
+LDLIB=-L/usr/local/lib
 
 BIN=bin/
 SRC=src/
@@ -37,14 +37,14 @@ CHEADER=$(addprefix $(SRC),$(HEADER))
 
 
 
-all: $(CSOURCES) $(EXECUTABLE) 
+all: $(CSOURCES) $(EXECUTABLE)
 
-$(EXECUTABLE): $(COBJECTS) 
+$(EXECUTABLE): $(COBJECTS)
 	$(CC)  $(COBJECTS) $(LDLIB) $(LDFLAGS) -o $@
 
-$(BIN)%.o: $(SRC)%.c $(CHEADER) 
+$(BIN)%.o: $(SRC)%.c $(CHEADER)
 	$(CC) $(INCLIB) $(CFLAGS) $< -o $@
 
-	
+
 clean:
-	rm $(COBJECTS) $(EXECUTABLE) 
+	rm $(COBJECTS) $(EXECUTABLE)
