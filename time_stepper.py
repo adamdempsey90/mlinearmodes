@@ -1,6 +1,64 @@
 
 from scipy.integrate import ode
 
+def compute_matrices(mat,ei):
+	e,x = eig(mat)
+	
+	xinv = inv(x)
+	yi = dot(xinv,ei)
+	
+	return [e,x,xinv,yi]
+	
+
+def evolve(tend,matrices):
+	e = matrices[0]
+	x = matrices[1]
+	xinv = matrices[2]
+	yi = matrices[3]
+	
+	yf = zeros(yi.shape,dtype='complex')
+	
+	for i,y in enumerate(yi):
+		yf[i] = y * exp(e[i]*tend)
+	
+	ef = dot(x,yf)
+	
+	return ef
+
+
+def time_stepper(t,mat,ei,plot_results=False,logr=True,r=None):
+	
+	matrices = compute_matrices(mat,ei)
+	
+	ef = zeros(ei.shape + (len(t),),dtype='complex')
+	ef[:,0] = ei
+	for i,a in enumerate(t[1:],start=1):
+		ef[:,i] = evolve(t[i],matrices)
+	
+	if plot_results:
+		fig,(axr,axi) = subplots(2,1,sharex='col')
+		
+		axi.set_xlabel('$r',fontsize='large')
+		axi.set_ylabel('$e_y$',fontsize='large')
+		axr.set_ylabel('$e_x$',fontsize='large')
+		axr.set_title('t = %.2f' % t[0])
+		axr.set_ylim((ef.real.min(),ef.real.max()))
+		axi.set_ylim((ef.imag.min(),ef.imag.max()))
+		if logr:
+			liner,=axr.semilogx(r,ef[:,0].real)
+			linei,=axi.semilogx(r,ef[:,0].imag)
+		else:
+			liner,=axr.plot(r,ef[:,0].real)
+			linei,=axi.plot(r,ef[:,0].imag)
+		
+		for i,ti in enumerate(t[1:],start=1):
+			liner.set_ydata(ef[:,i].real)
+			linei.set_ydata(ef[:,i].imag)
+			axr.set_title('t = %.2f' % ti)
+			fig.canvas.draw()
+	
+	return ef  	
+
 def load_matrix():
 	mat = loadtxt('matrix.dat')
 	mat = mat[:,::2] + 1j*mat[:,1::2]
