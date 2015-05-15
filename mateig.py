@@ -19,9 +19,11 @@ class Mode():
 
 class Field():
 	def __init__(self,params):
+	
 		dat=loadtxt('globals.dat')
 		emat=loadtxt('eigen.dat')
 		self.params = deepcopy(params)
+		self.defines = load_defines()
 		self.matrix=loadtxt('matrix.dat')
 		self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
 # 		self.lr = dat[:,0]
@@ -81,6 +83,8 @@ class Field():
 		self.Q = self.omega * sqrt(self.temp)/(pi*self.sigma)
 		self.mdisk = trapz(self.r*self.sigma,x=self.r)*2*pi
 		
+		(self.Veff,self.K2eff,self.Psi) = calculate_veff(self)
+	
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
 		
@@ -192,18 +196,22 @@ class Field():
 		max_wp = self.wp.max()
 		
 		fig, ax1=subplots()
+		ax1.set_xlabel('$r$',fontsize='large')
+		ax1.set_title('$\\Omega_p = %.2e + %.2ei$' % (ev.real, ev.imag),fontsize='large')
 		if logr:
 			ax1.semilogx(self.r,self.wp,'-k')
 			ax1.semilogx(self.r,ones(self.r.shape)*ev.real,'--')
 			for lr in ilr:
-				ax1.semilogx([lr,lr],[min_wp,max_wp],'--k')
+				ax1.semilogx([lr,lr],[min_wp,max_wp],'--k',label='$r_{ilr}=%.2e$'%lr)
+			
 			
 		else:
 			ax1.plot(self.r,self.wp,'-k')
 			ax1.plot(self.r,ones(self.r.shape)*ev.real,'--')
 			for lr in ilr:
-				ax1.plot([lr,lr],[min_wp,max_wp],'--k')
+				ax1.plot([lr,lr],[min_wp,max_wp],'--k',label='$r_{ilr}=%.2e$'%lr)
 		
+		ax1.legend(loc='best')
 		ax2 = ax1.twinx()
 		
 		if logr:
@@ -212,6 +220,61 @@ class Field():
 			ax2.plot(self.r,self.edict[ev].real,'-r')
 		
 		
+	def Veff_plot(self,ev,logr=True):
+	
+		ilr = self.r[sign(self.wp-ev.real)[1:] - sign(self.wp-ev.real)[:-1] != 0]
+		num_ilr = len(ilr)
+		min_veff = self.Veff.min()
+		max_veff = self.Veff.max()
+		
+		tp = self.r[sign(self.Veff-ev.real)[1:] - sign(self.Veff-ev.real)[:-1] != 0]
+		
+		fig, (ax1,axk)=subplots(1,2,figsize=(20,10))
+		ax1.set_xlabel('$r$',fontsize='large')
+		ax1.set_ylabel('$V_{eff}$, $-\\Omega_p$',fontsize='large')
+		ax1.set_title('$\\Omega_p = %.2e + %.2ei$' % (ev.real, ev.imag),fontsize='large')
+		if logr:
+			ax1.semilogx(self.r,self.Veff,'-k')
+			ax1.semilogx(self.r,ones(self.r.shape)*ev.real,'--')
+			for lr in ilr:
+				ax1.semilogx([lr,lr],[min_veff,max_veff],'--k',label='$r_{ilr}=%.2e$'%lr)
+			for t in tp:
+				ax1.semilogx([t,t],[min_veff,max_veff],'--r',label='$r_{tp}=%.2e$'%t)
+			
+			
+		else:
+			ax1.plot(self.r,self.Veff,'-k')
+			ax1.plot(self.r,ones(self.r.shape)*ev.real,'--')
+			for lr in ilr:
+				ax1.plot([lr,lr],[min_veff,max_veff],'--k',label='$r_{ilr}=%.2e$'%lr)
+			for t in tp:
+				ax1.plot([t,t],[min_veff,max_veff],'--r',label='$r_{tp}=%.2e$'%t)
+		
+		ax1.legend(loc='best')
+		ax2 = ax1.twinx()
+		
+		if logr:
+			ax2.semilogx(self.r, self.edict[ev].real*self.Psi,'-r')
+		else:
+			ax2.plot(self.r,self.edict[ev].real*self.Psi,'-r')
+				
+		axk.set_xlabel('$r$',fontsize='large')
+		axk.set_ylabel('$K^2(r)$',fontsize='large')
+		axk.set_title('$\\Omega_p = %.2e + %.2ei$' % (ev.real, ev.imag),fontsize='large')
+	
+		val = self.K2eff*(ev - self.Veff)
+		if logr:
+			axk.semilogx(self.r,val)
+			for lr in ilr:
+				axk.semilogx([lr,lr],[val.min(),val.max()],'--k',label='$r_{ilr}=%.2e$'%lr)
+		
+		else:
+			axk.plot(self.r,val)
+			for lr in ilr:
+				axk.plot([lr,lr],[val.min(),val.max()],'--k',label='$r_{ilr}=%.2e$'%lr)
+			axk.legend(loc='best')
+			
+			
 	def plotreal(self,ev,logz=False, logx=False,logy=False,rlims=None):
 	
 		phi = linspace(0,2*pi,6*self.nr)
@@ -1292,3 +1355,34 @@ def predicted_omegap(params,eos):
 
 def kuzmin_veff(r,gam):
 	return 3*(r**4 * ( 5 - 4*gam + 3*gam*gam)+r**2 * (6-8*gam) + 1)/(8*sqrt(r)*(1+r**2)**(.5*(3*gam+1)))
+
+def load_defines():
+	with open('src/defines.h') as f:
+		lines = f.readlines()
+	return [line.split()[1] for line in lines]
+
+def calculate_veff(fld):
+	d = fld.dldtemp
+	mu = fld.dlds
+	mup = fld.d2lds
+	dp = fld.d2lds
+	gam = fld.params['gam']
+	
+	if 'BAROTROPIC' in fld.defines:
+		veff = fld.wp-(fld.temp/(8*fld.omega*fld.r**2))*((1+d-mu)*(3+d-mu) + 2*(dp-mup))
+		k2eff = 2*fld.omega/fld.temp
+		psi = sqrt(fld.sigma*fld.temp*fld.r**3)
+	elif 'ISOTHERMAL' in fld.defines:
+		veff = fld.wp-(fld.temp/(8*fld.omega*fld.r**2))*((1-mu)*(3-mu)+2*mup)
+		k2eff = 2*fld.omega/fld.temp
+		psi = sqrt(fld.sigma*fld.r**3)
+	elif 'COOLING' in fld.defines:
+		veff = fld.wp - (fld.temp/(8*fld.omega*fld.r**2))*(4*(2+d)*(d+mu)-gam*(1+d+mu)*(3+d+mu)-2*(gam-2)*(dp+mup))	
+		k2eff = 2*fld.omega/(gam*fld.temp)
+		psi = sqrt(gam*fld.r**3 * fld.sigma*fld.temp)
+	else:
+		return 'No good EOS, outputinng precession rate'
+		veff = fld.wp
+		k2eff = 2*fld.omega/fld.temp
+
+	return veff,k2eff,psi

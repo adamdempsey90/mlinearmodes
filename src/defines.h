@@ -1,6 +1,4 @@
 #define OPENMP
-#define BAROTROPIC
-#define SELFGRAVITY
-#define INPUTMASS
+#define ISOTHERMAL
 #define COMPSIMPS
 #define SYMSOFT2

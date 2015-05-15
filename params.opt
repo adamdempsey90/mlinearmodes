@@ -8,26 +8,26 @@
 
 # Equation of State Options
 
-#+ISOTHERMAL
-+BAROTROPIC
++ISOTHERMAL
+#+BAROTROPIC
 #+POLYTROPE
 #+COOLING
 
 # Disable Pressure
 
-#NOPRESSURE
+#+NOPRESSURE
 #+NOOMEGAPREC
 
 # Enable Self Gravity
 
-+SELFGRAVITY
+#+SELFGRAVITY
 #+READKERNEL
 #+INDIRECT
 
 
 # Switch for inputing the total disk mass
 
-+INPUTMASS
+#+INPUTMASS
 
 # Profile Options
 
