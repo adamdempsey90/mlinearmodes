@@ -2,6 +2,7 @@ from scipy.integrate import cumtrapz
 from scipy.special import ellipe,ellipk
 from subprocess import call
 from copy import deepcopy
+import pickle 
 
 class Mode():
 	def __init__(self,ev,emode,(r,dlr,omega,sigma)):
@@ -81,9 +82,10 @@ class Field():
 		inds = argsort(evals)
 		
 		self.Q = self.omega * sqrt(self.temp)/(pi*self.sigma)
+		self.Mach = self.r*self.omega/sqrt(self.temp)
 		self.mdisk = trapz(self.r*self.sigma,x=self.r)*2*pi
 		
-		(self.Veff,self.K2eff,self.Psi) = calculate_veff(self)
+		(self.Veffp,self.Veffm,self.K2eff,self.Psi) = calculate_veff(self)
 	
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
@@ -220,60 +222,96 @@ class Field():
 			ax2.plot(self.r,self.edict[ev].real,'-r')
 		
 		
-	def Veff_plot(self,ev,logr=True):
+	def Veff_plot(self,ev,signk=1,logr=True,plot_lr=False):
 	
 		ilr = self.r[sign(self.wp-ev.real)[1:] - sign(self.wp-ev.real)[:-1] != 0]
-		num_ilr = len(ilr)
-		min_veff = self.Veff.min()
-		max_veff = self.Veff.max()
 		
-		tp = self.r[sign(self.Veff-ev.real)[1:] - sign(self.Veff-ev.real)[:-1] != 0]
+		cor = self.r[sign(self.omega-ev.real)[1:] - sign(self.omega-ev.real)[:-1] != 0]
+		
+		for rc in cor:
+			print 'Corotation at %.2e'%rc
+		
+		for lr in ilr:
+			print 'Inner Linblad resonance at %.2e'%lr
+		
+		if signk == 1:
+			Veff = self.Veffp
+		else:
+			Veff = self.Veffm
+		
+		
+		num_ilr = len(ilr)
+		min_veff = Veff.min()
+		max_veff = Veff.max()
+		
+		tp = self.r[sign(Veff.real-ev.real)[1:] - sign(Veff.real-ev.real)[:-1] != 0]
+		tpi = self.r[sign(Veff.imag-ev.imag)[1:] - sign(Veff.imag-ev.imag)[:-1] != 0]
+
 		
 		fig, (ax1,axk)=subplots(1,2,figsize=(20,10))
 		ax1.set_xlabel('$r$',fontsize='large')
-		ax1.set_ylabel('$V_{eff}$, $-\\Omega_p$',fontsize='large')
+		ax1.set_ylabel('$V_{eff}$,    $\\Omega_p$',fontsize='large')
 		ax1.set_title('$\\Omega_p = %.2e + %.2ei$' % (ev.real, ev.imag),fontsize='large')
 		if logr:
-			ax1.semilogx(self.r,self.Veff,'-k')
-			ax1.semilogx(self.r,ones(self.r.shape)*ev.real,'--')
-			for lr in ilr:
-				ax1.semilogx([lr,lr],[min_veff,max_veff],'--k',label='$r_{ilr}=%.2e$'%lr)
-			for t in tp:
-				ax1.semilogx([t,t],[min_veff,max_veff],'--r',label='$r_{tp}=%.2e$'%t)
+			ax1.semilogx(self.r,Veff.real,'-k')
+			ax1.semilogx(self.r,Veff.imag,'--k')
+			
+			
 			
 			
 		else:
-			ax1.plot(self.r,self.Veff,'-k')
-			ax1.plot(self.r,ones(self.r.shape)*ev.real,'--')
+			ax1.plot(self.r,Veff.real,'-k')
+			ax1.plot(self.r,Veff.imag,'--k')
+		
+		ax1.axhline(ev.real,color='b',linestyle='-')
+		ax1.axhline(ev.imag,color='b',linestyle='--')
+		if plot_lr:
 			for lr in ilr:
-				ax1.plot([lr,lr],[min_veff,max_veff],'--k',label='$r_{ilr}=%.2e$'%lr)
-			for t in tp:
-				ax1.plot([t,t],[min_veff,max_veff],'--r',label='$r_{tp}=%.2e$'%t)
+				ax1.axvline(lr,color='k',linestyle='--',label='$r_{ilr}=%.2e$'%lr)
+		for t in tp:
+			ax1.axvline(t,color='r',linestyle='-',label='$r_{tp}=%.2e$'%t)
+		for t in tpi:
+			ax1.axvline(t,color='r',linestyle='--',label='$r_{tp}=%.2e$'%t)	
+		for rc in cor:
+			ax1.axvline(rc,color='k',linewidth=2,label='$r_{co}=%.2e$'%rc)	
+		
+		
 		
 		ax1.legend(loc='best')
 		ax2 = ax1.twinx()
 		
 		if logr:
-			ax2.semilogx(self.r, self.edict[ev].real*self.Psi,'-r')
+			ax2.semilogx(self.r, self.edict[ev].real,'-m')
+			ax2.semilogx(self.r, self.edict[ev].imag,'--m')
 		else:
-			ax2.plot(self.r,self.edict[ev].real*self.Psi,'-r')
+			ax2.plot(self.r,self.edict[ev].real,'-m')
+			ax2.plot(self.r,self.edict[ev].imag,'--m')
 				
 		axk.set_xlabel('$r$',fontsize='large')
-		axk.set_ylabel('$K^2(r)$',fontsize='large')
 		axk.set_title('$\\Omega_p = %.2e + %.2ei$' % (ev.real, ev.imag),fontsize='large')
 	
-		val = self.K2eff*(ev - self.Veff)
+		val = self.K2eff*(ev - Veff)
 		if logr:
-			axk.semilogx(self.r,val)
-			for lr in ilr:
-				axk.semilogx([lr,lr],[val.min(),val.max()],'--k',label='$r_{ilr}=%.2e$'%lr)
-		
-		else:
-			axk.plot(self.r,val)
-			for lr in ilr:
-				axk.plot([lr,lr],[val.min(),val.max()],'--k',label='$r_{ilr}=%.2e$'%lr)
-			axk.legend(loc='best')
+			axk.semilogx(self.r,val.real,'-g')
+			axk.semilogx(self.r,val.imag,'--g')
 			
+		else:
+			axk.plot(self.r,val.real,'-g')
+			axk.plot(self.r,val.imag,'--g')
+	
+		
+		if plot_lr:
+			for lr in ilr:
+				axk.axvline(lr,color='k',linestyle='--',label='$r_{ilr}=%.2e$'%lr)
+		for t in tp:
+			axk.axvline(t,color='r',linestyle='-',label='$r_{tp}=%.2e$'%t)
+		for t in tpi:
+			axk.axvline(t,color='r',linestyle='--',label='$r_{tp}=%.2e$'%t)	
+		for rc in cor:
+			ax1.axvline(rc,color='k',linewidth=2,label='$r_{co}=%.2e$'%rc)	
+			
+				
+		axk.legend(loc='best')	
 			
 	def plotreal(self,ev,logz=False, logx=False,logy=False,rlims=None):
 	
@@ -1361,28 +1399,53 @@ def load_defines():
 		lines = f.readlines()
 	return [line.split()[1] for line in lines]
 
-def calculate_veff(fld):
+def calculate_veff(fld,signk=1):
+	T = fld.temp
+	om = fld.omega
+	r = fld.r
+	S = fld.sigma
+	
 	d = fld.dldtemp
-	mu = fld.dlds
-	mup = fld.d2lds
+	m = fld.dlds
+	mp = fld.d2lds
 	dp = fld.d2lds
-	gam = fld.params['gam']
+	g = fld.params['gam']
+	if 'SELFGRAVITY' in fld.defines:
+		moq = fld.Mach/fld.Q
+	else:
+		moq = 0
 	
 	if 'BAROTROPIC' in fld.defines:
-		veff = fld.wp-(fld.temp/(8*fld.omega*fld.r**2))*((1+d-mu)*(3+d-mu) + 2*(dp-mup))
-		k2eff = 2*fld.omega/fld.temp
-		psi = sqrt(fld.sigma*fld.temp*fld.r**3)
+		veffp = fld.wp- (T/(8*om*r*r))*( (1+d-m)*(3+d-m)+2*(dp-mp))
+		veffm = veffp +  (T/(8*om*r*r))*4*moq*(moq - 3*1j)
+		veffp = veffp +  (T/(8*om*r*r))*4*moq*(moq + 3*1j)
+		k2eff = -2*om/T
+		psi = (sqrt(S/(r**3 * T)) + exp(-1j*signk*moq)) * S
 	elif 'ISOTHERMAL' in fld.defines:
-		veff = fld.wp-(fld.temp/(8*fld.omega*fld.r**2))*((1-mu)*(3-mu)+2*mup)
-		k2eff = 2*fld.omega/fld.temp
-		psi = sqrt(fld.sigma*fld.r**3)
+		veffp = fld.wp-(T/(8*om*r*r))*((m-3)*(m-1)-2*m)
+		veffm = veffp + (T/(8*om*r*r))*4*moq*(moq - (3-d)*1j)
+		veffp = veffp + (T/(8*om*r*r))*4*moq*(moq + (3-d)*1j)
+	
+		k2eff = -2*om/T
+		psi = (sqrt(S/r**3) + exp(-1j*signk*moq)) * S
 	elif 'COOLING' in fld.defines:
-		veff = fld.wp - (fld.temp/(8*fld.omega*fld.r**2))*(4*(2+d)*(d+mu)-gam*(1+d+mu)*(3+d+mu)-2*(gam-2)*(dp+mup))	
-		k2eff = 2*fld.omega/(gam*fld.temp)
-		psi = sqrt(gam*fld.r**3 * fld.sigma*fld.temp)
+		veffp = fld.wp - (T/(8*om*r*r))*(g*(1+d+m)*(3+d+m)-4*(2+d)*(d+m)+2*(g-2)*(dp+mp))
+		veffm = veffp + (T/(8*om*r*r))*4*moq*(moq - 3*1j)
+		veffp = veffp + (T/(8*om*r*r))*4*moq*(moq + 3*1j)
+		k2eff = -2*om/(g*T)
+		psi = 1/sqrt(g*r**3*S*T) + exp(-1j*signk*moq)
 	else:
 		return 'No good EOS, outputinng precession rate'
-		veff = fld.wp
+		veffp = fld.wp
+		veffm = fld.wp
 		k2eff = 2*fld.omega/fld.temp
 
-	return veff,k2eff,psi
+	return veffp,veffm,k2eff,psi
+
+def save_Field(obj, filename):
+    with open(filename, 'wb') as output:
+        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+        
+def load_Field(filename):
+	with open(filename,'rb') as output:
+		return pickle.load(output)

@@ -9,7 +9,7 @@
 # Equation of State Options
 
 #+ISOTHERMAL
-#+BAROTROPIC
++BAROTROPIC
 #+POLYTROPE
 #+COOLING
 
@@ -27,7 +27,7 @@
 
 # Switch for inputing the total disk mass
 
-+INPUTMASS
+#+INPUTMASS
 
 # Profile Options
 

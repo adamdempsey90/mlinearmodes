@@ -22,8 +22,8 @@ def create_defines_file():
 				def_str = x[-1].split('\n')[0]
 				if '_PROF' in def_str:
 					copy_profile( profiles[ def_str] )
-				else:	
-					defs.append(def_str)
+					
+				defs.append(def_str)
 				
 	with open('src/defines.h','w') as g:
 		if defs != []:
