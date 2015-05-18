@@ -1,4 +1,5 @@
 #define OPENMP
-#define ISOTHERMAL
+#define SELFGRAVITY
+#define INPUTMASS
 #define COMPSIMPS
 #define SYMSOFT2
