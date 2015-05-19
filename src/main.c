@@ -44,13 +44,11 @@ int main(int argc, char *argv[]) {
 	flare_index = atof(argv[8]);
 	temp_index = 2*flare_index - 1;
 
-#ifdef VISCOSITY
 	alpha_s = atof(argv[9]);
 	alpha_b = atof(argv[10]);
-#else
-	alpha_s = 0;
-	alpha_b = 0;
-#endif
+
+
+
 
 #if  defined(COOLING) || defined(ADIABATIC) 
 	adi_gam = atof(argv[12]);

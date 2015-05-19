@@ -106,29 +106,21 @@ void calc_coefficients(void) {
 
 	
 
-// 	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
-// /* Shear Viscosity */
-// 
-// 	coeffs_A[i]  -= I * (alpha_s / 6.) * norm * (33.5 + dldtemp[i] - 2*dlds[i] + 18*d2lds[i]);
-// 	coeffs_B[i]  -= I * (alpha_s / 3.) * norm * (-9.5 - 7*dldtemp[i] + 2*dlds[i]);
-// 	coeffs_C[i]  -= I * (2 *alpha_s / 3.) * norm;
+/*	Shear Viscosity	*/
 	if (alpha_s !=0) {
-		norm  = -I * alpha_s * temp[i]/(24 * omega[i] *r[i]*r[i]);
-	
-		coeffs_A[i] += 3*norm*(-3+2*dldtemp[i] - 4*dlds[i] + 12*d2lds[i]);
-		coeffs_B[i] -= 2*norm *(25+18*dldtemp[i]);
-		coeffs_C[i] += 8*norm; 
+		norm = - I * alpha_s * temp[i]/(24 * omega[i]*r[i]*r[i]);
+		coeffs_A[i]  += norm*3*( 9 + 4*dlds[i]*(-2+3*dlds[i])+2*dldtemp[i]*(-1+6*dlds[i])-12*d2lds[i] );
+		coeffs_B[i] += norm*(-82+64*dldtemp[i]+28*dlds[i]);
+		coeffs_C[i] -= norm*8;
 	}
 /* Bulk Viscosity */
 	if (alpha_b != 0) {
 	
 		norm = I*alpha_b * temp[i]/(2 * omega[i]*r[i]*r[i]);
 	
-		coeffs_B[i] += norm*(2 + dldtemp[i] + dlds[i]);
+		coeffs_B[i] += norm*(-1 + dldtemp[i] + dlds[i]);
 		coeffs_C[i] += norm;
 	}
-// 	coeffs_B[i]  += I * alpha_b * norm * (2.5 + dldtemp[i] + dlds[i]);
-// 	coeffs_C[i] -= I * alpha_b * norm;
 
 
 

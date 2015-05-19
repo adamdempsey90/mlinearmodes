@@ -1,6 +1,5 @@
 #define OPENMP
 #define BAROTROPIC
-#define SELFGRAVITY
-#define INNERTAPER_PROF
+#define POWERLAW_PROF
 #define COMPSIMPS
 #define SYMSOFT2
