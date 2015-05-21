@@ -671,11 +671,11 @@ class Field():
 		
 		result = [ (nodes_list[i],ev_list[i]) for i in ind]
 		sorted_res = [(sorted_node_list[i],indx_list[i]) for i in range(len(nodes_list))]
-		if show_val==True:
-			print result
-		else:
-			for x in sorted_res:
-				print x
+# 		if show_val==True:
+# 			print result
+# 		else:
+# 			for x in sorted_res:
+# 				print x
 		
 		return sorted_res
 	def find_node(self,num):
@@ -813,7 +813,7 @@ def argand_compare(flds,labelstr=None,tstr=None,linrange=(1e-6,1e-6)):
 	return
 	
 	
-def compare(flds, evnum, labels=None,logr=False,scale=0,logy=False):
+def compare(flds, evnum, labels=None,logr=False,scale=0,logy=False,just_e=False):
 	
 	if type(evnum) != list and type(evnum) != array: 
 		evstr = ['$\\Omega_p$ = %.1e + %.1e i ' % (real(fld.evals[evnum]),imag(fld.evals[evnum])) for fld in flds]
@@ -834,48 +834,79 @@ def compare(flds, evnum, labels=None,logr=False,scale=0,logy=False):
 		xstr = '$r$'
 	
 	
-		
-	fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
-	axw.set_xlabel(xstr,fontsize='large')
-	if logy:
-		axe.set_ylabel('$ \log_{10} e(r)$',fontsize='large')
-	else:
-		axe.set_ylabel('$e(r)$',fontsize='large')
-	axex.set_ylabel('$e_x(r)$',fontsize='large')
-	axey.set_ylabel('$e_y(r)$',fontsize='large')
-	axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
-#	axw.set_ylim((-.9,1.1))
-	for i,fld in enumerate(flds):
-		if type(evnum) != list and type(evnum) != array:
-			ev = fld.evals[evnum]
-		else:
-			ev = fld.evals[evnum[i]]
-		dat = copy(fld.edict[ev])
-		
-		if scale != 0:
-			if scale == 'max':
-				dat /= dat.max()
+	if just_e:
+		figure()
+		for i,fld in enumerate(flds):
+			if type(evnum) != list and type(evnum) != array:
+				ev = fld.evals[evnum]
 			else:
-				dat *= scale/dat[0]
+				ev = fld.evals[evnum[i]]
+			dat = copy(fld.edict[ev])
+			if scale != 0:
+				if scale == 'max':
+					dat /= dat.max()
+				else:
+					dat *= scale/dat[0]
+				
+			if logr:
+				if logy:
+					loglog(fld.r,abs(dat,label=fldstr[i]))
+				else:
+					semilogx(fld.r,abs(dat),label=fldstr[i])
+			else:
+				if logy:
+					semilogy(fld.r,abs(dat),label=fldstr[i])
+				else:
+					plot(fld.r,abs(dat),label=fldstr[i])
+			ylabel('$|e|$', fontsize='large')
+			xlabel('$r$', fontsize='large')
 		
-		if fld == '':
-			axex.plot(r[i],real(dat))
+		if len(flds) > 3:
+			legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=len(flds)/2, mode="expand", borderaxespad=0.)
 		else:
-			axex.plot(r[i],real(dat),label=fldstr[i])
-		axey.plot(r[i],imag(dat))
-		if logy:
-			axe.plot(r[i],log10(abs(dat)))
-		else:
-			axe.plot(r[i],abs(dat))
-		axw.plot(r[i],angle(fld.edict[ev])/pi)
-	
-
-	if len(flds) > 3:
-		axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=len(flds)/2, mode="expand", borderaxespad=0.)
+			legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=len(flds), mode="expand", borderaxespad=0.)
 	else:
-		axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=len(flds), mode="expand", borderaxespad=0.)
+		
+		fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
+		axw.set_xlabel(xstr,fontsize='large')
+		if logy:
+			axe.set_ylabel('$ \log_{10} e(r)$',fontsize='large')
+		else:
+			axe.set_ylabel('$e(r)$',fontsize='large')
+		axex.set_ylabel('$e_x(r)$',fontsize='large')
+		axey.set_ylabel('$e_y(r)$',fontsize='large')
+		axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
+	#	axw.set_ylim((-.9,1.1))
+		for i,fld in enumerate(flds):
+			if type(evnum) != list and type(evnum) != array:
+				ev = fld.evals[evnum]
+			else:
+				ev = fld.evals[evnum[i]]
+			dat = copy(fld.edict[ev])
+		
+			if scale != 0:
+				if scale == 'max':
+					dat /= dat.max()
+				else:
+					dat *= scale/dat[0]
+		
+			if fld == '':
+				axex.plot(r[i],real(dat))
+			else:
+				axex.plot(r[i],real(dat),label=fldstr[i])
+			axey.plot(r[i],imag(dat))
+			if logy:
+				axe.plot(r[i],log10(abs(dat)))
+			else:
+				axe.plot(r[i],abs(dat))
+			axw.plot(r[i],angle(fld.edict[ev])/pi)
 	
-	subplots_adjust(hspace=.1)
+		if len(flds) > 3:
+			axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,ncol=len(flds)/2, mode="expand", borderaxespad=0.)
+		else:
+			axex.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=len(flds), mode="expand", borderaxespad=0.)
+	
+		subplots_adjust(hspace=.1)
 	return
 	
 
@@ -1449,3 +1480,106 @@ def save_Field(obj, filename):
 def load_Field(filename):
 	with open(filename,'rb') as output:
 		return pickle.load(output)
+
+
+def create_power_law_plots(fld,moq,soft):
+	cut_moq = lambda fld,m: ([fld[(r,m)] for r in soft], ['$r_s = %.2e$'%r for r in soft])
+	cut_rs = lambda fld,r: ([fld[(r,m)] for m in moq], ['$M/Q_{outer} = %.2e$'%m for m in moq])
+	
+	figr, axr = subplots(2,3,sharex='col',sharey='row',figsize=(20,15))
+	for ax in axr[1,:]:
+		ax.set_xlabel('$r$', fontsize='large')
+	for ax in axr[:,0]:
+		ax.set_ylabel('$|e|$', fontsize='large')
+		
+	for ax,r in zip(axr.flatten(),soft):
+		(list_f,label_f) = cut_rs(fld,r)
+		zn = [x.sort_nodes()[0][1] for x in list_f]
+		for i,f in enumerate(list_f):
+			lbl=label_f[i] + ', $\\Omega_p = %.2e$'%f.evals[zn[i]].real 
+			ax.loglog(f.r,abs(f.edict[f.evals[zn[i]]]),label=lbl)
+		ax.legend(loc='best')
+		ax.set_title('$r_s = %.2e$' % r)	
+		ax.set_ylim(1e-3,1)
+
+	subplots_adjust(wspace=0)
+
+	figr, axm = subplots(2,3,sharex='col',sharey='row',figsize=(20,15))
+	for ax in axm[1,:]:
+		ax.set_xlabel('$r$', fontsize='large')
+	for ax in axm[:,0]:
+		ax.set_ylabel('$|e|$', fontsize='large')
+	for ax,m in zip(axm.flatten(),moq):
+		(list_f,label_f) = cut_moq(fld,m)
+		zn = [x.sort_nodes()[0][1] for x in list_f]
+		for i,f in enumerate(list_f):
+			lbl=label_f[i] + ', $\\Omega_p = %.2e$'%f.evals[zn[i]].real 
+			ax.loglog(f.r,abs(f.edict[f.evals[zn[i]]]),label=lbl)
+		ax.legend(loc='best')
+		ax.set_title('$M/Q = %.2e$' % m)
+		ax.set_ylim(1e-3,1)
+	subplots_adjust(wspace=0)
+	
+
+def create_power_law_plots_2(fld,fld1,moq,soft,tstr=None):
+	cut_moq = lambda fld,m: ([fld[(r,m)] for r in soft], ['$r_s = %.2e$'%r for r in soft])
+	cut_rs = lambda fld,r: ([fld[(r,m)] for m in moq], ['$M/Q_{outer} = %.2e$'%m for m in moq])
+	
+	figr, axr = subplots(2,3,sharex='col',sharey='row',figsize=(20,15))
+	for ax in axr[1,:]:
+		ax.set_xlabel('$r$', fontsize='large')
+	for ax in axr[:,0]:
+		ax.set_ylabel('$|e|$', fontsize='large')
+		
+	for ax,r in zip(axr.flatten(),soft):
+		(list_f,label_f) = cut_rs(fld,r)
+		zn = [x.sort_nodes()[0][1] for x in list_f]
+		for i,f in enumerate(list_f):
+			lbl=label_f[i] #+ ', $\\Omega_p = %.2e$'%f.evals[zn[i]].real 
+			ax.loglog(f.r,abs(f.edict[f.evals[zn[i]]]),label=lbl)
+		
+		ax.set_color_cycle(None)
+		(list_f,label_f) = cut_rs(fld1,r)
+		zn = [x.sort_nodes()[0][1] for x in list_f]
+		for i,f in enumerate(list_f):
+			lbl=label_f[i] #+ ', $\\Omega_p = %.2e$'%f.evals[zn[i]].real 
+			ax.loglog(f.r,abs(f.edict[f.evals[zn[i]]]),'--')
+	
+		ax.legend(loc='best')
+		if tstr != None:
+			ax.set_title(tstr + ', '+'$r_s = %.2e$' % r)	
+		ax.set_ylim(1e-3,1)
+
+	subplots_adjust(wspace=0)
+
+	figr, axm = subplots(2,3,sharex='col',sharey='row',figsize=(20,15))
+	for ax in axm[1,:]:
+		ax.set_xlabel('$r$', fontsize='large')
+	for ax in axm[:,0]:
+		ax.set_ylabel('$|e|$', fontsize='large')
+	for ax,m in zip(axm.flatten(),moq):
+		(list_f,label_f) = cut_moq(fld,m)
+		zn = [x.sort_nodes()[0][1] for x in list_f]
+		for i,f in enumerate(list_f):
+			lbl=label_f[i] #+ ', $\\Omega_p = %.2e$'%f.evals[zn[i]].real 
+			ax.loglog(f.r,abs(f.edict[f.evals[zn[i]]]),label=lbl)
+			
+		ax.set_color_cycle(None)	
+		(list_f,label_f) = cut_moq(fld1,m)
+		zn = [x.sort_nodes()[0][1] for x in list_f]
+		for i,f in enumerate(list_f):
+			lbl=label_f[i] #+ ', $\\Omega_p = %.2e$'%f.evals[zn[i]].real 
+			ax.loglog(f.r,abs(f.edict[f.evals[zn[i]]]),'--')	
+
+		ax.legend(loc='best')
+		if tstr != None:
+			ax.set_title(tstr + ', '+'$M/Q = %.2e$' % m)
+		ax.set_ylim(1e-3,1)
+	subplots_adjust(wspace=0)
+
+
+def sigma_from_machq_power_law(moq,h,ro): 
+	return h*h*moq*ro**(-.5) / pi
+	
+def sigma_from_machq_taper(moq,h,ro,rt):
+	return sigma_from_machq_power(moq,h,ro)*(rt**3+rt**(-1.5))

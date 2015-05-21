@@ -61,7 +61,7 @@ def param_dict(prof=None):
 	return params
 	
 def run_code(params, defines = None):
-	tic = time()
+	
 	if defines != None:
 		add_defines(defines)
 		call(['./compile'])
@@ -89,10 +89,12 @@ def run_code(params, defines = None):
 		print ' '.join(callstr)
 		return -1
 	else:
+		tic = time()
 		fld = Field(params)
+		toc = time()
+		print 'Loading time: %.4f seconds' % (toc - tic)
 	
-	toc = time()
-#	print 'Final Running Time: %.4f seconds' % (tic - toc)
+
 	return fld
 	
 def add_defines(defines_list):
