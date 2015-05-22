@@ -14,7 +14,7 @@
 #endif
 
 
-int N;
+int N, NP;
 
 double Mdisk, eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol; 
 
