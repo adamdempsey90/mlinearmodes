@@ -18,6 +18,16 @@ class Mode():
 		overlap = sign(y[1:]) - sign(y[:-1])
 		return len(overlap[overlap != 0])
 
+class Planet():
+	def __init__(self,dat):
+		self.num = dat[0]
+		self.a = dat[1]
+		self.mp = dat[2]
+		self.e = dat[3] + 1j*dat[4]
+		self.hill = dat[5]
+		self.wp = dat[6]
+
+
 class Field():
 	def __init__(self,params):
 
@@ -76,17 +86,23 @@ class Field():
 
 
 		npl = self.params['Nplanets']
+		if npl != 0:
+			pdat = loadtxt('planet_summary.dat')
+			if npl != 1:
+				self.planets = [Planet(line) for line in pdat]
+			else:
+				self.planets = Planet(pdat)
 
 		evals = emat[:,0] + 1j*emat[:,1]
 		emat = emat[:,2:]
 		evecs = emat[:,::2] + 1j*emat[:,1::2]
 
-		if npl != 0:
-			self.plevals = evals[-npl:]
-			evals = evals[:-npl]
-			evecs = evecs[:-npl,:-npl]
-		else:
-			self.plevals = 0
+		# if npl != 0:
+		# 	self.plevals = evals[-npl:]
+		# 	evals = evals[:-npl]
+		# 	evecs = evecs[:-npl,:-npl]
+		# else:
+		# 	self.plevals = 0
 
 
 

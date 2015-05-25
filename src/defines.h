@@ -1,5 +1,5 @@
 #define OPENMP
-#define BAROTROPIC
+#define ISOTHERMAL
 #define SELFGRAVITY
 #define PLANETS
 #define INNERTAPER_PROF

@@ -92,9 +92,9 @@ void output(double complex *evals, double complex *evecs) {
 	FILE *f = fopen("eigen.dat","w");
 
 	fprintf(f,"# lambda \t evecs along row\n");
-	for(i=0;i<nrows;i++) {
+	for(i=0;i<N;i++) {
 		fprintf(f,"%.12lg\t%.12lg\t",creal(evals[i]),cimag(evals[i]));
-		for(j=0;j<nrows;j++) {
+		for(j=0;j<N;j++) {
 			evecij = evecs[j+nrows*i];
 // 			evecij /= sigma[i];
 // 			evecij /= evecs[N*i];
@@ -107,7 +107,8 @@ void output(double complex *evals, double complex *evecs) {
 
 	fclose(f);
 
-	
+	output_planet_summary();
+
 	return;
 }
 

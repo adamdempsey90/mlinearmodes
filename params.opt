@@ -8,8 +8,8 @@
 
 # Equation of State Options
 
-#+ISOTHERMAL
-+BAROTROPIC
++ISOTHERMAL
+#+BAROTROPIC
 #+POLYTROPE
 #+COOLING
 

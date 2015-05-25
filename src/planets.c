@@ -23,8 +23,8 @@ void init_planets(void) {
 	Planets = (Planet *)malloc(sizeof(Planet)*NP);
 
 	for(i=0;i<NP;i++) {
-		Planets[i].pot0 = (double *)malloc(sizeof(double)*(N+NP));
-		Planets[i].pot1 = (double *)malloc(sizeof(double)*(N+NP));
+		Planets[i].pot0 = (double complex *)malloc(sizeof(double complex)*(N+NP));
+		Planets[i].pot1 = (double complex *)malloc(sizeof(double complex)*(N+NP));
 	}
 
 	matpp = (double complex *)malloc(sizeof(double complex)*NP*NP);
@@ -73,6 +73,7 @@ void read_planets_file(void) {
 		Planets[i].InteriorPlanet = 0;
 		Planets[i].ExteriorPlanet = 0;
 		Planets[i].wp = 0;
+		Planets[i].e = 0;
 
 		if (Planets[i].position < r[0]) {
 			Planets[i].InteriorPlanet = 1;
@@ -86,7 +87,6 @@ void read_planets_file(void) {
 	}
 	fclose(f);
 
-	output_planet_summary();
 
 	return;
 }
@@ -94,16 +94,21 @@ void read_planets_file(void) {
 
 void output_planet_summary(void) {
 	int i;
+	FILE *f;
+	f = fopen("planet_summary.dat","w");
+
 	printf("\n\nPlanet Summary \n");
-	printf("Planet#\tRadius\tRadialIndex\tMass\tHillRadius\twp\tInterior?\tExterior?\n");
+	printf("PlanetNumber\tRadius\tMass\tEccentricity\tHillRadius\twp\n");
+	fprintf(f,"#PlanetNumber\tRadius\tMass\tEccentricity\tHillRadius\twp\n");
 	for(i=0;i<NP;i++) {
-		printf("%d\t%lg\t%d\t%.1e\t%lg\t%lg\t%d\t%d\n",i,Planets[i].position,
-							Planets[i].index,Planets[i].mass,Planets[i].hill,Planets[i].wp,
-							Planets[i].InteriorPlanet,Planets[i].ExteriorPlanet);
+		printf("%d\t%lg\t%.2e\t%.2e+%.2ei\t%lg\t%lg\n",i,Planets[i].position,
+							Planets[i].mass,creal(Planets[i].e),cimag(Planets[i].e),Planets[i].hill,Planets[i].wp);
+		fprintf(f,"%d\t%.12lg\t%.12e\t%.12e\t%.12e\t%.12lg\t%.12lg\n",i,Planets[i].position,
+												Planets[i].mass,creal(Planets[i].e),cimag(Planets[i].e),Planets[i].hill,Planets[i].wp);
 	}
 
 	printf("\n\n");
-
+	fclose(f);
 	return;
 
 

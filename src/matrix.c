@@ -1,35 +1,35 @@
 #include "eigen.h"
 
 
-void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA) 
+void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA)
 {
 /* Computes the eigenvalues and right eigenvectors of the complex matrix A which is NxN.
-	A . evecs = evals Q . evecs 
+	A . evecs = evals Q . evecs
 	This is essentially a wrapper for the ZGEEV LAPACK routine.
-	
+
 	INPUTS:
 		The matrices M, Q, and evecs and the vector evals which are all overwritten
-		
+
 	OUTPUTS:
 		The eigenvalues are stored in the evals array.
-		The eigenvectors are stored in the ROWS of the evecs matrix	
+		The eigenvectors are stored in the ROWS of the evecs matrix
 */
 	int i,j;
 	char JOBVL = 'N';
 	char JOBVR = 'V';
-	int INFO; 
+	int INFO;
 	int LDA = nA;
 	int LDB = nA;
 	int LDVL = nA;
 	int LDVR = nA;
 	int LWORK = 2*nA;
-	
+
 	double *RWORK = (double *)malloc(sizeof(double)*8*nA);
 	double complex *CWORK = (double complex *)malloc(sizeof(double complex)*2*nA);
-	
+
 	double complex *tA = (double complex *)malloc(sizeof(double complex)*nA*nA);
 	double complex *tQ = (double complex *)malloc(sizeof(double complex)*nA*nA);
-	
+
 	double complex *evals_alpha = (double complex *)malloc(sizeof(double complex)*nA);
 	double complex *evals_beta = (double complex *)malloc(sizeof(double complex)*nA);
 
@@ -52,6 +52,13 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 		}
 	}
 #endif
+
+#ifdef PLANETS
+	for(i=0;i<NP;i++) {
+		Planets[i].e = evals[i+N];
+	}
+
+#endif
 	free(tA); free(tQ);
 	free(RWORK); free(CWORK);
 	free(evals_alpha);
@@ -59,12 +66,12 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
  	return;
 }
 
-void matmat(double  *A, double *B, double *C, 
-					double alpha, double beta, int nA) 
+void matmat(double  *A, double *B, double *C,
+					double alpha, double beta, int nA)
 {
 /* Performs \alpha * A.B + \beta * C and stores the output in C.
 	A,B, and C are all matrices.
-	This is essenitally a wrapper for the ZGEMM BLAS routine 
+	This is essenitally a wrapper for the ZGEMM BLAS routine
 */
 	int i,j;
 	char TRANSA = 't';
@@ -75,23 +82,23 @@ void matmat(double  *A, double *B, double *C,
 	int LDA = nA;
 	int LDB = nA;
 	int LDC = nA;
-		 
-	
+
+
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++) work[i+N*j] = C[j + nA*i];
 	}
-	
+
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++)	C[i + nA*j] = work[i+N*j];
 	}
-	
+
 	dgemm_(&TRANSA, &TRANSB, &m,&n,&k,&alpha,A,&LDA,B,&LDB,&beta,C,&LDC);
 
 
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++)  work[i+N*j] = C[j + nA*i];
 	}
-	
+
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++)	C[i + nA*j] = work[i+N*j];
 	}
@@ -99,12 +106,12 @@ void matmat(double  *A, double *B, double *C,
 
 }
 
-void cmatmat(double complex *A, double complex *B, double complex *C, 
-					double complex alpha, double complex beta, int nA) 
+void cmatmat(double complex *A, double complex *B, double complex *C,
+					double complex alpha, double complex beta, int nA)
 {
 /* Performs \alpha * A.B + \beta * C and stores the output in C.
 	A,B, and C are all matrices.
-	This is essenitally a wrapper for the ZGEMM BLAS routine 
+	This is essenitally a wrapper for the ZGEMM BLAS routine
 */
 	int i,j;
 	char TRANSA = 't';
@@ -115,23 +122,23 @@ void cmatmat(double complex *A, double complex *B, double complex *C,
 	int LDA = nA;
 	int LDB = nA;
 	int LDC = nA;
-		 
-	
+
+
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++) cwork[i+N*j] = C[j + nA*i];
 	}
-	
+
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++)	C[i + nA*j] = cwork[i+N*j];
 	}
-	
+
 	zgemm_(&TRANSA, &TRANSB, &m,&n,&k,&alpha,A,&LDA,B,&LDB,&beta,C,&LDC);
 
 
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++)  cwork[i+N*j] = C[j + nA*i];
 	}
-	
+
 	for(i=0;i<nA;i++) {
 		for(j=0;j<nA;j++)	C[i + nA*j] = cwork[i+N*j];
 	}
@@ -140,12 +147,12 @@ void cmatmat(double complex *A, double complex *B, double complex *C,
 }
 
 
-void matvec(double  *A, double*B, double *C, 
-					double alpha, double beta, int nB) 
+void matvec(double  *A, double*B, double *C,
+					double alpha, double beta, int nB)
 {
-/* Performs \alpha * A.B + \beta * C and stores the output in C. 
+/* Performs \alpha * A.B + \beta * C and stores the output in C.
 	A is a matrix, B and C are vectors.
-	This is essenitally a wrapper for the ZGEMV BLAS routine 
+	This is essenitally a wrapper for the ZGEMV BLAS routine
 */
 
 	char TRANS = 't';
@@ -154,8 +161,8 @@ void matvec(double  *A, double*B, double *C,
 	int LDA = nB;
 	int INCX = 1;
 	int INCY = 1;
-		 
-	
+
+
 
 	dgemv_(&TRANS, &m,&n,&alpha,A,&LDA,B,&INCX,&beta,C,&INCY);
 
@@ -163,12 +170,12 @@ void matvec(double  *A, double*B, double *C,
 
 }
 
-void cmatvec(double  complex *A, double complex *B, double complex *C, 
-					double complex alpha, double complex beta, int nB) 
+void cmatvec(double  complex *A, double complex *B, double complex *C,
+					double complex alpha, double complex beta, int nB)
 {
-/* Performs \alpha * A.B + \beta * C and stores the output in C. 
+/* Performs \alpha * A.B + \beta * C and stores the output in C.
 	A is a matrix, B and C are vectors.
-	This is essenitally a wrapper for the ZGEMV BLAS routine 
+	This is essenitally a wrapper for the ZGEMV BLAS routine
 */
 
 	char TRANS = 't';
@@ -177,8 +184,8 @@ void cmatvec(double  complex *A, double complex *B, double complex *C,
 	int LDA = nB;
 	int INCX = 1;
 	int INCY = 1;
-		 
-	
+
+
 
 	zgemv_(&TRANS, &m,&n,&alpha,A,&LDA,B,&INCX,&beta,C,&INCY);
 
