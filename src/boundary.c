@@ -40,9 +40,9 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 #endif
 	int j,indx;
 	for(j=0;j<N;j++) {
-		indx= j + N*(N-1);
+		indx= j + nrows*(N-1);
 
-		mat[indx] = D[indx];
+		mat[indx] = D[j+N*(N-1)];
 		bcmat[indx] = 0;
 
 		if (j==(N-1)) {
@@ -83,7 +83,7 @@ void zero_e_bc_outer(double complex *mat, double complex *bcmat) {
 
 	int j,indx;
 	for(j=0;j<N;j++) {
-		indx = j + N*(N-1);
+		indx = j + nrows*(N-1);
 		mat[indx] = 0;
 		bcmat[indx] = 0;
 		if (j==N-1) {
@@ -98,9 +98,9 @@ void user_gradient_bc_outer(double complex *mat, double complex *bcmat,double co
 /* Set up zero Lagrangian Pressure B.C at outer boundary */
 	int j,indx;
 	for(j=0;j<N;j++) {
-		indx= j + N*(N-1);
+		indx= j + nrows*(N-1);
 
-		mat[indx] = D[indx];
+		mat[indx] = D[j+N*(N-1)];
 		bcmat[indx] = 0;
 
 		if (j==(N-1)) {

@@ -2,12 +2,12 @@
 
 //#define ANALYTICPOTENTIAL
 
-static const double r_max = .3;
+static const double r_max = 1;
 static const double inner_slope = 3;
 
 
 
-double sigma_func(double x) {	
+double sigma_func(double x) {
 	double outer_slope = sigma_index;
 	return sigma0 /( pow(x/r_max,-inner_slope) + pow(x/r_max,-outer_slope));
 }

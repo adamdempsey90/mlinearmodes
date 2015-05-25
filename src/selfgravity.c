@@ -24,25 +24,13 @@ void read_kernel(void) {
 	return;
 
 }
-void compute_kernels(void) {
 
-#ifdef READKERNEL
-	read_kernel();
-#else
-
-	int i,j, indx;
-	double r1,r2,r3,r4,r5,r6,r7,r8,rp1,rp2,rp3,rp4,rp5,rp6,rp7,rp8,eps1,eps2,eps4,eps6,eps8,kval,ek,ee;
-
-#ifdef OPENMP
-#pragma omp parallel private(indx,i,j, r1,r2,r3,r4,r5,r6,r7,r8,rp1,rp2,rp3,rp4,rp5,rp6,rp7,rp8,eps1,eps2,eps4,eps6,eps8,kval,ek,ee) shared(kernel,N,r,scaleH,weights)
-#pragma omp for schedule(static)
-#endif
-	for(indx=0;indx<N*N;indx++) {
-		i = indx/N;
-		j = indx - i*N;
+double sg_integrand(double r1, double rp1, double eps1) {
+	double res;
+	double r2,r3,r4,r5,r6,r7,r8,rp2,rp3,rp4,rp5,rp6,rp7,rp8,eps2,eps4,eps6,eps8,kval,ek,ee;
 
 
-		r1 = r[i];
+
 		r2 = r1*r1;
 		r3 = r2*r1;
 		r4 = r2*r2;
@@ -51,7 +39,6 @@ void compute_kernels(void) {
 		r7 = r6*r1;
 		r8 = r7*r1;
 
-		rp1 = r[j];
 		rp2 = rp1*rp1;
 		rp3 = rp2*rp1;
 		rp4 = rp2*rp2;
@@ -60,6 +47,62 @@ void compute_kernels(void) {
 		rp7 = rp6*rp1;
 		rp8 = rp7*rp1;
 
+
+		eps2 = eps1*eps1;
+		eps4 = eps2*eps2;
+		eps6 = eps4*eps2;
+		eps8 = eps6*eps2;
+
+
+#ifdef CONSTSOFT
+	kval = sqrt(4*r1*rp1/((r1+rp1)*(r1+rp1)+ eps2));
+	ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+	ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+
+	res = (2*(r2-rp2)*(r2-rp2)*(r4-r2*rp2+rp4)+(r2+rp2)*(7*r4-18*r2*rp2+7*rp4)*eps2
+					+9*(r4+rp4)*eps4+5*(r2+rp2)*eps6+eps8)*-2*ee;
+	res -= ( r_m_rp +eps2)*(2*(r2-rp2)*(r2-rp2)*(r2+rp2)+(5*r4+4*r2*rp2+5*rp4)*eps2
+					+4*(r2+rp2)*eps4+eps6)*-2*ek;
+  res /= (pow(r_m_rp+eps2,2)*pow(r_p_rp+eps2,1.5));
+
+#else
+
+		kval = sqrt(4*r1*rp1/((r1+rp1)*(r1+rp1)+ eps2*r1*rp1));
+		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
+		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
+
+		res = -ee*(8*r8 + 8*rp8 + 32*r7*rp1*eps2 + 32*r1*rp7*eps2
+					+2*r5*rp3*eps2 *(-24 + 17 *eps4) + 2*r3*rp5*eps2 *(-24 + 17*eps4)
+					+r6*rp2*(-24 + 49*eps4) + r2*rp6*(-24 + 49*eps4)
+					+r4*rp4 *(32 + 22*eps4 + 9*eps8));
+
+		res += ((r1 - rp1)*(r1-rp1) + r1*rp1*eps2)*(8*(r2 - rp2)*(r2-rp2)*(r2 + rp2)
+						+ 8*r1*rp1*(3*r4 + r2*rp2 + 3*rp4)*eps2
+						+ 25*r2*rp2*(r2 + rp2)*eps4 + 9*r3*rp3*eps6)*ek;
+
+		res /= (2*pow((r1-rp1)*(r1-rp1)+r1*rp1*eps2,2)*pow((r1+rp1)*(r1+rp1)+r1*rp1*eps2,1.5));
+#endif
+
+
+	return res;
+}
+
+void compute_kernels(void) {
+
+#ifdef READKERNEL
+	read_kernel();
+#else
+
+	int i,j, indx;
+	double eps1;
+
+#ifdef OPENMP
+#pragma omp parallel private(indx,i,j,eps1) shared(kernel,N,r,scaleH)
+#pragma omp for schedule(static)
+#endif
+	for(indx=0;indx<N*N;indx++) {
+		i = indx/N;
+		j = indx - i*N;
 
 #ifdef CONSTSOFT
 		eps1 = eps;
@@ -76,45 +119,7 @@ void compute_kernels(void) {
 #endif
 #endif
 
-		eps2 = eps1*eps1;
-		eps4 = eps2*eps2;
-		eps6 = eps4*eps2;
-		eps8 = eps6*eps2;
-
-
-#ifdef CONSTSOFT
-	kval = sqrt(4*r1*rp1/((r1+rp1)*(r1+rp1)+ eps2));
-	ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
-	ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
-
-	kernel[indx] = (2*(r2-rp2)*(r2-rp2)*(r4-r2*rp2+rp4)+(r2+rp2)*(7*r4-18*r2*rp2+7*rp4)*eps2
-					+9*(r4+rp4)*eps4+5*(r2+rp2)*eps6+eps8)*-2*ee;
-	kernel[indx] -= ( r_m_rp +eps2)*(2*(r2-rp2)*(r2-rp2)*(r2+rp2)+(5*r4+4*r2*rp2+5*rp4)*eps2
-					+4*(r2+rp2)*eps4+eps6)*-2*ek;
-	kernel[indx] /= (pow(r_m_rp+eps2,2)*pow(r_p_rp+eps2,1.5));
-
-#else
-
-		kval = sqrt(4*r1*rp1/((r1+rp1)*(r1+rp1)+ eps2*r1*rp1));
-		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
-		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
-
-		kernel[indx] = -ee*(8*r8 + 8*rp8 + 32*r7*rp1*eps2 + 32*r1*rp7*eps2
-					 +2*r5*rp3*eps2 *(-24 + 17 *eps4) + 2*r3*rp5*eps2 *(-24 + 17*eps4)
-					 +r6*rp2*(-24 + 49*eps4) + r2*rp6*(-24 + 49*eps4)
-					 +r4*rp4 *(32 + 22*eps4 + 9*eps8));
-
-  	kernel[indx] += ((r1 - rp1)*(r1-rp1) + r1*rp1*eps2)*(8*(r2 - rp2)*(r2-rp2)*(r2 + rp2)
-					  + 8*r1*rp1*(3*r4 + r2*rp2 + 3*rp4)*eps2
- 					  + 25*r2*rp2*(r2 + rp2)*eps4 + 9*r3*rp3*eps6)*ek;
-
-		kernel[indx] /= (2*pow((r1-rp1)*(r1-rp1)+r1*rp1*eps2,2)*pow((r1+rp1)*(r1+rp1)+r1*rp1*eps2,1.5));
-#endif
-
-
-
-
-
+		kernel[indx] = sg_integrand(r[i],r[j],eps1);
 
 	}
 #endif
@@ -123,7 +128,7 @@ void compute_kernels(void) {
 
 void add_sg(double complex *mat, double complex *bcmat) {
 	int i,j;
-	int indx;
+	int indx,mindx;
 	double complex G;
 	double lambda = 1;
 
@@ -131,12 +136,13 @@ void add_sg(double complex *mat, double complex *bcmat) {
 		G = lambda*.5/ (omega[i]*r[i]*r[i]*r[i]);
 
 #ifdef INDIRECT
-		mat[N*i] -= G *3*M_PI*r[i]*r[i]*sigma[0];
-		mat[N-1 + N*i] += G*3*M_PI*r[i]*r[i]*sigma[N-1];
+		mat[ncols*i] -= G *3*M_PI*r[i]*r[i]*sigma[0];
+		mat[N-1 + ncols*i] += G*3*M_PI*r[i]*r[i]*sigma[N-1];
 #endif
 		for(j=0;j<N;j++) {
-			indx = j + N*i;
-			mat[indx] += G*kernel[indx]*weights[j]*r[j]*sigma[j];
+			mindx = j + ncols*i;
+			indx = j+N*i;
+			mat[mindx] += G*kernel[indx]*weights[j]*r[j]*sigma[j];
 		}
 
 
@@ -146,97 +152,6 @@ void add_sg(double complex *mat, double complex *bcmat) {
 
 
 
-
-// void compute_kernels(void) {
-//
-// #ifdef READKERNEL
-// 	read_kernel();
-// #else
-//
-// 	int i,j, indx;
-// 	double r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee;
-//
-// #ifdef OPENMP
-// #pragma omp parallel private(indx,i,j,r1,r2,r4,rp1,rp2,rp4,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee) shared(kernel,N,r,scaleH,weights)
-// #pragma omp for schedule(static)
-// #endif
-// 	for(indx=0;indx<N*N;indx++) {
-// 		i = indx/N;
-// 		j = indx - i*N;
-//
-//
-// 		r1 = r[i];
-// 		r2 = r1*r1;
-// 		r4 = r2*r2;
-// 		rp1 = r[j];
-// 		rp2 = rp1*rp1;
-// 		rp4 = rp2*rp2;
-//
-// #ifdef CONSTSOFT
-// 		eps1 = eps;
-// #else
-// #ifdef SYMSOFT
-// 		eps1 = eps * sqrt(scaleH[i]*scaleH[i] + scaleH[j]*scaleH[j]);
-// #else
-// 		eps1 = eps *scaleH[j];
-// #endif
-// #endif
-//
-// 		eps2 = eps1*eps1;
-// 		eps4 = eps2*eps2;
-// 		r_p_rp = r[i] + r[j];
-// 		r_p_rp *= r_p_rp;
-// 		r_m_rp = r[i] - r[j];
-// 		r_m_rp *= r_m_rp;
-//
-// 		kval = sqrt(4*r1*rp1/(r_p_rp + eps2));
-// 		ek =  gsl_sf_ellint_Kcomp(kval, GSL_PREC_DOUBLE);
-// 		ee = gsl_sf_ellint_Ecomp(kval,GSL_PREC_DOUBLE);
-//
-// 		kernel[indx] = -2*(eps4 + 2*r4 - 3*r2*rp2 + rp4 + eps2*(3*r2 + 2*rp2))*ee;
-// 		kernel[indx] += 2*(eps2 + r_m_rp)*(eps2 + 2*r2 + rp2)*ek;
-// 		kernel[indx] /= ((eps2 + r_m_rp)*rp1*sqrt(eps2 +r_p_rp));
-//
-// 		kernel[indx] *=  weights[j]*rp2;
-//
-//
-//
-//
-// 	}
-// #endif
-// 	return;
-// }
-//
-// void add_sg(double complex *mat, double complex *bcmat) {
-// 	int i,j;
-// 	int l,indx;
-// 	int il, lj;
-// 	double complex res,G;
-//
-//
-// 	for(i=0;i<N;i++) {
-// 		G = .5/ ( omega[i]*r[i]*r[i]*r[i]);
-// 		for(j=0;j<N;j++) {
-// 			indx = j + N*i;
-// 			res = 0;
-// 			for(l=0;l<N;l++) {
-// 				il = l + N*i;
-// 				lj = j + N*l;
-// 				res -= sigma[i]*(dlds[l]*Identity[il] + D[il])*kernel[lj];
-// 			}
-// 			mat[indx] += G*res;
-// 		}
-//
-//
-// 	}
-//
-// #ifdef EDGEGRAVITY
-// 		add_edge_sg(mat);
-// #endif
-//
-// 	return;
-//
-// }
 
 void add_edge_sg(double complex *mat) {
 	int i,j;
@@ -282,9 +197,9 @@ void add_edge_sg(double complex *mat) {
 double integrand(double x, void *params) {
 	double r1,r2,r3,r4,r6,rp1,rp2,rp3,rp4,rp6,eps1,eps2,eps4,r_p_rp,r_m_rp,kval,ek,ee;
 	double ans,norm;
-	int i=  *(int *)params;
-
-	r1 = r[i];
+//	int i=  *(int *)params;
+	r1 = * (double *)params;
+//	r1 = r[i];
 	r2 = r1*r1;
 	r3 = r2*r1;
 	r4 = r2*r2;
@@ -295,27 +210,26 @@ double integrand(double x, void *params) {
 	r6 = r4*r2;
 	rp6 = rp4*rp2;
 
-
-//	printf("%d\t%lg\t%lg\n", i,r1,rp1);
-
-#ifdef CONSTSOFT
 	eps1 = eps;
-#else
-#ifdef SYMSOFT
-	eps1 = eps * sqrt(scaleH_func(r1)*scaleH_func(r1) + scaleH_func(rp1)*scaleH_func(rp1));
-#else
-#ifdef SYMSOFT2
-//	eps1  = eps*sqrt(scaleH_func(r1)*scaleH_func(rp1));
-	eps1 = eps;
-#else
-#ifdef LINEARSOFT
-	eps1 = eps*rp1;
-#else
-	eps1 = eps * scaleH_func(rp1);
-#endif
-#endif
-#endif
-#endif
+
+// #ifdef CONSTSOFT
+// 	eps1 = eps;
+// #else
+// #ifdef SYMSOFT
+// 	eps1 = eps * sqrt(scaleH_func(r1)*scaleH_func(r1) + scaleH_func(rp1)*scaleH_func(rp1));
+// #else
+// #ifdef SYMSOFT2
+// //	eps1  = eps*sqrt(scaleH_func(r1)*scaleH_func(rp1));
+// 	eps1 = eps;
+// #else
+// #ifdef LINEARSOFT
+// 	eps1 = eps*rp1;
+// #else
+// 	eps1 = eps * scaleH_func(rp1);
+// #endif
+// #endif
+// #endif
+// #endif
 	eps2 = eps1*eps1;
 	eps4 = eps2*eps2;
 	r_p_rp = r1 + rp1;
@@ -348,12 +262,6 @@ double integrand(double x, void *params) {
 
 
 
-
-
-
-
-
-
 	ans *= norm;
 
 
@@ -367,16 +275,21 @@ void calc_omega_prec_grav(void) {
 
 
 	int nsubintervals = 3000;
-	double error, res, norm;
+	double error, res, norm,a;
 	gsl_integration_workspace *workspace = gsl_integration_workspace_alloc( nsubintervals );
 	gsl_function func;
 	int i;
-	FILE *f;
+
 	if (analytic_potential()) {
 		for(i=0;i<N;i++) {
 			omega_prec[i] += omega_prec_grav_analytic(r[i]);
 		}
+#ifdef PLANETS
+			for(i=0;i<NP;i++) {
+				Planets[i].wp  += omega_prec_grav_analytic(Planets[i].position);
+			}
 
+#endif
 	}
 	else {
 
@@ -384,12 +297,22 @@ void calc_omega_prec_grav(void) {
 
 		for(i=0;i<N;i++) {
 
-			func.params = &i;
+			func.params = &r[i];
 			gsl_integration_qags(&func, log(r[0]/10),log(r[N-1]*10),0,tol, nsubintervals , workspace,&res,&error);
 			norm = 2*sqrt(r[i]);
 			omega_prec[i] += res/norm;
 
 		}
+#ifdef PLANETS
+	for(i=0;i<NP;i++) {
+		a = Planets[i].position;
+		func.params = &a;
+		gsl_integration_qags(&func,log(r[0]/10),log(r[N-1]*10),0,tol, nsubintervals , workspace,&res,&error);
+		norm = 2*omk_func(a)*a*a;
+		Planets[i].wp += res/norm;
+	}
+
+#endif
 	}
 
 	gsl_integration_workspace_free(workspace);

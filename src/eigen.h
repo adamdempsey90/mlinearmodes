@@ -9,14 +9,14 @@
 
 
 
-#ifdef OPENMP	
+#ifdef OPENMP
 #include <omp.h>
 #endif
 
 
-int N, NP;
+int N, NP,nrows,ncols;
 
-double Mdisk, eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol; 
+double Mdisk, eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol;
 
 double *weights, *kernel, *work;
 double complex *cwork;
@@ -33,10 +33,22 @@ double alpha_s, alpha_b;
 double adi_gam, beta_cool;
 
 
+#ifdef PLANETS
+typedef struct Planet {
+
+	double mass, position, hill,wp;
+	double *pot0, *pot1;
+	int index,InteriorPlanet, ExteriorPlanet;
+
+} Planet;
+
+Planet *Planets;
+
+#endif
+
 
 void alloc_globals(void);
 void free_globals(void);
-
 int init(double ri,double ro);
 
 void init_derivatives(void);
@@ -64,13 +76,13 @@ void output(double complex *evals, double complex *evecs);
 void output_derivatives(void);
 void output_coefficients(void);
 
-void cmatvec(double  complex *A, double complex *B, double complex *C, 
+void cmatvec(double  complex *A, double complex *B, double complex *C,
 					double complex alpha, double complex beta, int nB) ;
-void matvec(double  *A, double*B, double *C, 
+void matvec(double  *A, double*B, double *C,
 					double alpha, double beta, int nB) ;
-void cmatmat(double complex *A, double complex *B, double complex *C, 
+void cmatmat(double complex *A, double complex *B, double complex *C,
 					double complex alpha, double complex beta, int nA) ;
-void matmat(double  *A, double *B, double *C, 
+void matmat(double  *A, double *B, double *C,
 					double alpha, double beta, int nA) ;
 void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA) ;
 
@@ -79,7 +91,15 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 void compute_kernels(void);
 void add_sg(double complex *mat, double complex *bcmat);
 void calc_omega_prec_grav(void);
+double sg_integrand(double r1, double rp1, double eps1);
 #endif
 int analytic_potential(void);
 double omega_prec_grav_analytic(double x);
+#endif
+
+#ifdef PLANETS
+void add_planets(double complex *mat, double complex *bcmat);
+void init_planets(void);
+void calc_planet_matrices(void);
+void free_planets(void);
 #endif

@@ -2,22 +2,22 @@
 
 
 void alloc_globals(void) {
-	
+
 	D = (double *)malloc(sizeof(double)*N*N);
 	D2 = (double *)malloc(sizeof(double)*N*N);
 	Identity = (double *)malloc(sizeof(double)*N*N);
 	kernel = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
-	
 
-	cwork = (double complex *)malloc(sizeof(double complex)*N*N);
-	work = (double *)malloc(sizeof(double)*N*N);
-	
+
+	cwork = (double complex *)malloc(sizeof(double complex)*nrows*ncols);
+	work = (double *)malloc(sizeof(double)*nrows*ncols);
+
 	r = (double *)malloc(sizeof(double)*N);
 	lr = (double *)malloc(sizeof(double)*N);
 
 	scaleH = (double *)malloc(sizeof(double)*N);
-	
+
 	omega = (double *)malloc(sizeof(double)*N);
 	dldom = (double *)malloc(sizeof(double)*N);
 	d2ldom = (double *)malloc(sizeof(double)*N);
@@ -29,21 +29,21 @@ void alloc_globals(void) {
 	pres = (double *)malloc(sizeof(double)*N);
 	dldpres = (double *)malloc(sizeof(double)*N);
 	d2ldpres = (double *)malloc(sizeof(double)*N);
-	
+
 	temp = (double *)malloc(sizeof(double)*N);
 	dldtemp = (double *)malloc(sizeof(double)*N);
 	d2ldtemp = (double *)malloc(sizeof(double)*N);
-	
+
 	c2 = (double *)malloc(sizeof(double)*N);
 	dldc2 = (double *)malloc(sizeof(double)*N);
 	d2ldc2 = (double *)malloc(sizeof(double)*N);
-	
+
 	omega_prec =  (double *)malloc(sizeof(double)*N);
 
 	coeffs_A =  (double complex *)malloc(sizeof(double complex)*N);
 	coeffs_B =  (double complex *)malloc(sizeof(double complex)*N);
 	coeffs_C =  (double complex *)malloc(sizeof(double complex)*N);
-	
+
 	return;
 
 }
@@ -54,16 +54,16 @@ void free_globals(void) {
 	free(Identity);
 	free(kernel);
 	free(weights);
-	
-	
+
+
 	free(cwork);
 	free(work);
-	
+
 	free(r );
 	free(lr);
 
 	free(scaleH);
-	
+
 	free(omega );
 	free(dldom);
 	free(d2ldom );
@@ -75,17 +75,17 @@ void free_globals(void) {
 	free(pres );
 	free(dldpres);
 	free(d2ldpres );
-	
+
 	free(temp);
 	free(dldtemp );
 	free(d2ldtemp);
-	
+
 	free(c2);
 	free(dldc2);
 	free(d2ldc2);
-	
+
 	free(omega_prec);
-	
+
 	free(coeffs_A);
 	free(coeffs_B);
 	free(coeffs_C);

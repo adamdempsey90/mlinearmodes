@@ -11,14 +11,14 @@ def param_dict(prof=None):
 	params['alpha_s'] = 0
 	params['alpha_b'] = 0
 	params['ri'] = .4
-	params['ro'] = 10	
+	params['ro'] = 10
 	params['nr'] = 400
 	params['np'] = 8
 	params['flare_ind'] = 0
 	params['beta'] = 0
 	params['gam'] = 2
 	params['tol'] = 1e-8
-
+	params['Nplanets'] = 0
 	if prof=='yoram':
 		params = {'alpha_b': 0, \
 		 'alpha_s': 0, \
@@ -34,53 +34,54 @@ def param_dict(prof=None):
 		 'rs': 0.1, \
 		 'sig_ind': -1.5, \
 		 'tol': 1e-08}
-	
+
 	if prof=='tremaine':
 		params['ri'] = .0009
 #		params['ri'] = 0.00674
 		params['ro'] = 148.41
 		params['rs'] = .01
 		params['mdisk'] = 1
-	
+
 	if prof in ['papa_a','papa_b']:
 		params['ri'] = 1.1
 		params['ro'] = 99.9
 		if prof == 'papa_a':
 			params['mdisk'] = .04
 		else:
-			params['mdisk'] = .004	
-	
+			params['mdisk'] = .004
+
 	if prof == 'narrow ring':
 		params['ri'] =  0.95122942
 		params['ro'] =  1.0512711
 		params['mdisk']= 1
 		params['rs']=.01
 		params['sig_ind'] = .01
-		
-		
+
+
 	return params
-	
+
 def run_code(params, defines = None):
-	
+
 	if defines != None:
 		add_defines(defines)
 		call(['./compile'])
-	
+
 	callstr = ['./eigen']
-	callstr.append(str(params['nr'])) 
-	callstr.append(str(params['ri'])) 
-	callstr.append(str(params['ro'])) 
-	callstr.append(str(params['mdisk'])) 
-	callstr.append(str(params['rs'])) 
-	callstr.append(str(params['h0'])) 
-	callstr.append(str(params['sig_ind'])) 
-	callstr.append(str(params['flare_ind'])) 
-	callstr.append(str(params['alpha_s'])) 
-	callstr.append(str(params['alpha_b'])) 
-	callstr.append(str(params['np'])) 
-	callstr.append(str(params['gam'])) 
-	callstr.append(str(params['beta'])) 
-	callstr.append(str(params['tol'])) 
+	callstr.append(str(params['nr']))
+	callstr.append(str(params['ri']))
+	callstr.append(str(params['ro']))
+	callstr.append(str(params['mdisk']))
+	callstr.append(str(params['rs']))
+	callstr.append(str(params['h0']))
+	callstr.append(str(params['sig_ind']))
+	callstr.append(str(params['flare_ind']))
+	callstr.append(str(params['alpha_s']))
+	callstr.append(str(params['alpha_b']))
+	callstr.append(str(params['np']))
+	callstr.append(str(params['gam']))
+	callstr.append(str(params['beta']))
+	callstr.append(str(params['tol']))
+	callstr.append(str(params['Nplanets']))
 
 	res = call(callstr)
 	if res != 0:
@@ -93,10 +94,10 @@ def run_code(params, defines = None):
 		fld = Field(params)
 		toc = time()
 		print 'Loading time: %.4f seconds' % (toc - tic)
-	
+
 
 	return fld
-	
+
 def add_defines(defines_list):
 	if type(defines_list) != list:
 		defines_list = [defines_list]
@@ -109,13 +110,13 @@ def add_defines(defines_list):
 						lines[i] = line[2:]
 		f.seek(0,0)
 		f.writelines(lines)
-	return			
+	return
 def remove_defines(defines_list):
 	if type(defines_list) != list:
 		defines_list = [defines_list]
 	with open("defines.h","r+") as f:
 		lines = f.readlines()
-		
+
 		for i,line in enumerate(lines):
 			for val in defines_list:
 				if val in line:
@@ -128,13 +129,10 @@ def remove_defines(defines_list):
 def set_profile(prof):
 
 	allowed_profs = [ 'EXPDECAY', 'POWER', 'MLIN','KUZMIN','RING','USER','INNERTAPER']
-	
+
 	if prof not in allowed_profs:
 		print 'Not a valid profile name'
 		print 'Choose from'
 		print prof
-	
+
 	return
-	
-
-

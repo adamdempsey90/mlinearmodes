@@ -1,16 +1,21 @@
 EXECUTABLE=eigen
-SOURCES=alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c
+SOURCES=alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c planets.c
 HEADER=eigen.h defines.h
 
-LDFLAGS=-llapack -lblas -lm -lgomp -lgsl
+LAPACKLIB=-llapack -lblas
+OPENMPLIB=-lgomp
+MATHLIB=-lm
+GSLLIB=-lgsl
+
+LDFLAGS=$(MATHLIB) $(LAPACKLIB) $(OPENMPLIB) $(GSLLIB)
 
 CFLAGS=-c -fopenmp -Wall -O3  -g
 
 
-#INCLIB=
-#LDLIB=
-INCLIB=-I/usr/local/include/
-LDLIB=-L/usr/local/lib
+INCLIB=
+LDLIB=
+#INCLIB=-I/usr/local/include/
+#LDLIB=-L/usr/local/lib/
 
 BIN=bin/
 SRC=src/

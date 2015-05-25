@@ -10,16 +10,19 @@ double omega_prec_pres(double x);
 int init(double ri,double ro) {
 	int i;
 	init_derivatives();
-	
-	
-	init_weights();
-	
-	init_globals(ri,ro);
-	
 
+
+	init_weights();
+
+	init_globals(ri,ro);
+
+#ifdef PLANETS
+		printf("Initializing %d Planets...\n",NP);
+		init_planets();
+#endif
 
 /* Initialize Kernels if we're not reading it from a file */
-	
+
 	printf("Calculating Kernels\n");
 
 #ifdef SELFGRAVITY
@@ -40,6 +43,10 @@ int init(double ri,double ro) {
 	}
 #endif
 #endif
+
+
+
+
 	return 0;
 }
 
@@ -49,9 +56,9 @@ double omega_prec_pres(double x) {
 	double delta_p = d2logtemp_func(x);
 	double mu_p = d2logsigma_func(x);
 	double fac;
-		
+
 #if defined(ISOTHERMAL) || defined(COOLING)
-	
+
 //	fac = (mu+delta)*(delta+1)*temp_func(x);
 	fac = -temp_func(x) * ( (mu+delta)*(1+delta) + mu_p + delta_p);
 #endif
@@ -61,69 +68,69 @@ double omega_prec_pres(double x) {
 #endif
 
 // #ifdef COOLING
-// 		
+//
 // 	fac =  (mu+delta)*(delta+1)*temp_func(x);
-// 
+//
 // #endif
 
 #ifdef BAROTROPIC
-	
+
 //	fac = mu*(delta + 1)*temp_func(x)*adi_gam;
 	fac = -temp_func(x)*( mu*(1+delta) + mu_p);
-#endif		
-	
+#endif
+
 #if defined(INFINITEDISK) && defined(SELFGRAVITY)
 	fac += sigma_func(x)*(1+mu)*(2+mu)*x*27.5;
-#endif	
-	
+#endif
+
 	return fac /(2*omk_func(x)*x*x);
 }
-void init_globals(double ri, double ro) {	
+void init_globals(double ri, double ro) {
 	int i;
 	for(i=0;i<N;i++) {
-	
-	
+
+
 		lr[i] = log(ri) + i*dlr;
 		r[i] = exp(lr[i]);
-		lr[i] = log(r[i]);	
-		
+		lr[i] = log(r[i]);
+
 		omega[i] = omk_func(r[i]);
 		dldom[i] = dlogomk_func(r[i]);
 		d2ldom[i] = d2logomk_func(r[i]);
-		
+
 		scaleH[i] = scaleH_func(r[i]);
 
 		sigma[i] = sigma_func(r[i]);
 		dlds[i] = dlogsigma_func(r[i]);
 		d2lds[i] = d2logsigma_func(r[i]);
-		
+
 		temp[i] = temp_func(r[i]);
 		dldtemp[i] = dlogtemp_func(r[i]);
 		d2ldtemp[i] = d2logtemp_func(r[i]);
-		
-		
-		
+
+
+
 		c2[i] = adi_gam * temp[i];
 		dldc2[i] = adi_gam * dldtemp[i];
 		d2ldc2[i] = adi_gam * d2ldtemp[i];
-		
+
 		pres[i] = sigma[i] * temp[i];
 		dldpres[i] = dlds[i] + dldtemp[i];
 		d2ldpres[i] = d2lds[i] + d2ldtemp[i];
 		omega_prec[i] = 0;
-		
 
-		
+
+
 	}
 
 #ifdef INPUTMASS
-	sigma0 = Mdisk/calc_total_disk_mass();	
+	sigma0 = Mdisk/calc_total_disk_mass();
 	for(i=0;i<N;i++) {
 		sigma[i] *= sigma0;
 	}
-#else	
+#else
 	Mdisk = calc_total_disk_mass();
-#endif	
+#endif
 
 	}
 
@@ -160,17 +167,17 @@ void init_weights(void) {
 		else {
 			weights[i] = dlr;
 		}
-	
+
 	}
-		
+
 
 #endif
 
 #ifdef COMPTRAPZ
-	
+
 	weights[0] = .5*dlr;
 	weights[N-1] = .5*dlr;
-	
+
 	for(i=1;i<N-1;i++) {
 		weights[i] = dlr;
 	}

@@ -24,6 +24,8 @@
 #+READKERNEL
 #+INDIRECT
 
+# Enable Planets
++PLANETS
 
 # Switch for inputing the total disk mass
 
