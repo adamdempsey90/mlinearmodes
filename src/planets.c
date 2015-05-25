@@ -6,7 +6,7 @@
 
 typedef struct Planet {
 
-	double mass, position, hill;
+	double mass, position, hill,wp;
 	double *pot0, *pot1;
 	int InteriorPlanet, ExteriorPlanet
 
@@ -14,14 +14,22 @@ typedef struct Planet {
 
 Planet *Planets;
 
+double complex *matPP, *matDP, *matPD;
+
+
 void init_planets(void) {
 	int i;
 	Planets = (Planet *)malloc(sizeof(Planet)*NP);
 	
 	for(i=0;i<NP;i++) {
-		Planets[i]->pot0 = (double *)malloc(sizeof(double)*N);
-		Planet[i]->pot1 = (double *)malloc(sizeof(double)*N);
+		Planets[i]->pot0 = (double *)malloc(sizeof(double)*(N+NP));
+		Planet[i]->pot1 = (double *)malloc(sizeof(double)*(N+NP));
 	}
+	
+	matPP = (double complex *)malloc(sizeof(double complex)*NP*NP);
+	matDP = (double complex *)malloc(sizeof(double complex)*N*NP);
+	matPD = (double complex *)malloc(sizeof(double complex)*N*NP);
+	
 	
 	read_planets_file();
 	init_planet_potentials();
@@ -39,6 +47,10 @@ void free_planets(void) {
 		free(Planets[i]->pot1);
 	}
 	free(Planets);
+	
+	free(matPP);
+	free(matDP);
+	free(matPD);
 
 	return;
 }
@@ -76,17 +88,90 @@ void read_planets_file(void) {
 	return;
 }
 
-void init_planet_potentials(void)  {
+void calc_planet_matrices(void) {
+	int i,j,indx;
+	double a, norm;;
+	
+	
+/* Planet-Planet Matrix */
+
+	for(i=0;i<NP;i++) {
+		a = Planets[i]->position;
+		norm = 2*omega_func(a)*a*a*a;
+		for(j=0;j<NP;j++) {
+			indx = j + NP*i;
+			matpp[indx] = (Planets[j]->pot1[i+N])/norm;
+			if (i==j) {
+				matpp[indx] += Planets[i]->wp;
+			}
+			
+		}
+	}
+	
+/* Planet-Disk Matrix */
+	
+	for(i=0;i<N;i++) {
+		a = Planets[i]->position;
+		norm = 2*omega_func(a)*a*a*a;
+		for(j=0;j<NP;j++) {
+			indx = j+N*i;
+			matpd[indx] = (Planets[j]->pot1[i])/norm;
+		}
+	}
+
+/* Disk-Planet Matrix */
+	
+	for(i=0;i<Np;i++) {
+		for(j=0;j<N;j++) {
+			indx = j+N*i;
+			matdp[indx] =  
+		
+		}
+	}
+
+}
+
+void calc_planet_potentials(void)  {
 	int i,j;
 	
 	
 	for(i=0;i<NP;i++) {
+	
+/* Potential of Planet i in the disk at r[j] */	
 		for(j=0;j<N;j++) {
-			Planets[i]->pot0[j] = Planets[i]->mass*planetpot0(r[j],Planets[i]->position,Planets[i]->hill);
-			Planets[i]->pot1[j] = Planets[i]->mass*planetpot1(r[j],Planets[i]->position,Planets[i]->hill);
+			Planets[i]->pot0[j] = Planets[i]->mass* planetpot0(r[j],Planets[i]->position,
+																Planets[i]->hill);
+			Planets[i]->pot1[j] = Planets[i]->mass*planetpot1(r[j],Planets[i]->position,
+																	Planets[i]->hill);
+		}
+		
+/* Potential of Planet i at Planet j */
+		for(j=0;j<NP;j++) {
+			if (i!=j) {
+				Planets[i]->pot0[j+N] = Planets[i]->mass
+										*planetpot0(Planets[j]->position,Planets[i]->position,
+													Planets[i]->hill);
+				Planets[i]->pot1[j+N] = Planets[i]->mass
+										*planetpot1(Planets[j]->position,Planets[i]->position,
+													Planets[i]->hill);
+			}
+			else {
+				Planets[i]->pot0[j+N] = 0;
+				Planets[i]->pot1[j+N] = 0;
+			}
+		}
+				
+	}
 
-
-
+/* Calculate the precession frequency */	
+	for(i=0;i<NP;i++) {
+		Planets[i]->wp = 0;
+		for(j=0;j<NP;j++) {
+			Planets[i]->wp += Planets[j]->pot0[i+N];
+		}
+		Planets[i]->wp /= (2 * omk_func(a)*a*a);
+	}
+	return;
 }
 
 
