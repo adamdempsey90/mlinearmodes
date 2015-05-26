@@ -2,7 +2,7 @@
 #include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_integration.h>
 
-
+#ifdef PLANETS
 
 
 
@@ -15,7 +15,7 @@ double planetpot0(double x, double a, double eps);
 double planetpot1(double x, double a, double eps);
 double regularize_radius(double x, int *indx);
 void output_planet_summary(void);
-
+void output_planet_potentials(void);
 
 
 void init_planets(void) {
@@ -73,7 +73,6 @@ void read_planets_file(void) {
 		Planets[i].InteriorPlanet = 0;
 		Planets[i].ExteriorPlanet = 0;
 		Planets[i].wp = 0;
-		Planets[i].e = 0;
 
 		if (Planets[i].position < r[0]) {
 			Planets[i].InteriorPlanet = 1;
@@ -98,19 +97,38 @@ void output_planet_summary(void) {
 	f = fopen("planet_summary.dat","w");
 
 	printf("\n\nPlanet Summary \n");
-	printf("PlanetNumber\tRadius\tMass\tEccentricity\tHillRadius\twp\n");
-	fprintf(f,"#PlanetNumber\tRadius\tMass\tEccentricity\tHillRadius\twp\n");
+	printf("PlanetNumber\tRadius\tMass\tHillRadius\twp\n");
+	fprintf(f,"#PlanetNumber\tRadius\tMass\tHillRadius\twp\n");
 	for(i=0;i<NP;i++) {
-		printf("%d\t%lg\t%.2e\t%.2e+%.2ei\t%lg\t%lg\n",i,Planets[i].position,
-							Planets[i].mass,creal(Planets[i].e),cimag(Planets[i].e),Planets[i].hill,Planets[i].wp);
-		fprintf(f,"%d\t%.12lg\t%.12e\t%.12e\t%.12e\t%.12lg\t%.12lg\n",i,Planets[i].position,
-												Planets[i].mass,creal(Planets[i].e),cimag(Planets[i].e),Planets[i].hill,Planets[i].wp);
+		printf("%d\t%lg\t%.2e\t%lg\t%lg\n",i,Planets[i].position,
+							Planets[i].mass,Planets[i].hill,Planets[i].wp);
+		fprintf(f,"%d\t%.12lg\t%.12e\t%.12lg\t%.12lg\n",i,Planets[i].position,
+												Planets[i].mass,Planets[i].hill,Planets[i].wp);
 	}
 
 	printf("\n\n");
 	fclose(f);
 	return;
 
+
+}
+
+void output_planet_potentials(void) {
+	int i,j;
+	FILE *f;
+
+	f = fopen("planet_pots.dat","w");
+
+	for(j=0;j<(N+NP);j++) {
+		for(i=0;i<NP;i++) {
+			fprintf(f,"%.12lg\t%.12lg\t%.12lg\t%.12lg\t",
+						creal(Planets[i].pot0[j]),cimag(Planets[i].pot0[j]),
+						creal(Planets[i].pot1[j]),cimag(Planets[i].pot1[j]));
+		}
+		fprintf(f,"\n");
+	}
+	fclose(f);
+	return;
 
 }
 
@@ -157,7 +175,6 @@ void calc_planet_matrices(void) {
 	int i,j,indx;
 	double a, norm;
 
-	output_planet_summary();
 
 	printf("\tCalculating Planet Potentials...\n");
 	calc_planet_potentials();
@@ -176,7 +193,6 @@ void calc_planet_matrices(void) {
 
 		}
 	}
-	printf("Done PP\n");
 /* Planet-Disk Matrix */
 
 	for(i=0;i<N;i++) {
@@ -186,7 +202,6 @@ void calc_planet_matrices(void) {
 			matpd[indx] = (Planets[j].pot1[i])/norm;
 		}
 	}
-	printf("Done PD\n");
 
 /* Disk-Planet Matrix */
 
@@ -200,7 +215,6 @@ void calc_planet_matrices(void) {
 
 		}
 	}
-	printf("Done DP\n");
 
 	return;
 }
@@ -239,13 +253,13 @@ void calc_planet_potentials(void)  {
 
 /* Calculate the precession frequency */
 	for(i=0;i<NP;i++) {
-		Planets[i].wp = 0;
 		a = Planets[i].position;
 		for(j=0;j<NP;j++) {
-			Planets[i].wp += Planets[j].pot0[i+N];
+			Planets[i].wp += Planets[j].pot0[i+N]/(2 * omk_func(a)*a*a);
 		}
-		Planets[i].wp /= (2 * omk_func(a)*a*a);
 	}
+
+	output_planet_potentials();
 	return;
 }
 
@@ -336,3 +350,4 @@ double regularize_radius(double x, int *indx) {
 	printf("\n\n\n\n Couldn't put the planet on the grid! \n\n\n\n");
 	return -1;
 }
+#endif

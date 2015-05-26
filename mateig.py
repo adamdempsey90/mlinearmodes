@@ -19,14 +19,14 @@ class Mode():
 		return len(overlap[overlap != 0])
 
 class Planet():
-	def __init__(self,dat):
+	def __init__(self,dat,pot):
 		self.num = dat[0]
 		self.a = dat[1]
 		self.mp = dat[2]
-		self.e = dat[3] + 1j*dat[4]
-		self.hill = dat[5]
-		self.wp = dat[6]
-
+		self.hill = dat[3]
+		self.wp = dat[4]
+		self.p0 = pot[0]
+		self.p1 = pot[1]
 
 class Field():
 	def __init__(self,params):
@@ -85,18 +85,25 @@ class Field():
 		self.nr = len(self.r)
 
 
-		npl = self.params['Nplanets']
-		if npl != 0:
+		self.npl = self.params['Nplanets']
+		if self.npl > 0:
 			pdat = loadtxt('planet_summary.dat')
-			if npl != 1:
-				self.planets = [Planet(line) for line in pdat]
+			ppot = loadtxt('planet_pots.dat')
+			ppot = [ (ppot[:,4*i]+1j*ppot[:,4*i+1],ppot[:,4*i+2]+1j*ppot[:,4*i+3]) for i in range(self.npl)]
+			if self.npl > 1:
+				self.planets = [Planet(line,pp) for line,pp in zip(pdat,ppot)]
+				self.plr = array([pl.a for pl in self.planets])
 			else:
-				self.planets = Planet(pdat)
+				self.planets = Planet(pdat,ppot[0])
+				self.plr = self.planets.a
 
 		evals = emat[:,0] + 1j*emat[:,1]
 		emat = emat[:,2:]
 		evecs = emat[:,::2] + 1j*emat[:,1::2]
-
+		if self.npl > 0:
+			self.pevecs = evecs[:,-self.npl:]
+			evecs = evecs[:,:-self.npl]
+			self.evecs = evecs
 		# if npl != 0:
 		# 	self.plevals = evals[-npl:]
 		# 	evals = evals[:-npl]
@@ -119,17 +126,20 @@ class Field():
 		self.evals = evals[inds]
 		self.evecs = evecs[inds,:]
 
-		self.evdict = dict()
-		self.edict= dict()
-		self.sigp = dict()
-		self.vrp = dict()
-		self.vpp = dict()
+		self.evdict = {}
+		self.edict= {}
+		self.pedict = {}
+		self.sigp = {}
+		self.vrp = {}
+		self.vpp = {}
 
-		self.modes = dict()
+		self.modes = {}
 
 		for i,ev in enumerate(self.evals):
 			self.modes[ev] = Mode(ev,self.evecs[i,:],(self.r,self.dlr,self.omega,self.sigma))
 			self.edict[ev] = self.evecs[i,:]
+			if self.npl > 0:
+				self.pedict[ev] = self.pevecs[i,:]
 #			if abs(ev) != 0:
 #				self.evdict[self.nodes(self.evecs[i,:])] = ev
 #				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]
@@ -414,6 +424,7 @@ class Field():
 
 
 
+
 		if logr:
 			axu.set_xscale('symlog')
 			axv.set_xscale('symlog')
@@ -433,9 +444,16 @@ class Field():
 		if logr:
 			r = log10(self.r)
 			xstr = '$\log_{10} r$'
+			if self.npl > 0:
+				plr = log10(self.plr)
 		else:
 			r = self.r
 			xstr = '$r$'
+			if self.npl > 0:
+				plr = self.plr
+
+
+
 
 
 		fig,(axex,axey,axe,axw) = subplots(4,1,sharex='col')
@@ -449,11 +467,6 @@ class Field():
 		axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
 #		axw.set_ylim((-.9,1.1))
 
-
-#	 	fig,(axe,axw) = subplots(2,1,sharex='col')
-# 		axw.set_xlabel(xstr,fontsize='large')
-# 		axe.set_ylabel('$e(r)$',fontsize='large')
-# 		axw.set_ylabel('$ | \omega(r) |/ \pi $',fontsize='large')
 
 		if ev != None:
 			if type(ev)==list or type(ev)==numpy.ndarray:
@@ -477,36 +490,31 @@ class Field():
 
 		for x in keys:
 			dat = copy(self.edict[x])
+
+			if self.npl > 0:
+				pdat = copy(self.pedict[x])
 			if renormalize:
 				dat /= self.sigma
 			if scale != 0:
 				if scale == 'max':
 					dat /= dat.max()
+					if self.npl > 0:
+						pdat /= dat.max()
 				else:
 					dat *= scale/dat[0]
+					if self.npl > 0:
+						pdat *= scale/dat[0]
 
 			axex.plot(r,real(dat))
 			axey.plot(r,imag(dat))
 			axe.plot(r,abs(dat))
 			axw.plot(r,angle(self.edict[x])/pi)
 			axex.set_title('$\\Omega_p = %.2e + %.2ei$' % (real(x),imag(x)))
-
-# 			else:
-# 				dat = copy(self.edict[ev])
-# 				if renormalize:
-# 						dat /= self.sigma
-# 				if scale != 0:
-# 					if scale == 'max':
-# 						dat /= dat.max()
-# 					else:
-# 						dat *= scale/dat[0]
-#
-# 				axex.plot(r,real(dat),'-k',label=('$\\Omega_p = %.2e$' % real(ev)))
-# 				axey.plot(r,imag(dat),'-k',label=('$\\gamma = %.2e$' % imag(ev)))
-# 				axex.legend(loc='best')
-# 				axey.legend(loc='best')
-# 				axe.plot(r,abs(dat),'-k')
-# 				axw.plot(r,angle(self.edict[ev])/pi,'-k')
+			if self.npl > 0:
+				axex.plot(plr,real(pdat),'-ro')
+				axey.plot(plr,imag(pdat),'-ro')
+				axe.plot(plr,abs(pdat),'-ro')
+				axw.plot(plr,angle(self.pedict[x])/pi,'-ro')
 
 
 		subplots_adjust(hspace=.1)
@@ -1607,8 +1615,8 @@ def create_power_law_plots_2(fld,fld1,moq,soft,tstr=None):
 	subplots_adjust(wspace=0)
 
 
-def sigma_from_machq_power_law(moq,h,ro):
-	return h*h*moq*ro**(-.5) / pi
+def sigma_from_machq_power_law(moq,h,ro,mu,delta):
+	return h*h*moq*ro**(1+mu-delta) / pi
 
-def sigma_from_machq_taper(moq,h,ro,rt):
-	return sigma_from_machq_power(moq,h,ro)*(rt**3+rt**(-1.5))
+def sigma_from_machq_taper(moq,h,ro,rt,mu,delta):
+	return sigma_from_machq_power(moq,h,ro,mu,delta)*(rt**3+rt**(mu))

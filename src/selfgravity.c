@@ -274,11 +274,17 @@ double integrand(double x, void *params) {
 void calc_omega_prec_grav(void) {
 
 
+
 	int nsubintervals = 3000;
-	double error, res, norm,a;
+	double error, res, norm,a, rad_ext;
 	gsl_integration_workspace *workspace = gsl_integration_workspace_alloc( nsubintervals );
 	gsl_function func;
 	int i;
+#ifdef EXTENDINTEG
+	rad_ext = 10;
+#else
+	rad_ext = 1;
+#endif
 
 	if (analytic_potential()) {
 		for(i=0;i<N;i++) {
@@ -298,7 +304,7 @@ void calc_omega_prec_grav(void) {
 		for(i=0;i<N;i++) {
 
 			func.params = &r[i];
-			gsl_integration_qags(&func, log(r[0]/10),log(r[N-1]*10),0,tol, nsubintervals , workspace,&res,&error);
+			gsl_integration_qags(&func, log(r[0]/rad_ext),log(r[N-1]*rad_ext),0,tol, nsubintervals , workspace,&res,&error);
 			norm = 2*sqrt(r[i]);
 			omega_prec[i] += res/norm;
 
@@ -307,7 +313,7 @@ void calc_omega_prec_grav(void) {
 	for(i=0;i<NP;i++) {
 		a = Planets[i].position;
 		func.params = &a;
-		gsl_integration_qags(&func,log(r[0]/10),log(r[N-1]*10),0,tol, nsubintervals , workspace,&res,&error);
+		gsl_integration_qags(&func,log(r[0]/rad_ext),log(r[N-1]*rad_ext),0,tol, nsubintervals , workspace,&res,&error);
 		norm = 2*omk_func(a)*a*a;
 		Planets[i].wp += res/norm;
 	}

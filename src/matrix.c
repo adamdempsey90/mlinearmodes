@@ -53,12 +53,6 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 	}
 #endif
 
-#ifdef PLANETS
-	for(i=0;i<NP;i++) {
-		Planets[i].e = evals[i+N];
-	}
-
-#endif
 	free(tA); free(tQ);
 	free(RWORK); free(CWORK);
 	free(evals_alpha);

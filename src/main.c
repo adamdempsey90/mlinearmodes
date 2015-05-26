@@ -167,7 +167,9 @@ int main(int argc, char *argv[]) {
   	printf("Freeing Arrays...\n");
 
   	free_globals();
-		free_planets();
+#ifdef PLANETS
+	free_planets();
+#endif
 	free(mat); free(evecs); free(evals); free(bcmat);
 
 	toc = clock();

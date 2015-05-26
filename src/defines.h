@@ -1,7 +1,8 @@
 #define OPENMP
-#define ISOTHERMAL
+#define BAROTROPIC
 #define SELFGRAVITY
 #define PLANETS
-#define INNERTAPER_PROF
+#define INPUTMASS
+#define PAPALOIZOU_PROF
 #define COMPSIMPS
 #define SYMSOFT2

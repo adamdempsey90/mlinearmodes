@@ -38,7 +38,6 @@ typedef struct Planet {
 
 	double mass, position, hill,wp;
 	double complex *pot0, *pot1;
-	double complex e;
 	int index,InteriorPlanet, ExteriorPlanet;
 
 } Planet;
@@ -103,5 +102,4 @@ void add_planets(double complex *mat, double complex *bcmat);
 void init_planets(void);
 void calc_planet_matrices(void);
 void free_planets(void);
-void output_planet_summary(void);
 #endif
