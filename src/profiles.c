@@ -2,40 +2,40 @@
 
 //#define ANALYTICPOTENTIAL
 
-static const double rin = 1;
-static const double rout = 100;
-static const double polyn = 1.5;
+static const double r_max = .3;
+static const double inner_slope = 3;
+
+
 
 double sigma_func(double x) {
-	return sigma0 *  pow(temp_func(x),polyn);
+	double outer_slope = sigma_index;
+	return sigma0 /( pow(x/r_max,-inner_slope) + pow(x/r_max,-outer_slope));
 }
 
 double dlogsigma_func(double x) {
-	return polyn * dlogtemp_func(x);
+	double outer_slope = sigma_index;
+	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
+	return outer_slope + (inner_slope - outer_slope)*pow(x/r_max,outer_slope)/denom;
 }
 
 double d2logsigma_func(double x) {
-	return polyn * d2logtemp_func(x);
+	double outer_slope = sigma_index;
+	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
+	denom *= denom;
+	return -(outer_slope-inner_slope)*(outer_slope-inner_slope)*pow(x/r_max,inner_slope+outer_slope)/denom;
 }
 
 
 double temp_func(double x) {
-	double fac_in = (1 - pow(rin/x,10));
-	double fac_out = (1 - pow(x/rout,10));
-	return scaleH_func(x)*scaleH_func(x) * fac_in * fac_out * pow(rin/x,3);
+	return h0*h0*pow(x,temp_index);
 }
 
 double dlogtemp_func(double x) {
-	double fac_in = (1 - pow(x/rin,10));
-	double fac_out = (1- pow(rout/x,10));
-	return temp_index - 10/fac_in + 10/fac_out;
+	return temp_index;
 }
 
 double d2logtemp_func(double x) {
-	double fac_in = pow(rout/x,10);
-	double fac_out = pow(rin/x,10);
-
-	return -100*fac_in *pow(1-fac_in,-2) - 100*fac_out*pow(1-fac_out,-2);
+	return 0;
 }
 
 double omk_func(double x) {

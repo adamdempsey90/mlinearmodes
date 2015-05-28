@@ -113,11 +113,28 @@ void user_gradient_bc_outer(double complex *mat, double complex *bcmat,double co
 void set_bc(double complex *mat, double complex *bcmat) {
 
 #ifndef NOPRESSURE
+
+#ifdef ZEROBCIN
+	zero_e_bc_inner(mat,bcmat);
+#endif
+
+#ifdef ZEROBCOUT
+	zero_e_bc_outer(mat,bcmat);
+#endif
+
+#ifdef PRESBCIN
 	lagrangian_pressure_bc_inner(mat, bcmat);
-//	zero_e_bc_inner(mat,bcmat);
-//	zero_e_bc_outer(mat,bcmat);
-//	user_gradient_bc_outer(mat,bcmat,.5);
+#endif
+
+#ifdef PRESBCOUT
 	lagrangian_pressure_bc_outer(mat, bcmat);
+#endif
+
+#ifdef GRADBCIN
+	user_gradient_bc_outer(mat,bcmat,.5);
+#endif
+
+
 #endif
 	return;
 }

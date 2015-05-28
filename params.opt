@@ -9,9 +9,9 @@
 # Equation of State Options
 
 #+ISOTHERMAL
-+BAROTROPIC
+#+BAROTROPIC
 #+POLYTROPE
-#+COOLING
++COOLING
 
 # Disable Pressure
 
@@ -20,17 +20,17 @@
 
 # Enable Self Gravity
 
-+SELFGRAVITY
+#+SELFGRAVITY
 #+EXTENDINTEG
 #+READKERNEL
 #+INDIRECT
 
 # Enable Planets
-+PLANETS
+#+PLANETS
 
 # Switch for inputing the total disk mass
 
-+INPUTMASS
+#+INPUTMASS
 
 # Profile Options
 
@@ -40,8 +40,8 @@
 #+KUZMIN_PROF
 #+GAUSSIANRING_PROF
 #+GAUSSIANBUMP_PROF
-#+INNERTAPER_PROF
-+PAPALOIZOU_PROF
++INNERTAPER_PROF
+#+PAPALOIZOU_PROF
 
 #+HEEMSKERK
 
@@ -60,3 +60,11 @@
 #+LINEARSOFT
 #+SYMSOFT
 +SYMSOFT2
+
+# Boundary Conditions #
+
+#+ZEROBCIN
+#+ZEROBCOUT
++PRESBCIN
++PRESBCOUT
+#+GRADBCOUT

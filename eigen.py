@@ -98,33 +98,66 @@ def run_code(params, defines = None):
 
 	return fld
 
-def add_defines(defines_list):
-	if type(defines_list) != list:
-		defines_list = [defines_list]
-	with open("defines.h","r+") as f:
+def add_option(opt,recompile=False):
+	if type(opt) != list:
+		opt = [opt]
+	with open('params.opt','r+') as f:
 		lines = f.readlines()
+		f.seek(0)
 		for i,line in enumerate(lines):
-			for val in defines_list:
-				if val in line:
-					if line[0:2] == '//':
-						lines[i] = line[2:]
-		f.seek(0,0)
-		f.writelines(lines)
-	return
-def remove_defines(defines_list):
-	if type(defines_list) != list:
-		defines_list = [defines_list]
-	with open("defines.h","r+") as f:
-		lines = f.readlines()
+			for key in opt:
+				if key in line:
+					if '#' in line:
+						lines[i] = lines[i].split('#')[-1]
+		f.write(''.join(lines))
 
+	if recompile:
+		code_compile()
+
+def remove_option(opt,recompile=False):
+	if type(opt) != list:
+		opt = [opt]
+	with open('params.opt','r+') as f:
+		lines = f.readlines()
+		f.seek(0)
 		for i,line in enumerate(lines):
-			for val in defines_list:
-				if val in line:
-					if line[0:2] != '//':
-						lines[i] = '//' + line
-		f.seek(0,0)
-		f.writelines(lines)
-	return
+			for key in opt:
+				if key in line:
+					if '#' not in line:
+						lines[i] = '#' + lines[i]
+		f.write(''.join(lines))
+
+	if recompile:
+		code_compile()
+
+def add_remove_option(add_opts,rm_opts,recompile=False):
+	if type(add_opts) != list:
+		add_opts = [add_opts]
+	if type(rm_opts) != list:
+		rm_opts = [rm_opts]
+
+	with open('params.opt','r+') as f:
+		lines = f.readlines()
+		f.seek(0)
+		for i,line in enumerate(lines):
+			for key in add_opts:
+				if key in line:
+					if '#' in line:
+						lines[i] = lines[i].split('#')[-1]
+			for key in rm_opts:
+				if key in line:
+					if '#' not in line:
+						lines[i] = '#' + lines[i]
+		f.write(''.join(lines))
+
+	if recompile:
+		code_compile()
+
+
+def code_compile():
+	call(['./configure'])
+	call(['make'])
+
 
 def set_profile(prof):
 

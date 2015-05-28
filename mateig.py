@@ -1511,10 +1511,12 @@ def calculate_veff(fld,signk=1):
 	return veffp,veffm,k2eff,psi
 
 def save_Field(obj, filename):
-    with open(filename, 'wb') as output:
-        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+	print 'Saving Field to ' + filename
+	with open(filename, 'wb') as output:
+		pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
 def load_Field(filename):
+	print 'Loading Field from ' + filename
 	with open(filename,'rb') as output:
 		return pickle.load(output)
 
@@ -1620,3 +1622,144 @@ def sigma_from_machq_power_law(moq,h,ro,mu,delta):
 
 def sigma_from_machq_taper(moq,h,ro,rt,mu,delta):
 	return sigma_from_machq_power(moq,h,ro,mu,delta)*(rt**3+rt**(mu))
+
+
+def visc_runs(alpha,params,save_results = False,direct='saved_class/visc_diss/inner_taper/adiabatic/'):
+	bcs = ['PRESBCIN','ZEROBCIN']
+	rinner = [.01,.1]
+	nrad = [600,400]
+
+	fld = [[None for a in alpha] for j in range(4)]
+
+
+	add_remove_option(bcs[0],bcs[1],True)
+
+
+# [.01, 10]
+
+	params['nr'] = nrad[0]
+	params['ri'] = rinner[0]
+	for i,a in enumerate(alpha):
+		params['alpha_s'] = a
+		if save_results:
+			fname = direct + 'bcP_ri.01_alpha%d.dat'%i
+			save_Field(run_code(params),fname)
+			fld[0][i] = load_Field(fname)
+		else:
+			fld[0][i] = run_code(params)
+
+
+	add_remove_option(bcs[1],bcs[0],True)
+	for i,a in enumerate(alpha):
+		params['alpha_s'] = a
+		if save_results:
+			fname = direct + 'bcZ_ri.01_alpha%d.dat'%i
+			save_Field(run_code(params),fname)
+			fld[1][i] = load_Field(fname)
+		else:
+			fld[1][i] = run_code(params)
+
+# [.1, 10]
+	params['nr'] = nrad[1]
+	params['ri'] = rinner[1]
+	add_remove_option(bcs[0],bcs[1],True)
+
+	for i,a in enumerate(alpha):
+		params['alpha_s'] = a
+		if save_results:
+			fname = direct + 'bcP_ri.1_alpha%d.dat'%i
+			save_Field(run_code(params),fname)
+			fld[2][i] = load_Field(fname)
+		else:
+			fld[2][i] = run_code(params)
+
+	add_remove_option(bcs[1],bcs[0],True)
+	for i,a in enumerate(alpha):
+		params['alpha_s'] = a
+		if save_results:
+			fname = direct + 'bcZ_ri.1_alpha%d.dat'%i
+			save_Field(run_code(params),fname)
+			fld[3][i] = load_Field(fname)
+		else:
+			fld[3][i] = run_code(params)
+
+
+
+	return fld
+
+
+def gamma_var(alpha,gammas,params,save_results = False,direct='saved_class/visc_diss/inner_taper/adiabatic/'):
+
+	fld=[[None for a in alpha] for g in gammas]
+
+	for i,g in enumerate(gammas):
+		call(['mkdir',direct+'g%.1f'%g])
+		for j,a in enumerate(alpha):
+			params['gam'] = g
+			params['alpha_s'] = a
+			if save_results:
+				fname = direct +'g%.1f/bcP_ri0.1_alpha%d.dat'%(g,j)
+				save_Field(run_code(params),fname)
+				fld[i][j] = load_Field(fname)
+			else:
+				fld[i][j] = run_code(params)
+
+	return fld
+def visc_diss_summary(fld,alpha,ind=-3):
+
+	zn0_ev = [ fld[0][i].evals[ind] for i in range(len(alpha)) ]
+	zn0_e = [abs(fld[0][i].edict[ev]) for i,ev in enumerate(zn0_ev)]
+
+	zn1_ev = [ fld[1][i].evals[ind] for i in range(len(alpha)) ]
+	zn1_e = [abs(fld[1][i].edict[ev]) for i,ev in enumerate(zn1_ev)]
+
+	zn2_ev = [ fld[2][i].evals[ind] for i in range(len(alpha)) ]
+	zn2_e = [abs(fld[2][i].edict[ev]) for i,ev in enumerate(zn2_ev)]
+
+	zn3_ev = [ fld[3][i].evals[ind] for i in range(len(alpha)) ]
+	zn3_e = [abs(fld[3][i].edict[ev]) for i,ev in enumerate(zn3_ev)]
+
+	print zn2_ev
+
+	in_pres_fld = fld[0]
+	in_z_fld = fld[1]
+	pres_fld = fld[2]
+	z_fld = fld[3]
+
+
+	fig,((ax0,ax2),(ax1,ax3)) = subplots(2,2,sharex='col')
+
+	ax1.set_xlabel('$r$',fontsize='large')
+	ax3.set_xlabel('$r$',fontsize='large')
+
+	ax0.set_ylabel('$|e|$',fontsize='large')
+	ax2.set_ylabel('$|e|$',fontsize='large')
+
+	ax0.set_title('$\\delta P(r_i) = 0$, $r_i = 0.01$',fontsize='large')
+	ax2.set_title('$\\delta P(r_i) = 0$, $r_i = 0.1$',fontsize='large')
+	ax1.set_title('$e(r_i) = 0$, $r_i = 0.01$',fontsize='large')
+	ax3.set_title('$e(r_i) = 0$, $r_i = 0.1$',fontsize='large')
+
+
+	for i,a in enumerate(alpha):
+		ax0.loglog(fld[0][i].r,zn0_e[i],label='$\\alpha = %.2e$, $\\gamma = %.2e$'%(a,imag(zn0_ev[i])))
+		ax1.loglog(fld[1][i].r,zn1_e[i],label='$\\alpha = %.2e$, $\\gamma = %.2e$'%(a,imag(zn1_ev[i])))
+		ax2.loglog(fld[2][i].r,zn2_e[i],label='$\\alpha = %.2e$, $\\gamma = %.2e$'%(a,imag(zn2_ev[i])))
+		ax3.loglog(fld[3][i].r,zn3_e[i],label='$\\alpha = %.2e$, $\\gamma = %.2e$'%(a,imag(zn3_ev[i])))
+
+	ax0.legend(loc='best')
+	ax1.legend(loc='best')
+	ax2.legend(loc='best')
+	ax3.legend(loc='best')
+
+
+	figure()
+
+	loglog(alpha[1:],abs(imag(zn0_ev[1:])),label='$\\delta P(r_i) = 0$, $r_i = 0.01$')
+	loglog(alpha[1:],abs(imag(zn1_ev[1:])),label='$e(r_i) = 0$, $r_i = 0.01$')
+	loglog(alpha[1:],abs(imag(zn2_ev[1:])),label='$\\delta P(r_i) = 0$, $r_i = 0.1$')
+	loglog(alpha[1:],abs(imag(zn3_ev[1:])),label='$e(r_i) = 0$, $r_i = 0.1$')
+
+	xlabel('$\\alpha$',fontsize='large')
+	ylabel('$|\\gamma|$',fontsize='large')
+	legend(loc='best')
