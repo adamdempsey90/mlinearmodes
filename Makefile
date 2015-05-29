@@ -23,14 +23,24 @@ IN=inputs/
 PY=src/pyutils/
 
 
-UNAME := $(shell uname)
+UNAME := $(shell echo $(USER))
 
-ifeq ($(UNAME),Linux)
+ifeq ($(UNAME),apollo)
 CC=gcc
 endif
 
-ifeq ($(UNAME),Darwin)
+ifeq ($(UNAME),jupiter)
 CC=gcc-4.9
+endif
+
+ifeq ($(UNAME),helios)
+CC=gcc
+INCLIB=-I/usr/local/include/
+LDLIB=-L/usr/local/lib/
+endif
+
+ifeq ($(UNAME),amd616)
+CC=gcc
 endif
 
 #!!!!!DO NOT EDIT ANYTHING UNDER THIS LINE!!!!!
