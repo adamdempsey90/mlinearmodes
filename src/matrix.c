@@ -1,5 +1,6 @@
 #include "eigen.h"
 
+void normalize_evectors(double complex *evecs);
 
 void reigenvalues(double complex *A, double complex *Q, double complex *evals, double complex *evecs, int nA)
 {
@@ -52,6 +53,11 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 		}
 	}
 #endif
+
+#ifdef NORMALIZEEVECS
+	normalize_evectors(evecs);
+#endif
+
 
 	free(tA); free(tQ);
 	free(RWORK); free(CWORK);
@@ -184,5 +190,38 @@ void cmatvec(double  complex *A, double complex *B, double complex *C,
 	zgemv_(&TRANS, &m,&n,&alpha,A,&LDA,B,&INCX,&beta,C,&INCY);
 
 	return;
+
+}
+
+
+
+void normalize_evectors(double complex *evecs) {
+/* Normalize the eigenvectors */
+
+	int i,j,indx;
+	double norm;
+
+
+#ifdef OPENMP
+#pragma omp parallel private(i,j,norm,indx) shared(evecs,nrows,ncols)
+#pragma omp for schedule(static)
+#endif
+	for(i=0;i<nrows;i++) {
+			norm = 0;
+			for(j=0;j<N;j++) {
+/* Calculate the factor to normalize the disk eccentricity.
+	 Each planet eccentricity will then be normalized by the same factor.
+*/
+				indx = j + ncols*i;
+				norm += r[j]*r[j]*weights[j]*conj(evecs[indx])*evecs[indx];
+			}
+			for(j=0;j<ncols;j++) {
+					indx = j + ncols*i;
+					evecs[indx] /= norm;
+			}
+	}
+
+	return;
+
 
 }

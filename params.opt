@@ -3,7 +3,7 @@
 # Comment all but 1 option for each block
 
 
-# Enable OPENMP parallelization
+# Enable parallelization
 +OPENMP
 
 # Equation of State Options
@@ -31,6 +31,9 @@
 # Switch for inputing the total disk mass
 
 #+INPUTMASS
+
+# Normalize the integrated disk eccentricity
++NORMALIZE
 
 # Profile Options
 
@@ -63,8 +66,8 @@
 
 # Boundary Conditions #
 
-#+ZEROBCIN
++ZEROBCIN
 #+ZEROBCOUT
-+PRESBCIN
+#+PRESBCIN
 +PRESBCOUT
 #+GRADBCOUT

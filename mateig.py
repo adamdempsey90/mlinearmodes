@@ -37,29 +37,9 @@ class Field():
 		self.defines = load_defines()
 		self.matrix=loadtxt('matrix.dat')
 		self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
-# 		self.lr = dat[:,0]
-# 		self.r = dat[:,1]
-# 		self.omega = dat[:,2]
-# 		self.c2 = dat[:,3]
-# 		self.sigma = dat[:,4]
-# 		self.hor = dat[:,5]
-# 		self.pres = dat[:,6]
-# 		self.temp = dat[:,7]
-# 		self.soft = dat[:,8]
-# 		self.wp = dat[:,9]
-# 		self.dldc2 = dat[:,10]
-# 		self.dlds = dat[:,11]
-# 		self.dldpres = dat[:,12]
-# 		self.kappa2 = dat[:,13]
-# 		self.kappa = sqrt(self.kappa2)
-# 		self.d2lds = dat[:,14]
-# 		self.d2ldpres = dat[:,15]
-# 		self.dldom = dat[:,16]
-# 		self.d2dom = dat[:,17]
-# 		self.nu = dat[:,18]
-# 		self.dldnu = dat[:,19]
-# 		self.dlr = diff(self.lr)[0]
-# 		self.nr = len(self.r)
+		self.D = loadtxt('D.dat')
+		self.D2 = loadtxt('D2.dat')
+
 
 		self.lr = dat[:,0]
 		self.r = dat[:,1]
@@ -132,14 +112,21 @@ class Field():
 		self.sigp = {}
 		self.vrp = {}
 		self.vpp = {}
-
+		self.vortp = {}
+		self.vortensp = {}
 		self.modes = {}
 
 		for i,ev in enumerate(self.evals):
-			self.modes[ev] = Mode(ev,self.evecs[i,:],(self.r,self.dlr,self.omega,self.sigma))
-			self.edict[ev] = self.evecs[i,:]
+			ee = self.evecs[i,:]
+			self.modes[ev] = Mode(ev,ee,(self.r,self.dlr,self.omega,self.sigma))
+			self.edict[ev] = ee
 			if self.npl > 0:
 				self.pedict[ev] = self.pevecs[i,:]
+			self.sigp[ev] = -dot(self.D,self.sigma*ee)
+			self.vrp[ev] = 1j*self.r*self.omega*ee
+			self.vpp[ev] = .5*1j*self.vrp[ev]
+			self.vortp[ev] =
+
 #			if abs(ev) != 0:
 #				self.evdict[self.nodes(self.evecs[i,:])] = ev
 #				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]
@@ -352,40 +339,67 @@ class Field():
 
 		axk.legend(loc='best')
 
-	def plotreal(self,ev,logz=False, logx=False,logy=False,rlims=None):
+	def plotreal(self,ev,q,total=False,logz=False, logx=False,logy=False,rlims=None,plot_contours=True):
 
-		phi = linspace(0,2*pi,6*self.nr)
-		rr,pp = meshgrid(self.r,phi)
+		if rlims == None:
+			r = self.r
+			nr = self.nr
+			ind = range(nr)
+			sigma = self.sigma
+			evec  = self.edict[ev]
+		else:
+			ind = self.r <= rlims
+			r = self.r[ind]
+			nr = len(r)
+			sigma = self.sigma[ind]
+			evec = self.edict[ev]
+			evec = evec[ind]
+
+
+
+
+
+		phi = linspace(0,2*pi,6*nr)
+		rr,pp = meshgrid(r,phi)
 		xx = rr*cos(pp)
 		yy = rr*sin(pp)
 
-		if xx.shape[0] == self.nr:
+
+		if xx.shape[0] == nr:
 			ind = 0
 		else:
 			ind = 1
 
-#		sigp = self.sigp[ev]
-		sigp = -gradient(self.sigma*self.edict[ev],self.dlr)
+
+
+		sigp = -gradient(sigma*evec,self.dlr)
 		ss = zeros(xx.shape)
 
-		for i in range(self.nr):
+		for i in range(nr):
 			if ind == 0:
 				ss[i,:] = real(sigp[i]*exp(1j*phi))
+				if total:
+					ss[i,:] += sigma[i]
 			else:
 				ss[:,i] = real(sigp[i]*exp(1j*phi))
+				if total:
+					ss[:,i] += sigma[i]
+
 
 
 
 		figure();
 		if logz:
-			pcolormesh(xx,yy,log10(ss),cmap='hot')
+			pcolormesh(xx,yy,log10(ss),cmap='hot'); colorbar()
+			if plot_contours:
+				contour(xx,yy,log10(ss))
 		else:
-			pcolormesh(xx,yy,ss,cmap='hot')
+			pcolormesh(xx,yy,ss,cmap='hot'); colorbar()
+			if plot_contours:
+				contour(xx,yy,ss)
 
-		colorbar()
 
-		if rlims != None:
-			xlim(rlims); ylim(rlims)
+
 
 		return
 
@@ -1625,6 +1639,24 @@ def sigma_from_machq_taper(moq,h,ro,rt,mu,delta):
 
 
 def visc_runs(alpha,params,save_results = False,direct='saved_class/visc_diss/inner_taper/adiabatic/'):
+
+# 	alpha =  array([ 0.    ,  0.0001,  0.001 ,  0.01  ,  0.1   ])
+# params = {'Nplanets': 0, \
+#  'alpha_b': 0, \
+#  'alpha_s': 0.10000000000000001, \
+#  'beta': 0, \
+#  'flare_ind': 0.25, \
+#  'gam': 2.3, \
+#  'h0': 0.05, \
+#  'mdisk': 0.0001, \
+#  'np': 8, \
+#  'nr': 400, \
+#  'ri': 0.1, \
+#  'ro': 10, \
+#  'rs': 0.1, \
+#  'sig_ind': -1.5, \
+#  'tol': 1e-08}
+
 	bcs = ['PRESBCIN','ZEROBCIN']
 	rinner = [.01,.1]
 	nrad = [600,400]
@@ -1689,6 +1721,8 @@ def visc_runs(alpha,params,save_results = False,direct='saved_class/visc_diss/in
 
 
 def gamma_var(alpha,gammas,params,save_results = False,direct='saved_class/visc_diss/inner_taper/adiabatic/'):
+
+# gammas =  [1.1, 1.4, 1.7, 2.3]
 
 	fld=[[None for a in alpha] for g in gammas]
 
