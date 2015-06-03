@@ -34,7 +34,7 @@ CC=gcc-4.9
 endif
 
 ifeq ($(UNAME),helios)
-CC=gcc
+CC=gcc-4.9
 INCLIB=-I/usr/local/include/
 LDLIB=-L/usr/local/lib/
 endif

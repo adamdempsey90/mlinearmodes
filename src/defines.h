@@ -1,6 +1,6 @@
 #define OPENMP
 #define COOLING
-#define NORMALIZE
+#define NORMALIZE_MAX
 #define INNERTAPER_PROF
 #define COMPSIMPS
 #define SYMSOFT2

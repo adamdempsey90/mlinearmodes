@@ -58,6 +58,10 @@ class Field():
 		self.d2ldpres = dat[:,14]
 		self.d2ldtemp = dat[:,15]
 
+		self.vort = self.omega/2
+		self.vortens = self.vort/self.sigma
+
+
 		self.soft = self.params['rs'] * self.hor*self.r
 
 		self.nu = self.params['alpha_s'] * self.c2/self.omega
@@ -122,12 +126,18 @@ class Field():
 			self.edict[ev] = ee
 			if self.npl > 0:
 				self.pedict[ev] = self.pevecs[i,:]
-			self.sigp[ev] = -dot(self.D,self.sigma*ee)
-			self.vrp[ev] = 1j*self.r*self.omega*ee
-			self.vpp[ev] = .5*1j*self.vrp[ev]
-			self.vortp[ev] =
 
-#			if abs(ev) != 0:
+			sp = -dot(self.D,self.sigma*ee)
+			self.sigp[ev] = sp
+
+			uu =  1j*self.r*self.omega*ee
+			self.vrp[ev] =  uu
+			self.vpp[ev] = .5*1j*uu
+			vv = self.omega*(.75*ee -.5*dot(self.D,ee))
+			self.vortp[ev] = vv
+			self.vortensp[ev] = vv/self.sigma - sp*self.vort/(self.sigma**2)
+
+ #			if abs(ev) != 0:
 #				self.evdict[self.nodes(self.evecs[i,:])] = ev
 #				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]
 # 				self.sigp[ev]  = -gradient(self.sigma*self.evecs[i,:],self.dlr)
@@ -345,17 +355,43 @@ class Field():
 			r = self.r
 			nr = self.nr
 			ind = range(nr)
-			sigma = self.sigma
 			evec  = self.edict[ev]
+			omk = self.omega
 		else:
 			ind = self.r <= rlims
 			r = self.r[ind]
 			nr = len(r)
-			sigma = self.sigma[ind]
 			evec = self.edict[ev]
 			evec = evec[ind]
+			omk = self.omega[ind]
 
+		if q == 'sigma':
+			datb = self.sigma
+			datp = self.sigp[ev]
+			tstr = '$\\Sigma$'
+		elif q == 'vr':
+			datb = zeros(self.r.shape)
+			datp = self.vrp[ev]
+			tstr = '$v_r$'
+		elif q == 'vp':
+			datb = r * omk
+			datp = self.vpp[ev]
+			tstr = '$v_\\phi$'
+		elif q == 'vort':
+			datb = self.vort
+			datp = self.vortp[ev]
+			tstr = '$\\nabla \\times v$'
+		elif q == 'vortens':
+			datb = self.vortens
+			datp = self.vortensp[ev]
+			tstr = '$\\frac{ \\nabla \\times v}{\\Sigma}$'
+		else:
+			print 'Quantity not found'
+			return
 
+		if rlims != None:
+			datb = datb[ind]
+			datp = datp[ind]
 
 
 
@@ -372,28 +408,31 @@ class Field():
 
 
 
-		sigp = -gradient(sigma*evec,self.dlr)
+	#	sigp = -gradient(sigma*evec,self.dlr)
 		ss = zeros(xx.shape)
 
 		for i in range(nr):
 			if ind == 0:
-				ss[i,:] = real(sigp[i]*exp(1j*phi))
+				ss[i,:] = real(datp[i]*exp(1j*phi))
 				if total:
-					ss[i,:] += sigma[i]
+					ss[i,:] += datb[i]
 			else:
-				ss[:,i] = real(sigp[i]*exp(1j*phi))
+				ss[:,i] = real(datp[i]*exp(1j*phi))
 				if total:
-					ss[:,i] += sigma[i]
+					ss[:,i] += datb[i]
 
 
 
 
 		figure();
+
 		if logz:
+			title('Log10('+tstr+')')
 			pcolormesh(xx,yy,log10(ss),cmap='hot'); colorbar()
 			if plot_contours:
 				contour(xx,yy,log10(ss))
 		else:
+			title(tstr)
 			pcolormesh(xx,yy,ss,cmap='hot'); colorbar()
 			if plot_contours:
 				contour(xx,yy,ss)

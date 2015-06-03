@@ -33,7 +33,8 @@
 #+INPUTMASS
 
 # Normalize the integrated disk eccentricity
-+NORMALIZE
++NORMALIZE_MAX
+#+NORMALIZE_INT
 
 # Profile Options
 
