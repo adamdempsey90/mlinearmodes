@@ -1,6 +1,7 @@
 #include "eigen.h"
 
 void calc_coefficients(void);
+void calc_viscosity(void);
 
 
 int calc_matrices(double complex *mat, double complex *bcmat) {
@@ -8,11 +9,16 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 /* Compute the matrix including all of its component matrices */
 
-
+	for(i=0;i<N;i++) {
+		coeffs_A[i] = 0;
+		coeffs_B[i] = 0;
+		coeffs_C[i] = 0;
+	}
 
 #ifndef NOPRESSURE
 	calc_coefficients();
 #endif
+	calc_viscosity();
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
 			mindx=  j + ncols*i;
@@ -43,6 +49,7 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 	return 0;
 }
+
 
 
 void calc_coefficients(void) {
@@ -105,30 +112,30 @@ void calc_coefficients(void) {
 	coeffs_C[i]  *= (1 + cool_fac * (adi_gam -1));
 
 #endif
+	}
 
+	return;
+}
 
-
-
-
-
+void calc_viscosity(void) {
+	int i;
+	double complex norm;
+	for(i=0;i<N;i++) {
 /*	Shear Viscosity	*/
-	if (alpha_s !=0) {
-		norm = - I * alpha_s * temp[i]/(24 * omega[i]*r[i]*r[i]);
-		coeffs_A[i]  += norm*3*( 9 + 4*dlds[i]*(-2+3*dlds[i])+2*dldtemp[i]*(-1+6*dlds[i])-12*d2lds[i] );
-		coeffs_B[i] += norm*(-82+64*dldtemp[i]+28*dlds[i]);
-		coeffs_C[i] -= norm*8;
-	}
-/* Bulk Viscosity */
-	if (alpha_b != 0) {
+		if (alpha_s !=0) {
+			norm = - I * alpha_s * temp[i]/(24 * omega[i]*r[i]*r[i]);
+			coeffs_A[i]  += norm*3*( 9 + 4*dlds[i]*(-2+3*dlds[i])+2*dldtemp[i]*(-1+6*dlds[i])-12*d2lds[i] );
+			coeffs_B[i] += norm*(-82+64*dldtemp[i]+28*dlds[i]);
+			coeffs_C[i] -= norm*8;
+		}
+	/* Bulk Viscosity */
+		if (alpha_b != 0) {
 
-		norm = I*alpha_b * temp[i]/(2 * omega[i]*r[i]*r[i]);
+			norm = I*alpha_b * temp[i]/(2 * omega[i]*r[i]*r[i]);
 
-		coeffs_B[i] += norm*(-1 + dldtemp[i] + dlds[i]);
-		coeffs_C[i] += norm;
-	}
-
-
-
+			coeffs_B[i] += norm*(-1 + dldtemp[i] + dlds[i]);
+			coeffs_C[i] += norm;
+		}
 	}
 
 	return;

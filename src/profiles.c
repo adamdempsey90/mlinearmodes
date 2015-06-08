@@ -2,40 +2,48 @@
 
 //#define ANALYTICPOTENTIAL
 
-static const double r_max = .3;
-static const double inner_slope = 3;
-
-
-
 double sigma_func(double x) {
-	double outer_slope = sigma_index;
-	return sigma0 /( pow(x/r_max,-inner_slope) + pow(x/r_max,-outer_slope));
+	return sigma0 * pow(x, sigma_index);
 }
 
 double dlogsigma_func(double x) {
-	double outer_slope = sigma_index;
-	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
-	return outer_slope + (inner_slope - outer_slope)*pow(x/r_max,outer_slope)/denom;
+	return sigma_index;
 }
 
 double d2logsigma_func(double x) {
-	double outer_slope = sigma_index;
-	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
-	denom *= denom;
-	return -(outer_slope-inner_slope)*(outer_slope-inner_slope)*pow(x/r_max,inner_slope+outer_slope)/denom;
+	return 0;
 }
 
 
 double temp_func(double x) {
-	return h0*h0*pow(x,temp_index);
+	double res;
+#ifdef POLYTROPE
+	res = flare_index*pow(sigma_func(x),flare_index-1);
+//	printf("%.2e\t%.2e\n",sigma_func(x),res);
+#else	
+	res = h0*h0*pow(x,temp_index);
+#endif
+	return res;
 }
 
 double dlogtemp_func(double x) {
-	return temp_index;
+	double res;
+#ifdef POLYTROPE
+	res = (flare_index - 1)*dlogsigma_func(x);
+#else
+	res = temp_index;
+#endif
+	return res;
 }
 
 double d2logtemp_func(double x) {
-	return 0;
+	double res;
+#ifdef POLYTROPE
+	res = (flare_index - 1)*d2logsigma_func(x);
+#else
+	res = 0;
+#endif
+	return res;
 }
 
 double omk_func(double x) {
@@ -51,7 +59,13 @@ double d2logomk_func(double x) {
 }
 
 double scaleH_func(double x) {
-	return h0*x*pow(x,flare_index);
+	double res;
+#ifdef POLYTROPE
+	res = sqrt(flare_index)*pow(sigma_func(x),.5*(flare_index-1))*pow(omk_func(x),-1);
+#else
+	res =  h0*x*pow(x,flare_index);
+#endif
+	return res;
 }
 
 

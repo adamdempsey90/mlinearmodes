@@ -1,8 +1,9 @@
 #define OPENMP
 #define COOLING
-#define NORMALIZE_MAX
-#define INNERTAPER_PROF
+#define SELFGRAVITY
+#define PLANETS
+#define POWERLAW_PROF
 #define COMPSIMPS
 #define SYMSOFT2
-#define ZEROBCIN
+#define PRESBCIN
 #define PRESBCOUT

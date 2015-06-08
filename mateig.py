@@ -349,7 +349,7 @@ class Field():
 
 		axk.legend(loc='best')
 
-	def plotreal(self,ev,q,total=False,logz=False, logx=False,logy=False,rlims=None,plot_contours=True):
+	def plotreal(self,ev,q,total=False,logz=False, logx=False,logy=False,rlims=None,contours=True):
 
 		if rlims == None:
 			r = self.r
@@ -358,7 +358,12 @@ class Field():
 			evec  = self.edict[ev]
 			omk = self.omega
 		else:
-			ind = self.r <= rlims
+			if type(rlims) == tuple or type(rlims) == list:
+				ind = (self.r>rlims[0])&(self.r<=rlims[1])
+			else:
+				ind = self.r <= rlims
+
+
 			r = self.r[ind]
 			nr = len(r)
 			evec = self.edict[ev]
@@ -429,12 +434,12 @@ class Field():
 		if logz:
 			title('Log10('+tstr+')')
 			pcolormesh(xx,yy,log10(ss),cmap='hot'); colorbar()
-			if plot_contours:
+			if contours:
 				contour(xx,yy,log10(ss))
 		else:
 			title(tstr)
 			pcolormesh(xx,yy,ss,cmap='hot'); colorbar()
-			if plot_contours:
+			if contours:
 				contour(xx,yy,ss)
 
 
@@ -1674,7 +1679,7 @@ def sigma_from_machq_power_law(moq,h,ro,mu,delta):
 	return h*h*moq*ro**(1+mu-delta) / pi
 
 def sigma_from_machq_taper(moq,h,ro,rt,mu,delta):
-	return sigma_from_machq_power(moq,h,ro,mu,delta)*(rt**3+rt**(mu))
+	return sigma_from_machq_power_law(moq,h,ro,mu,delta)*(rt**3+rt**(mu))
 
 
 def visc_runs(alpha,params,save_results = False,direct='saved_class/visc_diss/inner_taper/adiabatic/'):

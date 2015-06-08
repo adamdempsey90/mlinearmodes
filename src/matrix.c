@@ -217,7 +217,7 @@ void normalize_evectors(double complex *evecs) {
 			for(j=0;j<N;j++) {
 				indx = j + ncols*i;
 
-				norm += r[j]*weights[j]*conj(evecs[indx])*evecs[indx];
+				norm += weights[j]*conj(evecs[indx])*evecs[indx];
 
 			}
 			norm = sqrt(norm);
