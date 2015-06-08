@@ -1,8 +1,20 @@
 from subprocess import call
 from time import time
 
+def load_params(fname='params.in'):
+	params={}
+	with open(fname,'r') as f:
+		for line in f.readlines():
+			if '#' not in line:
+				sline = line.split('=')
+				print sline
+				params[sline[0].strip()] = float(sline[-1].strip())
+
+	return params
+
+
 def param_dict(prof=None):
-	params=dict()
+	params={}
 	params['h0'] = .05
 	params['rs'] = .1
 	params['mdisk'] = .04

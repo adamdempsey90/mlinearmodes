@@ -1,5 +1,5 @@
 EXECUTABLE=eigen
-SOURCES=alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c planets.c
+SOURCES=readinputs.c alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c planets.c
 HEADER=eigen.h defines.h
 
 LAPACKLIB=-llapack -lblas

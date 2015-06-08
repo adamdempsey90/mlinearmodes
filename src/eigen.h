@@ -16,7 +16,7 @@
 
 int N, NP,nrows,ncols, nprocs;
 
-double Mdisk, eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol;
+double Mdisk, ri, ro,eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol;
 
 double *weights, *kernel, *work;
 double complex *cwork;
@@ -46,7 +46,7 @@ Planet *Planets;
 
 #endif
 
-
+void read_arguments(int argc, char *argv[]);
 void alloc_globals(void);
 void free_globals(void);
 int init(double ri,double ro);

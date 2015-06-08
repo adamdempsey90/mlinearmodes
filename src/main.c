@@ -6,73 +6,25 @@ void print_time(double t);
 
 int main(int argc, char *argv[]) {
 	int i;
-	double ri, ro;
+
 	clock_t tic, toc;
 	tic = clock();
 	printf("Reading arguments...\n");
+
 	for(i=1;i<argc;i++) {
 		printf("%s ",argv[i]);
 	}
+	printf("\n");
 
-	if (argc < 15) {
+	if ((argc < 15) && (argc != 3)) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
 
-
-#ifdef TESTFUNCTION
-	printf("\n\n\n\n\n\n RUNNING IN TEST FUNCTION MODE \n\n\n\n\n\n");
-#endif
-
-	N = atoi(argv[1]);
-	nrows = N; ncols = N;
-
-	ri = atof(argv[2]);
-
-	ro = atof(argv[3]);
-
-#ifdef INPUTMASS
-	Mdisk = atof(argv[4]);
-	sigma0 = 1;
-#else
-	sigma0 = atof(argv[4]);
-	Mdisk = 1;
-#endif
-
-	eps = atof(argv[5]);
-	h0 = atof(argv[6]);
-	sigma_index = atof(argv[7]);
-	flare_index = atof(argv[8]);
-	temp_index = 2*flare_index - 1;
-
-	alpha_s = atof(argv[9]);
-	alpha_b = atof(argv[10]);
+	read_arguments(argc,argv);
 
 
 
-
-#if  defined(COOLING) || defined(ADIABATIC)
-	adi_gam = atof(argv[12]);
-	beta_cool = atof(argv[13]);
-#else
-	adi_gam = 1;
-#endif
-
-#ifdef ADIABATIC
-	beta_cool = 0;
-#endif
-
-	tol = atof(argv[14]);
-
-	dlr = (log(ro) - log(ri))/((float) N);
-
-#ifdef PLANETS
-	NP = atoi(argv[15]);
-	nrows += NP;
-	ncols += NP;
-#else
-	NP = 0;
-#endif
 
 
 
@@ -105,8 +57,8 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef OPENMP
-	omp_set_num_threads(atoi(argv[11]));
-	printf("\t\t\tOpenMP threads = %d\n", atoi(argv[11]));
+	omp_set_num_threads(nprocs);
+	printf("\t\t\tOpenMP threads = %d\n", nprocs);
 #endif
 
 	double complex *mat = (double complex *)malloc(sizeof(double complex)*nrows*ncols);
