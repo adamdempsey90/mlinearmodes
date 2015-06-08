@@ -33,7 +33,7 @@ void read_arguments(int argc, char *argv[]) {
 
 */
 
-    if (strcmp(argv[1],"-i") || argc == 3) {
+    if (strstr(argv[1],"-i")) {
       read_input_file(argv[2]);
     }
     else {

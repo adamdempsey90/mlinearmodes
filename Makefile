@@ -5,9 +5,9 @@ HEADER=eigen.h defines.h
 LAPACKLIB=-llapack -lblas
 OPENMPLIB=-lgomp
 MATHLIB=-lm
-GSLLIB=-lgsl
+GSLLIB=-lgsl -lgslcblas
 
-LDFLAGS=$(MATHLIB) $(LAPACKLIB) $(OPENMPLIB) $(GSLLIB)
+LDFLAGS=$(GSLLIB) $(LAPACKLIB) $(OPENMPLIB) $(MATHLIB)
 
 CFLAGS=-c -fopenmp -Wall -O3  -g
 
