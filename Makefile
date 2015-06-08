@@ -14,8 +14,7 @@ CFLAGS=-c -fopenmp -Wall -O3  -g
 
 INCLIB=
 LDLIB=
-#INCLIB=-I/usr/local/include/
-#LDLIB=-L/usr/local/lib/
+
 
 BIN=bin/
 SRC=src/
@@ -41,6 +40,7 @@ endif
 
 ifeq ($(UNAME),amd616)
 CC=gcc
+LDLIB=-L/software/lapack/3.4.0/lib
 endif
 
 #!!!!!DO NOT EDIT ANYTHING UNDER THIS LINE!!!!!
