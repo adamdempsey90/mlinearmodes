@@ -128,7 +128,6 @@ int main(int argc, char *argv[]) {
   	printf("Outputting Results...\n");
   	output(evals,evecs);
 #else
-	printf("Outputting Results to results.hdf5...\n");
 	output_hdf5_file(mat,bcmat,evecs,evals);
 #endif
 #ifdef PLANETS

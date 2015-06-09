@@ -1553,10 +1553,7 @@ def predicted_omegap(params,eos):
 def kuzmin_veff(r,gam):
 	return 3*(r**4 * ( 5 - 4*gam + 3*gam*gam)+r**2 * (6-8*gam) + 1)/(8*sqrt(r)*(1+r**2)**(.5*(3*gam+1)))
 
-def load_defines():
-	with open('src/defines.h') as f:
-		lines = f.readlines()
-	return [line.split()[1] for line in lines]
+
 
 def calculate_veff(fld,signk=1):
 	T = fld.temp

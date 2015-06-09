@@ -15,6 +15,15 @@ def load_params(fname='params.in'):
 		params[key] = int(params[key])
 	return params
 
+def load_defines():
+	defs=[]
+	with open('params.opt','r') as f:
+		for line in f.readlines():
+		    if '#' not in line and '+' in line:
+		        defs.append((line.split('+')[1]).strip())
+	return defs
+
+
 def dump_params(params,fname='params.in'):
 	skeys = ['nr','ri','ro','mdisk','rs','h0','sig_ind', \
 			'flare_ind','alpha_s','alpha_b','np','gam', \
