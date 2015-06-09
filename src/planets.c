@@ -61,7 +61,7 @@ void read_planets_file(void) {
 	int i,indx;
 	FILE *f;
 	f=fopen("planets.in","r");
-
+	if (f==NULL) printf("Can't find Planets File!"); return;
 	for(i=0;i<NP;i++) {
 		if (!fscanf(f, "%lg %lg\n", &a,&mp))
           		break;
