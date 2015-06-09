@@ -1,6 +1,8 @@
 #define OPENMP
+#define HDF5_OUTPUT
 #define COOLING
 #define SELFGRAVITY
+#define PLANETS
 #define POWERLAW_PROF
 #define COMPSIMPS
 #define SYMSOFT2

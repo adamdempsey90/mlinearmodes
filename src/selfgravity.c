@@ -1,7 +1,9 @@
 #include "eigen.h"
 #include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_integration.h>
-
+#ifdef OPENMP
+#include <omp.h>
+#endif
 
 double integrand(double x, void *params);
 void add_edge_sg(double complex *mat);

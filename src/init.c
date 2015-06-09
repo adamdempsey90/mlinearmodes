@@ -92,13 +92,13 @@ void init_globals(double ri, double ro) {
 
 		lr[i] = log(ri) + i*dlr;
 		r[i] = exp(lr[i]);
-		lr[i] = log(r[i]);
 
 		omega[i] = omk_func(r[i]);
 		dldom[i] = dlogomk_func(r[i]);
 		d2ldom[i] = d2logomk_func(r[i]);
 
 		scaleH[i] = scaleH_func(r[i]);
+		aspect_ratio[i] = scaleH[i]/r[i];
 
 		sigma[i] = sigma_func(r[i]);
 		dlds[i] = dlogsigma_func(r[i]);

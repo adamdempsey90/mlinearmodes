@@ -1,15 +1,16 @@
 EXECUTABLE=eigen
-SOURCES=readinputs.c alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c planets.c
+SOURCES=readinputs.c alloc.c output.c boundary.c init.c algo.c derivatives.c main.c matrix.c profiles.c selfgravity.c planets.c hdf5.c
 HEADER=eigen.h defines.h
 
 LAPACKLIB=-llapack -lblas
 OPENMPLIB=-lgomp
 MATHLIB=-lm
 GSLLIB=-lgsl -lgslcblas
+HDF5LIB=-lhdf5
 
-LDFLAGS=$(GSLLIB) $(LAPACKLIB) $(OPENMPLIB) $(MATHLIB)
+LDFLAGS=$(GSLLIB) $(LAPACKLIB) $(OPENMPLIB) $(MATHLIB) $(HDF5LIB)
 
-CFLAGS=-c -fopenmp -Wall -O3  -g
+CFLAGS=-c -fopenmp -Wall -O3  -DH5_USE_16_API -g
 
 
 INCLIB=
@@ -40,7 +41,7 @@ endif
 
 ifeq ($(UNAME),amd616)
 CC=gcc
-LDLIB=-L/software/lapack/3.4.0/lib
+LDLIB=-L/software/lapack/3.4.0/lib -L/software/gsl/1.16-gcc4.8.3/lib/
 endif
 
 #!!!!!DO NOT EDIT ANYTHING UNDER THIS LINE!!!!!

@@ -107,9 +107,6 @@ void output(double complex *evals, double complex *evecs) {
 
 	fclose(f);
 
-#ifdef PLANETS
-	output_planet_summary();
-#endif
 	return;
 }
 

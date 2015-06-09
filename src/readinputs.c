@@ -69,7 +69,7 @@ void read_input_file(char *fname) {
   int read_res;
   FILE *f;
 
-  printf("Reading input file %s...", fname);
+  printf("Reading input file %s...\n", fname);
   f = fopen(fname,"r");
 
   if (f==NULL) printf("\n\nERROR Can't Find Input File!\n\n");
@@ -90,7 +90,6 @@ void read_input_file(char *fname) {
   read_res=fscanf(f,"beta = %lg \n",&beta_cool);
   read_res=fscanf(f,"tol = %lg \n",&tol);
   read_res=fscanf(f,"Nplanets = %d \n",&NP);
-
 
   fclose(f);
 

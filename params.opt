@@ -6,6 +6,10 @@
 # Enable parallelization
 +OPENMP
 
+# Output to HDF5 file
++HDF5_OUTPUT
+
+
 # Equation of State Options
 
 #+ISOTHERMAL
@@ -26,7 +30,7 @@
 #+INDIRECT
 
 # Enable Planets
-#+PLANETS
++PLANETS
 
 # Switch for inputing the total disk mass
 

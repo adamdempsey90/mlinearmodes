@@ -1,0 +1,208 @@
+#include "eigen.h"
+#ifdef HDF5_OUTPUT
+
+#include <hdf5.h>
+
+#define FILENAME "results.hdf5"
+
+typedef struct {
+   double r;   /*real part */
+   double i;   /*imaginary part */
+} complex_t;
+
+
+hid_t cdatatype;
+
+hid_t file_id, root_id, matrices_id, results_id, globals_id;
+
+
+
+
+void create_complex_type(void);
+void write_hdf5_results(double complex *evecs, double complex *evals);
+void write_hdf5_globals(void) ;
+void write_hdf5_matrices(double complex *mat, double complex *bcmat);
+void write_hdf5_double(double *data, hsize_t *shape, int ndims, hid_t group_path, char *name);
+void write_hdf5_complex(double complex *data, hsize_t *shape, int ndims, hid_t group_path, char *data_name);
+
+
+void output_hdf5_file(double complex *mat,double complex *bcmat,double complex *evecs,double complex *evals) {
+  herr_t status;
+  printf("Outputting Results to %s...\n",FILENAME);
+  create_complex_type();
+  file_id = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  root_id = H5Gcreate(file_id,"/Mateig",0);
+  globals_id = H5Gcreate(root_id,"Globals",0);
+  matrices_id = H5Gcreate(root_id,"Matrices",0);
+  results_id = H5Gcreate(root_id,"Results",0);
+
+  write_hdf5_globals();
+  write_hdf5_matrices(mat,bcmat);
+  write_hdf5_results(evecs,evals);
+
+
+  status = H5Tclose(cdatatype);
+  status = H5Gclose(globals_id);
+  status = H5Gclose(matrices_id);
+  status = H5Gclose(results_id);
+  status = H5Gclose(root_id);
+  status = H5Fclose(file_id);
+
+
+  return;
+
+
+}
+
+void create_complex_type(void) {
+/* Create the complex data type using the complex_t struct */
+
+  complex_t tmp;
+  cdatatype = H5Tcreate (H5T_COMPOUND, sizeof tmp);
+  H5Tinsert (cdatatype, "r", HOFFSET(complex_t,r),
+            H5T_NATIVE_DOUBLE);
+  H5Tinsert (cdatatype, "i", HOFFSET(complex_t,i),
+            H5T_NATIVE_DOUBLE);
+
+
+  return;
+}
+
+
+
+
+
+
+
+void write_hdf5_results(double complex *evecs, double complex *evals) {
+
+  hsize_t dims2[2] = {nrows,ncols};
+  hsize_t dims1[1] = {nrows};
+
+  write_hdf5_complex(evecs,dims2,2,results_id,"Evecs");
+  write_hdf5_complex(evals,dims1,1,results_id,"Evals");
+
+  return;
+
+
+}
+
+
+void write_hdf5_globals(void) {
+
+  hsize_t dims[1] = {N};
+
+
+  write_hdf5_double(lr,dims,1,globals_id,"lr");
+  write_hdf5_double(r,dims,1,globals_id,"r");
+  write_hdf5_double(omega,dims,1,globals_id,"Omega");
+  write_hdf5_double(c2,dims,1,globals_id,"c2");
+  write_hdf5_double(sigma,dims,1,globals_id,"Sigma");
+  write_hdf5_double(aspect_ratio,dims,1,globals_id,"hor");
+  write_hdf5_double(pres,dims,1,globals_id,"P");
+  write_hdf5_double(temp,dims,1,globals_id,"T");
+  write_hdf5_double(omega_prec,dims,1,globals_id,"wp");
+  write_hdf5_double(dldc2,dims,1,globals_id,"dc2");
+  write_hdf5_double(dlds,dims,1,globals_id,"ds");
+  write_hdf5_double(dldpres,dims,1,globals_id,"dp");
+  write_hdf5_double(dldtemp,dims,1,globals_id,"dt");
+  write_hdf5_double(d2lds,dims,1,globals_id,"d2s");
+  write_hdf5_double(d2ldpres,dims,1,globals_id,"d2p");
+  write_hdf5_double(d2ldtemp,dims,1,globals_id,"d2t");
+
+
+
+
+
+
+  return;
+}
+
+
+void write_hdf5_matrices(double complex *mat, double complex *bcmat) {
+/* Write all of the matrices */
+  int i,j;
+  double complex *coeffs_mat = (double complex *)malloc(sizeof(double complex)*N*3);
+
+  hsize_t dims1[1], dims2[2], dims3[3];
+
+
+  dims2[0] = N; dims2[1]= N;
+  dims1[0] = N;
+
+
+  write_hdf5_double(D, dims2, 2, matrices_id, "D");
+  write_hdf5_double(D2, dims2, 2, matrices_id, "D2");
+  write_hdf5_double(weights, dims1, 1, matrices_id, "Weights");
+
+
+#ifdef SELFGRAVITY
+  write_hdf5_double(kernel,dims2,2,matrices_id,"Kernel");
+#endif
+
+  dims2[0] = nrows; dims2[1] = ncols;
+  write_hdf5_complex(bcmat,dims2,2,matrices_id,"BC");
+  write_hdf5_complex(mat,dims2,2,matrices_id,"Matrix");
+
+
+
+
+
+  dims2[0] = N; dims2[1] = 3;
+
+  for(i=0;i<N;i++) {
+      for(j=0;j<3;j++) {
+        coeffs_mat[0 + 3*i] = coeffs_A[i];
+        coeffs_mat[1 + 3*i] = coeffs_B[i];
+        coeffs_mat[2 + 3*i] = coeffs_C[i];
+      }
+  }
+
+  write_hdf5_complex(coeffs_A,dims2,2,matrices_id,"Coeffs");
+  free(coeffs_mat);
+
+  return;
+}
+
+
+
+
+void write_hdf5_double(double *data, hsize_t *dims, int ndims, hid_t group_path, char *name) {
+  hid_t dspc_id, dset_id;
+  herr_t status;
+
+  dspc_id = H5Screate_simple(ndims,dims,NULL);
+  dset_id = H5Dcreate(group_path,name,H5T_NATIVE_DOUBLE,dspc_id,H5P_DEFAULT);
+
+  status = H5Dwrite(dset_id,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,data);
+  status = H5Sclose(dspc_id);
+  status = H5Dclose(dset_id);
+
+
+
+  return;
+
+
+}
+
+
+
+void write_hdf5_complex(double complex *data, hsize_t *dims, int ndims, hid_t group_path, char *name) {
+
+  hid_t dspc_id, dset_id;
+  herr_t status;
+
+  dspc_id = H5Screate_simple(ndims,dims,NULL);
+  dset_id = H5Dcreate(group_path,name,cdatatype,dspc_id,H5P_DEFAULT);
+
+  status = H5Dwrite(dset_id,cdatatype,H5S_ALL,H5S_ALL,H5P_DEFAULT,data);
+  status = H5Sclose(dspc_id);
+  status = H5Dclose(dset_id);
+
+
+
+  return;
+
+
+}
+#endif

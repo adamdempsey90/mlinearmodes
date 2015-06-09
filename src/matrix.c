@@ -1,4 +1,7 @@
 #include "eigen.h"
+#ifdef OPENMP
+#include <omp.h>
+#endif
 
 void normalize_evectors(double complex *evecs);
 

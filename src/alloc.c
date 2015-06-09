@@ -17,6 +17,7 @@ void alloc_globals(void) {
 	lr = (double *)malloc(sizeof(double)*N);
 
 	scaleH = (double *)malloc(sizeof(double)*N);
+	aspect_ratio = (double *)malloc(sizeof(double)*N);
 
 	omega = (double *)malloc(sizeof(double)*N);
 	dldom = (double *)malloc(sizeof(double)*N);
@@ -63,6 +64,7 @@ void free_globals(void) {
 	free(lr);
 
 	free(scaleH);
+	free(aspect_ratio);
 
 	free(omega );
 	free(dldom);

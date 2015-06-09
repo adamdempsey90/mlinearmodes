@@ -7,11 +7,25 @@ def load_params(fname='params.in'):
 		for line in f.readlines():
 			if '#' not in line:
 				sline = line.split('=')
-				print sline
 				params[sline[0].strip()] = float(sline[-1].strip())
 
+
+	int_keys = ['nr','Nplanets','np']
+	for key in int_keys:
+		params[key] = int(params[key])
 	return params
 
+def dump_params(params,fname='params.in'):
+	skeys = ['nr','ri','ro','mdisk','rs','h0','sig_ind', \
+			'flare_ind','alpha_s','alpha_b','np','gam', \
+			'beta','tol','Nplanets']
+
+	lines = [k + ' = ' + str(params[k]) for k in skeys]
+	lines.insert(0,'# Input parameters for matrixeigenvalue code')
+	with open(fname,"w") as f:
+		f.write('\n'.join(lines))
+
+	return
 
 def param_dict(prof=None):
 	params={}

@@ -1,6 +1,11 @@
 #include "eigen.h"
 #include <time.h>
 #include <unistd.h>
+#ifdef OPENMP
+#include <omp.h>
+#endif
+
+
 
 void print_time(double t);
 
@@ -81,40 +86,54 @@ int main(int argc, char *argv[]) {
 
   	init(ri,ro);
 
-
+#ifndef HDF5_OUTPUT
   	printf("Outputting Variables...\n");
   	output_globals();
 
   	printf("Outputting Derivative Matrices...\n");
   	output_derivatives();
 #ifndef READKERNEL
+
 	printf("Outputting Kernel...\n");
   	output_kernel();
+
 #endif
+
+#endif
+
+
 
 #ifdef PLANETS
 	printf("Calculating Matrices for %d Planets...\n",NP);
 	calc_planet_matrices();
 #endif
 
-  	printf("Populating Matrix...\n");
+   printf("Populating Matrix...\n");
 
 
    calc_matrices(mat,bcmat);
 
 
-	printf("Outputting Coefficients...\n");
+
+#ifndef HDF5_OUTPUT
+		printf("Outputting Coefficients...\n");
   	output_coefficients();
   	printf("Outputting Matrix...\n");
   	output_matrix(mat,bcmat);
-
+#endif
   	printf("Solving For Eigenvalues and Eigenvectors...\n");
   	reigenvalues(mat,bcmat,evals,evecs,nrows);
 
-
+#ifndef HDF5_OUTPUT
   	printf("Outputting Results...\n");
   	output(evals,evecs);
-
+#else
+	printf("Outputting Results to results.hdf5...\n");
+	output_hdf5_file(mat,bcmat,evecs,evals);
+#endif
+#ifdef PLANETS
+	output_planet_summary();
+#endif
 
   	printf("Freeing Arrays...\n");
 

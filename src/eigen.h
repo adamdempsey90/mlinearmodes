@@ -9,10 +9,6 @@
 
 
 
-#ifdef OPENMP
-#include <omp.h>
-#endif
-
 
 int N, NP,nrows,ncols, nprocs;
 
@@ -22,7 +18,7 @@ double *weights, *kernel, *work;
 double complex *cwork;
 
 
-double *r, *lr , *scaleH,*omega, *dldom, *d2ldom, *sigma, *dlds, *d2lds, *pres, *dldpres, *d2ldpres;
+double *r, *lr , *scaleH,*omega, *dldom, *d2ldom, *sigma, *dlds, *d2lds, *pres, *dldpres, *d2ldpres, *aspect_ratio;
 double *temp , *dldtemp, *d2ldtemp, *c2, *dldc2, *d2ldc2, *omega_prec;
 
 double complex *coeffs_A , *coeffs_B, *coeffs_C;
@@ -36,9 +32,15 @@ double adi_gam, beta_cool;
 #ifdef PLANETS
 typedef struct Planet {
 
-	double mass, position, hill,wp;
-	double complex *pot0, *pot1;
-	int index,InteriorPlanet, ExteriorPlanet;
+	double mass;
+	double position;
+	double hill;
+	double wp;
+	double complex *pot0;
+	double complex *pot1;
+	int index;
+	int InteriorPlanet;
+	int ExteriorPlanet;
 
 } Planet;
 
@@ -102,4 +104,8 @@ void add_planets(double complex *mat, double complex *bcmat);
 void init_planets(void);
 void calc_planet_matrices(void);
 void free_planets(void);
+#endif
+
+#ifdef HDF5_OUTPUT
+void output_hdf5_file(double complex *mat,double complex *bcmat,double complex *evecs,double complex *evals);
 #endif

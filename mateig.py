@@ -3,6 +3,7 @@ from scipy.special import ellipe,ellipk
 from subprocess import call
 from copy import deepcopy
 import pickle
+import h5py
 
 class Mode():
 	def __init__(self,ev,emode,(r,dlr,omega,sigma)):
@@ -29,34 +30,68 @@ class Planet():
 		self.p1 = pot[1]
 
 class Field():
-	def __init__(self,params):
-
-		dat=loadtxt('globals.dat')
-		emat=loadtxt('eigen.dat')
+	def __init__(self,params,HDF5=True):
 		self.params = deepcopy(params)
 		self.defines = load_defines()
-		self.matrix=loadtxt('matrix.dat')
-		self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
-		self.D = loadtxt('D.dat')
-		self.D2 = loadtxt('D2.dat')
+
+		if HDF5:
+			 with h5py.File("results.hdf5","r") as f:
+
+				evecs = f['Mateig/Results']['Evecs'][:]
+				evals = f['Mateig/Results']['Evals'][:]
+
+				self.matrix =  f['Mateig/Matrices']['Matrix'][:]
+				self.D = f['Mateig/Matrices']['D'][:]
+				self.D2 = f['Mateig/Matrices']['D2'][:]
 
 
-		self.lr = dat[:,0]
-		self.r = dat[:,1]
-		self.omega = dat[:,2]
-		self.c2 = dat[:,3]
-		self.sigma = dat[:,4]
-		self.hor = dat[:,5]
-		self.pres = dat[:,6]
-		self.temp = dat[:,7]
-		self.wp = dat[:,8]
-		self.dldc2 = dat[:,9]
-		self.dlds = dat[:,10]
-		self.dldpres = dat[:,11]
-		self.dldtemp = dat[:,12]
-		self.d2lds = dat[:,13]
-		self.d2ldpres = dat[:,14]
-		self.d2ldtemp = dat[:,15]
+				self.lr = f['Mateig/Globals']['lr'][:]
+				self.r = f['Mateig/Globals']['r'][:]
+				self.omega = f['Mateig/Globals']['Omega'][:]
+				self.c2 = f['Mateig/Globals']['c2'][:]
+				self.sigma = f['Mateig/Globals']['Sigma'][:]
+				self.hor = f['Mateig/Globals']['hor'][:]
+				self.pres = f['Mateig/Globals']['P'][:]
+				self.temp = f['Mateig/Globals']['T'][:]
+				self.wp = f['Mateig/Globals']['wp'][:]
+				self.dldc2 = f['Mateig/Globals']['dc2'][:]
+				self.dlds = f['Mateig/Globals']['ds'][:]
+				self.dldpres = f['Mateig/Globals']['dp'][:]
+				self.dldtemp = f['Mateig/Globals']['dt'][:]
+				self.d2lds = f['Mateig/Globals']['d2s'][:]
+				self.d2ldpres = f['Mateig/Globals']['d2p'][:]
+				self.d2ldtemp = f['Mateig/Globals']['d2t'][:]
+
+		else:
+			dat=loadtxt('globals.dat')
+			emat=loadtxt('eigen.dat')
+
+			self.matrix=loadtxt('matrix.dat')
+			self.matrix = self.matrix[:,::2] + 1j*self.matrix[:,1::2]
+			self.D = loadtxt('D.dat')
+			self.D2 = loadtxt('D2.dat')
+
+			self.lr = dat[:,0]
+			self.r = dat[:,1]
+			self.omega = dat[:,2]
+			self.c2 = dat[:,3]
+			self.sigma = dat[:,4]
+			self.hor = dat[:,5]
+			self.pres = dat[:,6]
+			self.temp = dat[:,7]
+			self.wp = dat[:,8]
+			self.dldc2 = dat[:,9]
+			self.dlds = dat[:,10]
+			self.dldpres = dat[:,11]
+			self.dldtemp = dat[:,12]
+			self.d2lds = dat[:,13]
+			self.d2ldpres = dat[:,14]
+			self.d2ldtemp = dat[:,15]
+
+			evals = emat[:,0] + 1j*emat[:,1]
+			emat = emat[:,2:]
+			evecs = emat[:,::2] + 1j*emat[:,1::2]
+
 
 		self.vort = self.omega/2
 		self.vortens = self.vort/self.sigma
@@ -81,9 +116,7 @@ class Field():
 				self.planets = Planet(pdat,ppot[0])
 				self.plr = self.planets.a
 
-		evals = emat[:,0] + 1j*emat[:,1]
-		emat = emat[:,2:]
-		evecs = emat[:,::2] + 1j*emat[:,1::2]
+
 		if self.npl > 0:
 			self.pevecs = evecs[:,-self.npl:]
 			evecs = evecs[:,:-self.npl]

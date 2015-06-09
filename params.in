@@ -2,7 +2,7 @@
 nr = 400
 ri = .1
 ro = 10
-mdisk = 1
+mdisk = .001
 rs = .1
 h0 = .05
 sig_ind = -1.5
@@ -13,4 +13,4 @@ np = 8
 gam = 2
 beta = 0
 tol = 1e-8
-Nplanets = 0
+Nplanets = 2
