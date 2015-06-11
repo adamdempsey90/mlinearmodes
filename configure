@@ -1,6 +1,4 @@
 #!/bin/bash
 
+python config.py $1 $2
 
-python config.py
-echo 'Created the defines.h file:'
-cat src/defines.h

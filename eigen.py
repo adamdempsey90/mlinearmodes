@@ -1,5 +1,7 @@
 from subprocess import call
+import os
 from time import time
+import config
 
 def load_params(fname='params.in'):
 	params={}
@@ -54,6 +56,7 @@ def param_dict(prof=None):
 	params['gam'] = 2
 	params['tol'] = 1e-8
 	params['Nplanets'] = 0
+	params['outputname'] = 'results'
 	if prof=='yoram':
 		params = {'alpha_b': 0, \
 		 'alpha_s': 0, \
@@ -117,6 +120,7 @@ def run_code(params, defines = None):
 	callstr.append(str(params['beta']))
 	callstr.append(str(params['tol']))
 	callstr.append(str(params['Nplanets']))
+	callstr.append(str(params['outputname']))
 
 	res = call(callstr)
 	if res != 0:
@@ -189,9 +193,15 @@ def add_remove_option(add_opts,rm_opts,recompile=False):
 		code_compile()
 
 
-def code_compile():
-	call(['./configure'])
+def code_compile(optfile='params.opt',sourcedir='src/'):
+	cdir = os.getcwd()
+
+	config.create_defines_file(optfile,sourcedir)
+	os.chdir(sourcedir)
+	os.chdir('../')
 	call(['make'])
+	os.chdir(cdir)
+
 
 
 def set_profile(prof):

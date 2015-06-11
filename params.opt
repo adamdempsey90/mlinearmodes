@@ -17,6 +17,9 @@
 #+POLYTROPE
 +COOLING
 
+# Include viscous heating
++VISCHEATING
+
 # Disable Pressure
 
 #+NOPRESSURE
@@ -30,7 +33,7 @@
 #+INDIRECT
 
 # Enable Planets
-+PLANETS
+#+PLANETS
 
 # Switch for inputing the total disk mass
 

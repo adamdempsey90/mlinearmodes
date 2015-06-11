@@ -8,11 +8,14 @@
 #include <complex.h>
 
 
-
+#define MAXSTRLEN 300
 
 int N, NP,nrows,ncols, nprocs;
 
 double Mdisk, ri, ro,eps, h0, dlr, flare_index, sigma_index, temp_index,sigma0, tol;
+
+char outputname[MAXSTRLEN];
+
 
 double *weights, *kernel, *work;
 double complex *cwork;

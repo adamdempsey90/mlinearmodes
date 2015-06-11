@@ -1871,3 +1871,33 @@ def visc_diss_summary(fld,alpha,ind=-3):
 	xlabel('$\\alpha$',fontsize='large')
 	ylabel('$|\\gamma|$',fontsize='large')
 	legend(loc='best')
+
+
+def pretty_comp_plot(fld_list, ind_list, label_list,ylims=None):
+	if type(fld_list) != list and type(fld_list) != numpy.ndarray:
+		print 'Converting to List'
+		fld_list = [fld_list]
+		ind_list = [ind_list]
+		label_list = [label_list]
+
+	fig,(ax1,ax2) = subplots(1,2)
+	tstr = '$\\delta = %.2f$' % (2*fld_list[0].params['flare_ind'] - 1)
+
+	for fld,ind,lab in zip(fld_list,ind_list,label_list):
+		lab += ', $\\Omega_p = %.2e+%.2ei$'%(fld.evals[ind].real,fld.evals[ind].imag)
+		ax1.semilogx(fld.r,abs(fld.edict[fld.evals[ind]]))
+		ax2.loglog(fld.r,fld.Mach/fld.Q,label=lab)
+
+	ax1.set_xlabel('$r$',fontsize='large')
+	ax1.set_ylabel('$|e|$',fontsize='large')
+	ax2.set_xlabel('$r$',fontsize='large')
+	ax2.set_ylabel('$\\frac{M}{Q}$',fontsize='large')
+	ax2.legend(loc='best')
+	ax1.set_title(tstr)
+
+	if ylims != None:
+		ax1.set_ylim(ylims)
+
+
+
+	return

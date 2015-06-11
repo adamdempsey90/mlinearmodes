@@ -3,7 +3,6 @@
 
 #include <hdf5.h>
 
-#define FILENAME "results.hdf5"
 
 typedef struct {
    double r;   /*real part */
@@ -28,9 +27,9 @@ void write_hdf5_complex(double complex *data, hsize_t *shape, int ndims, hid_t g
 
 void output_hdf5_file(double complex *mat,double complex *bcmat,double complex *evecs,double complex *evals) {
   herr_t status;
-  printf("Outputting Results to %s...\n",FILENAME);
+  printf("Outputting Results to %s...\n",outputname);
   create_complex_type();
-  file_id = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  file_id = H5Fcreate(outputname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   root_id = H5Gcreate(file_id,"/Mateig",0);
   globals_id = H5Gcreate(root_id,"Globals",0);
   matrices_id = H5Gcreate(root_id,"Matrices",0);

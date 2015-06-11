@@ -23,7 +23,7 @@ void read_arguments(int argc, char *argv[]) {
   beta_cool
   tol
   Nplanets
-
+  outputname
 
 
 
@@ -56,6 +56,7 @@ void read_arguments(int argc, char *argv[]) {
     	beta_cool = atof(argv[13]);
   	  tol = atof(argv[14]);
       NP = atoi(argv[15]);
+      sprintf(outputname,"%s.dat",argv[16]);
 
     }
     set_secondary_inputs();
@@ -64,7 +65,7 @@ void read_arguments(int argc, char *argv[]) {
 
 
 void read_input_file(char *fname) {
-  char garbage[100];
+  char garbage[100],inputstr[MAXSTRLEN];
 	char *gchar;
   int read_res;
   FILE *f;
@@ -90,6 +91,9 @@ void read_input_file(char *fname) {
   read_res=fscanf(f,"beta = %lg \n",&beta_cool);
   read_res=fscanf(f,"tol = %lg \n",&tol);
   read_res=fscanf(f,"Nplanets = %d \n",&NP);
+  read_res=fscanf(f,"outputname = %s",&inputstr);
+
+  sprintf(outputname,"%s.dat",inputstr);
 
   fclose(f);
 

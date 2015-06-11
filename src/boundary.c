@@ -8,8 +8,10 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 
 	int j,indx;
 #ifdef COOLING
-	double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
-	eta_fac /= (1 - eta_fac);
+// 	double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
+// 	eta_fac /= (1 - eta_fac);
+		double complex cool_fac = (adi_gam - 1)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
+		double complex fac1, fac2;
 #endif
 	for(j=0;j<N;j++) {
 		indx = j;
@@ -18,9 +20,15 @@ void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
 
 		if (j==0) {
 #ifdef COOLING
-//			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
-//			mat[indx] -= dldtemp[j]*(beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
-			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
+//			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
+				fac1 = dldtemp[j] - cool_fac*adi_gam*dldtemp[j];
+				fac2 = 1 + cool_fac*adi_gam;
+#ifdef VISCHEATING
+				fac1 -= cool_fac*.75*alpha_s*I;
+				fac2 += cool_fac*1.5*alpha_s*I;
+#endif
+			mat[indx] -= fac1/fac2;
+
 #endif
 #ifdef ISOTHERMAL
 			mat[indx] -= dldtemp[j];
@@ -35,8 +43,10 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 
 /* Set up zero Lagrangian Pressure B.C at outer boundary */
 #ifdef COOLING
-	double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
-	eta_fac /= (1 - eta_fac);
+	// double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
+	// eta_fac /= (1 - eta_fac);
+	double complex cool_fac = (adi_gam - 1)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
+	double complex fac1, fac2;
 #endif
 	int j,indx;
 	for(j=0;j<N;j++) {
@@ -47,9 +57,14 @@ void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
 
 		if (j==(N-1)) {
 #ifdef COOLING
-//			mat[indx] += I*beta_cool * dldpres[j] / adi_gam;
-//			mat[indx] -= dldtemp[j] * (beta_cool*beta_cool - I*adi_gam*beta_cool)/(beta_cool*beta_cool + adi_gam*adi_gam);
-			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
+//			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
+			fac1 = dldtemp[j] - cool_fac*adi_gam*dldtemp[j];
+			fac2 = 1 + cool_fac*adi_gam;
+#ifdef VISCHEATING
+			fac1 -= cool_fac*.75*alpha_s*I;
+			fac2 += cool_fac*1.5*alpha_s*I;
+#endif
+			mat[indx] -= fac1/fac2;
 #endif
 #ifdef ISOTHERMAL
 			mat[indx] -= dldtemp[j];
