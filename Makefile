@@ -41,9 +41,8 @@ endif
 
 ifeq ($(UNAME),amd616)
 CC=gcc
-LDLIB=-L/software/lapack/3.4.0/lib -L/software/gsl/1.16-gcc4.8.3/lib/ -L/sof    tware/hdf5/1.8.12-serial/lib/
+LDLIB=-L/software/lapack/3.4.0/lib -L/software/gsl/1.16-gcc4.8.3/lib/ -L/software/hdf5/1.8.12-serial/lib/
 INCLIB=-I/software/hdf5/1.8.12-serial/include/
-
 endif
 
 #!!!!!DO NOT EDIT ANYTHING UNDER THIS LINE!!!!!
