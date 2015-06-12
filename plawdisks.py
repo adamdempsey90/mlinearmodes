@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 fname = 'pl'+str(i)+str(j)+str(k)
                 params['sig_ind'] = mu
                 params['flare_ind'] = f
-                params['sig_0'] = sig
+                params['mdisk'] = sig
                 params['outputname'] = fname
                 fname += '.in'
                 flines.append('\t'.join([str(mu),str(f),str(m),fname]))
