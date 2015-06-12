@@ -5,16 +5,25 @@ import config
 
 def load_params(fname='params.in'):
 	params={}
+
+
+	int_keys = ['nr','Nplanets','np']
+	str_keys = ['outputname']
+
 	with open(fname,'r') as f:
 		for line in f.readlines():
 			if '#' not in line:
 				sline = line.split('=')
-				params[sline[0].strip()] = float(sline[-1].strip())
+				key = sline[0].strip()
+				val = sline[-1].strip()
+				if key in int_keys:
+					params[key] = int(val)
+				elif key in str_keys:
+					params[key] = str(val)
+				else:
+					params[key] = float(val)
 
 
-	int_keys = ['nr','Nplanets','np']
-	for key in int_keys:
-		params[key] = int(params[key])
 	return params
 
 def load_defines():
@@ -29,7 +38,7 @@ def load_defines():
 def dump_params(params,fname='params.in'):
 	skeys = ['nr','ri','ro','mdisk','rs','h0','sig_ind', \
 			'flare_ind','alpha_s','alpha_b','np','gam', \
-			'beta','tol','Nplanets']
+			'beta','tol','Nplanets','outputname']
 
 	lines = [k + ' = ' + str(params[k]) for k in skeys]
 	lines.insert(0,'# Input parameters for matrixeigenvalue code')
@@ -130,7 +139,9 @@ def run_code(params, defines = None):
 		return -1
 	else:
 		tic = time()
-		fld = Field(params)
+		fname = params['outputname'] + '.hdf5'
+		print 'Loading from file ' + fname
+		fld = Field(fname)
 		toc = time()
 		print 'Loading time: %.4f seconds' % (toc - tic)
 

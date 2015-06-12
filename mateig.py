@@ -30,12 +30,12 @@ class Planet():
 		self.p1 = pot[1]
 
 class Field():
-	def __init__(self,params,HDF5=True):
-		self.params = deepcopy(params)
+	def __init__(self,fname='results.hdf5',HDF5=True):
+
 		self.defines = load_defines()
 
 		if HDF5:
-			 with h5py.File("results.hdf5","r") as f:
+			 with h5py.File(fname,"r") as f:
 
 				evecs = f['Mateig/Results']['Evecs'][:]
 				evals = f['Mateig/Results']['Evals'][:]
@@ -62,7 +62,27 @@ class Field():
 				self.d2ldpres = f['Mateig/Globals']['d2p'][:]
 				self.d2ldtemp = f['Mateig/Globals']['d2t'][:]
 
+				pvals = f['Mateig/Parameters']['Parameters']
+				self.params = {}
+				self.params['nr'] = int(pvals['nr'])
+				self.params['ri'] = float(pvals['ri'])
+				self.params['ro'] = float(pvals['ro'])
+				self.params['mdisk'] = float(pvals['mdisk'])
+				self.params['rs'] = float(pvals['rs'])
+				self.params['h0'] = float(pvals['h0'])
+				self.params['sig_ind'] = float(pvals['sig_ind'])
+				self.params['flare_ind'] = float(pvals['flare_ind'])
+				self.params['alpha_s'] = float(pvals['alpha_s'])
+				self.params['alpha_b'] = float(pvals['alpha_b'])
+				self.params['np'] = int(pvals['np'])
+				self.params['gam'] = float(pvals['gam'])
+				self.params['beta'] = float(pvals['beta'])
+				self.params['tol'] = float(pvals['tol'])
+				self.params['Nplanets'] = int(pvals['Nplanets'])
+				self.params['outputname'] = fname.split('.')[0]
+
 		else:
+			self.params = deepcopy(load_params())
 			dat=loadtxt('globals.dat')
 			emat=loadtxt('eigen.dat')
 

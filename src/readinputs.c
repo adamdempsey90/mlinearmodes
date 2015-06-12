@@ -56,7 +56,7 @@ void read_arguments(int argc, char *argv[]) {
     	beta_cool = atof(argv[13]);
   	  tol = atof(argv[14]);
       NP = atoi(argv[15]);
-      sprintf(outputname,"%s.dat",argv[16]);
+      sprintf(outputname,"%s.hdf5",argv[16]);
 
     }
     set_secondary_inputs();
@@ -93,7 +93,7 @@ void read_input_file(char *fname) {
   read_res=fscanf(f,"Nplanets = %d \n",&NP);
   read_res=fscanf(f,"outputname = %s",&inputstr);
 
-  sprintf(outputname,"%s.dat",inputstr);
+  sprintf(outputname,"%s.hdf5",inputstr);
 
   fclose(f);
 

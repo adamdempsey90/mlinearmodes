@@ -32,6 +32,7 @@ double alpha_s, alpha_b;
 double adi_gam, beta_cool;
 
 
+
 #ifdef PLANETS
 typedef struct Planet {
 

@@ -3,6 +3,25 @@
 
 #include <hdf5.h>
 
+typedef struct param_t {
+	int nr;
+	double ri;
+	double ro;
+	double mdisk;
+	double rs;
+	double h0;
+	double sig_ind;
+	double flare_ind;
+	double alpha_s;
+	double alpha_b;
+	int np;
+	double gam;
+	double beta;
+	double tol;
+	int Nplanets;
+
+} param_t;
+
 
 typedef struct {
    double r;   /*real part */
@@ -12,7 +31,7 @@ typedef struct {
 
 hid_t cdatatype;
 
-hid_t file_id, root_id, matrices_id, results_id, globals_id;
+hid_t file_id, root_id, matrices_id, results_id, globals_id, params_id;
 
 
 
@@ -23,7 +42,7 @@ void write_hdf5_globals(void) ;
 void write_hdf5_matrices(double complex *mat, double complex *bcmat);
 void write_hdf5_double(double *data, hsize_t *shape, int ndims, hid_t group_path, char *name);
 void write_hdf5_complex(double complex *data, hsize_t *shape, int ndims, hid_t group_path, char *data_name);
-
+void write_hdf5_params(void);
 
 void output_hdf5_file(double complex *mat,double complex *bcmat,double complex *evecs,double complex *evals) {
   herr_t status;
@@ -34,16 +53,18 @@ void output_hdf5_file(double complex *mat,double complex *bcmat,double complex *
   globals_id = H5Gcreate(root_id,"Globals",0);
   matrices_id = H5Gcreate(root_id,"Matrices",0);
   results_id = H5Gcreate(root_id,"Results",0);
+  params_id = H5Gcreate(root_id,"Parameters",0);
 
   write_hdf5_globals();
   write_hdf5_matrices(mat,bcmat);
   write_hdf5_results(evecs,evals);
-
+  write_hdf5_params();
 
   status = H5Tclose(cdatatype);
   status = H5Gclose(globals_id);
   status = H5Gclose(matrices_id);
   status = H5Gclose(results_id);
+  status = H5Gclose(params_id);
   status = H5Gclose(root_id);
   status = H5Fclose(file_id);
 
@@ -67,7 +88,66 @@ void create_complex_type(void) {
   return;
 }
 
+void write_hdf5_params(void) {
+  hid_t memtype,dspc_id, dset_id;
+  herr_t status;
+  hsize_t dims[1] = {1};
 
+  param_t params;
+
+
+  params.nr = N;
+  params.ri = ri;
+  params.ro = ro;
+
+#ifdef INPUTMASS
+  params.mdisk = Mdisk;
+#else
+  params.mdisk = sigma0;
+#endif
+
+  params.rs = eps;
+  params.h0 = h0;
+  params.sig_ind = sigma_index;
+  params.flare_ind = flare_index;
+  params.alpha_s = alpha_s;
+  params.alpha_b = alpha_b;
+  params.np = nprocs;
+  params.gam = adi_gam;
+  params.beta = beta_cool;
+  params.tol = tol;
+  params.Nplanets = NP;
+
+
+  memtype = H5Tcreate (H5T_COMPOUND, sizeof (param_t));
+  status = H5Tinsert (memtype, "nr", HOFFSET (param_t, nr), H5T_NATIVE_INT);
+  status = H5Tinsert (memtype, "ri", HOFFSET (param_t, ri), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "ro", HOFFSET (param_t, ro), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "mdisk", HOFFSET (param_t, mdisk), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "rs", HOFFSET (param_t, rs), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "h0", HOFFSET (param_t, h0), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "sig_ind", HOFFSET (param_t, sig_ind), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "flare_ind", HOFFSET (param_t, flare_ind), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "alpha_s", HOFFSET (param_t, alpha_s), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "alpha_b", HOFFSET (param_t, alpha_b), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "np", HOFFSET (param_t, np), H5T_NATIVE_INT);
+  status = H5Tinsert (memtype, "gam", HOFFSET (param_t, gam), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "beta", HOFFSET (param_t, beta), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "tol", HOFFSET (param_t, tol), H5T_NATIVE_DOUBLE);
+  status = H5Tinsert (memtype, "Nplanets", HOFFSET (param_t, Nplanets), H5T_NATIVE_INT);
+
+
+
+  dspc_id = H5Screate_simple(1,dims,NULL);
+  dset_id = H5Dcreate(params_id,"Parameters",memtype,dspc_id,H5P_DEFAULT);
+
+  status = H5Dwrite(dset_id,memtype,H5S_ALL,H5S_ALL,H5P_DEFAULT,&params);
+  status = H5Sclose(dspc_id);
+  status = H5Dclose(dset_id);
+
+  return;
+
+}
 
 
 
@@ -204,4 +284,6 @@ void write_hdf5_complex(double complex *data, hsize_t *dims, int ndims, hid_t gr
 
 
 }
+
+
 #endif
