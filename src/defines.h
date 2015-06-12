@@ -1,7 +1,6 @@
 #define OPENMP
 #define HDF5_OUTPUT
 #define COOLING
-#define VISCHEATING
 #define SELFGRAVITY
 #define POWERLAW_PROF
 #define COMPSIMPS

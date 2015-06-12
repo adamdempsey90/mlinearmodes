@@ -41,6 +41,7 @@ class Field():
 				evals = f['Mateig/Results']['Evals'][:]
 
 				self.matrix =  f['Mateig/Matrices']['Matrix'][:]
+				self.bcmatrix = f['Mateig/Matrices']['Bcmatrix'][:]
 				self.D = f['Mateig/Matrices']['D'][:]
 				self.D2 = f['Mateig/Matrices']['D2'][:]
 
@@ -1921,3 +1922,82 @@ def pretty_comp_plot(fld_list, ind_list, label_list,ylims=None):
 
 
 	return
+
+
+def load_emodes(mu_list):
+	ev=[]
+	emode=[]
+	moq=[]
+	for p in mu_list:
+		fld=Field(p[-1])
+		if allclose(fld.evals[-1],0):
+			if allclose(fld.evals[-2],0):
+				x = fld.evals[-3]
+			else:
+				x = fld.evals[-2]
+		else:
+			x = fld.evals[-1]
+		ev.append(x)
+		emode.append(fld.edict[x])
+		moq.append(fld.Mach/fld.Q)
+		print 'Done ' + str(p)
+	r = fld.r
+	return r,ev,emode,moq
+
+
+def plot_summary_plaw(num_m, keys, r,moq_list,ev_list,emode_list):
+
+	fig1,axes1 = subplots(2,2,sharex='col')
+	fig2,axes2 = subplots(2,2,sharex='col')
+	axes1[1,0].set_xlabel('$r$',fontsize='large')
+	axes1[1,1].set_xlabel('$r$',fontsize='large')
+	axes1[0,0].set_ylabel('$|e|$',fontsize='large')
+	axes1[1,0].set_ylabel('$|e|$',fontsize='large')
+
+	axes2[1,0].set_xlabel('$r$',fontsize='large')
+	axes2[1,1].set_xlabel('$r$',fontsize='large')
+	axes2[0,0].set_ylabel('$\\frac{M}{Q}$',fontsize='large')
+	axes2[1,0].set_ylabel('$\\frac{M}{Q}$',fontsize='large')
+
+
+	linetypes = ['-' if m[2]<1 else '--' for m in keys[:num_m]]
+
+	for ltype,line,moq,ev,emode in zip(linetypes,keys[:num_m],moq_list[:num_m],ev_list[:num_m],emode_list[:num_m]):
+		axes1[0,0].semilogx(r,abs(emode),linestyle=ltype,label='$\\frac{M}{Q}=%.2f$, $\\Omega_p=(%.2e,%.2e)$'%(line[2],ev.real,ev.imag))
+		axes2[0,0].loglog(r,moq,linestyle=ltype)
+		axes1[0,0].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		axes2[0,0].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+
+		box = axes1[0,0].get_position()
+		axes1[0,0].set_position([box.x0, box.y0, box.width * 0.95, box.height])
+		axes1[0,0].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+
+
+	for ltype,line,moq,ev,emode in zip(linetypes,keys[(num_m*1):(num_m*2)],moq_list[(num_m*1):(num_m*2)],ev_list[(num_m*1):(num_m*2)],emode_list[(num_m*1):(num_m*2)]):
+		axes1[0,1].semilogx(r,abs(emode),linestyle=ltype,label='$\\frac{M}{Q}=%.2f$, $\\Omega_p=(%.2e,%.2e)$'%(line[2],ev.real,ev.imag))
+		axes2[0,1].loglog(r,moq,linestyle=ltype)
+		axes1[0,1].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		axes2[0,1].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		box = axes1[0,1].get_position()
+		axes1[0,1].set_position([box.x0, box.y0, box.width * 0.95, box.height])
+		axes1[0,1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+
+	for ltype,line,moq,ev,emode in zip(linetypes,keys[(num_m*2):(num_m*3)],moq_list[(num_m*2):(num_m*3)],ev_list[(num_m*2):(num_m*3)],emode_list[(num_m*2):(num_m*3)]):
+		axes1[1,0].semilogx(r,abs(emode),linestyle=ltype,label='$\\frac{M}{Q}=%.2f$, $\\Omega_p=(%.2e,%.2e)$'%(line[2],ev.real,ev.imag))
+		axes2[1,0].loglog(r,moq,linestyle=ltype)
+		axes1[1,0].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		axes2[1,0].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		box = axes1[1,0].get_position()
+		axes1[1,0].set_position([box.x0, box.y0, box.width * 0.95, box.height])
+		axes1[1,0].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+	for ltype,line,moq,ev,emode in zip(linetypes,keys[(num_m*3):(num_m*4)],moq_list[(num_m*3):(num_m*4)],ev_list[(num_m*3):(num_m*4)],emode_list[(num_m*3):(num_m*4)]):
+		axes1[1,1].semilogx(r,abs(emode),linestyle=ltype,label='$\\frac{M}{Q}=%.2f$, $\\Omega_p=(%.2e,%.2e)$'%(line[2],ev.real,ev.imag))
+		axes2[1,1].loglog(r,moq,linestyle=ltype)
+		axes1[1,1].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		axes2[1,1].set_title('$\\delta = %.2f$, $\\mu = %.2f$'%(2*line[1]-1,line[0]))
+		box = axes1[1,1].get_position()
+		axes1[1,1].set_position([box.x0, box.y0, box.width * 0.95, box.height])
+		axes1[1,1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
