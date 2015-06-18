@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.12.18)  28 MAY 2015 17:54
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.12.18)  18 JUN 2015 10:09
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -372,14 +372,27 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 24.
 (/usr/local/texlive/2013basic/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Underfull \hbox (badness 2846) in paragraph at lines 51--53
+
+Package natbib Warning: Citation `osa92' on page 1 undefined on input line 37.
+
+
+Package natbib Warning: Citation `gam01' on page 1 undefined on input line 52.
+
+
+Underfull \hbox (badness 4995) in paragraph at lines 51--53
 \OML/cmm/m/it/10 ^^L\OT1/cmr/m/n/10 
-$ ([]). We now Fourier Trans-form
+$ (\OT1/cmr/bx/n/10 ?\OT1/cmr/m/n/10 ). We now Fourier Trans-form the lin-
  []
 
 
-Underfull \hbox (badness 2229) in paragraph at lines 51--53
-\OT1/cmr/m/n/10 the lin-ear vari-ables in the az-imuthal di-rec-tion as
+Underfull \hbox (badness 4303) in paragraph at lines 51--53
+\OT1/cmr/m/n/10 ear vari-ables in the az-imuthal di-rec-tion as well
+ []
+
+
+Underfull \hbox (badness 4967) in paragraph at lines 51--53
+\OT1/cmr/m/n/10 as in time and write $(\OML/cmm/m/it/10 v[]; v[]; \OT1/cmr/m/n/
+10 ^^F[]\OML/cmm/m/it/10 ; P[]; s[]; T[]; \OT1/cmr/m/n/10 ^^H[]) =
  []
 
 
@@ -391,6 +404,17 @@ Overfull \hbox (36.76447pt too wide) in alignment at lines 62--65
 Package natbib Warning: Citation `og01' on page 1 undefined on input line 76.
 
 
+Package natbib Warning: Citation `go06' on page 1 undefined on input line 76.
+
+
+Package natbib Warning: Citation `papa02' on page 1 undefined on input line 76.
+
+
+
+Package natbib Warning: Citation `papa02' on page 1 undefined on input line 80.
+
+
+
 Overfull \hbox (3.61356pt too wide) detected at line 83
 \OT1/cmr/m/n/10 2
 \OML/cmm/m/it/10 r[]\OT1/cmr/m/n/10 (
@@ -399,61 +423,120 @@ Overfull \hbox (3.61356pt too wide) detected at line 83
  []
 
 [1{/usr/local/texlive/2013basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Overfull \hbox (2.6009pt too wide) detected at line 103
+Overfull \hbox (19.95572pt too wide) detected at line 99
+\OT1/cmr/m/n/10 (1 \OMS/cmsy/m/n/10 ^^@ \OML/cmm/m/it/10 i[]\OT1/cmr/m/n/10 )[]
+ = \OMS/cmsy/m/n/10 ^^@ []
+ []
+
+
+Overfull \hbox (2.6009pt too wide) detected at line 106
 \OT1/cmr/m/n/10 2
 \OML/cmm/m/it/10 r[]\OT1/cmr/m/n/10 (
 [] \OMS/cmsy/m/n/10 ^^@ \OML/cmm/m/it/10 ![]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 e
  \OT1/cmr/m/n/10 = \OMS/cmsy/m/n/10 ^^@[] [] \OT1/cmr/m/n/10 + [] []
  []
 
+
+Package natbib Warning: Citation `go06' on page 2 undefined on input line 110.
+
+
+LaTeX Warning: Reference `eq:wp_def' on page 2 undefined on input line 110.
+
+
+Package natbib Warning: Citation `papa02' on page 2 undefined on input line 116
+.
+
+
+Package natbib Warning: Citation `lin15' on page 2 undefined on input line 122.
+
+
+
+LaTeX Warning: Reference `eq:dtsigma' on page 2 undefined on input line 128.
+
+
+LaTeX Warning: Reference `eq:dtT' on page 2 undefined on input line 128.
+
+
+Package natbib Warning: Citation `ss73' on page 2 undefined on input line 154.
+
+
+LaTeX Warning: Reference `eq:coeff_eqn' on page 2 undefined on input line 167.
+
+
+Package natbib Warning: Citation `bt2' on page 2 undefined on input line 200.
+
+
+Package natbib Warning: Citation `papa02' on page 2 undefined on input line 204
+.
+
+
+Package natbib Warning: Citation `papa02' on page 2 undefined on input line 208
+.
+
 [2] <growth_wkb.png, id=24, 1281.3471pt x 792.0792pt>
 File: growth_wkb.png Graphic file (type png)
  <use growth_wkb.png>
-Package pdftex.def Info: growth_wkb.png used on input line 224.
+Package pdftex.def Info: growth_wkb.png used on input line 227.
 (pdftex.def)             Requested size: 256.55872pt x 158.59431pt.
 
-Overfull \hbox (11.29219pt too wide) in paragraph at lines 224--225
+Overfull \hbox (11.29219pt too wide) in paragraph at lines 227--228
 [][] 
  []
 
 
-Overfull \hbox (27.80031pt too wide) detected at line 258
+Overfull \hbox (27.80031pt too wide) detected at line 261
 \OML/cmm/m/it/10 ^^^[] \OT1/cmr/m/n/10 = \OMS/cmsy/m/n/10 ^^@[]\OML/cmm/m/it/10
  b[] [] \OT1/cmr/m/n/10 + []\OML/cmm/m/it/10 b[] []
  []
+
+
+LaTeX Warning: Reference `eq:potential_integral_def' on page 3 undefined on inp
+ut line 264.
 
 No file cooling.bbl.
 
 Package natbib Warning: There were undefined citations.
 
-[3 <./growth_wkb.png>] (./cooling.aux) ) 
+[3 <./growth_wkb.png>] (./cooling.aux
+
+Package natbib Warning: Citation(s) may have changed.
+(natbib)                Rerun to get citations correct.
+
+)
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right .
+
+
+ ) 
 Here is how much of TeX's memory you used:
  4776 strings out of 494536
  62752 string characters out of 6167445
- 157737 words of memory out of 5000000
+ 157374 words of memory out of 5000000
  7951 multiletter control sequences out of 15000+600000
  11495 words of font info for 47 fonts, out of 8000000 for 9000
  319 hyphenation exceptions out of 8191
- 39i,10n,29p,912b,328s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2013basic/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2013basic/texmf
--dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2013basic/
-texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2013ba
-sic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/20
-13basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive
-/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texl
-ive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/t
-exlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local
-/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/loc
-al/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/l
-ocal/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr
-/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><
-/usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pf
-b></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7
-.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cm
-ti10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmti8.pfb>
-Output written on cooling.pdf (3 pages, 256360 bytes).
+ 39i,10n,29p,913b,328s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx1
+0.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mcsc10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmex10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmmi10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmmi5.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/publ
+ic/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmr10.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2013basic/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2013basic/texmf-dist/font
+s/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2013basic/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2013basic/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2013basic/texmf-
+dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2013basic/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2013basic
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmti8.pfb>
+Output written on cooling.pdf (3 pages, 257048 bytes).
 PDF statistics:
  81 PDF objects out of 1000 (max. 8388607)
  57 compressed objects within 1 object stream

@@ -99,26 +99,20 @@ void calc_coefficients(void) {
 
 #ifdef COOLING
 
-	// double complex cool_fac = ( 1 + 1j*beta_cool*(adi_gam-1))/(1 + beta_cool*beta_cool*(adi_gam-1)*(adi_gam-1));
-	//
-	//
-	// coeffs_C[i] = temp[i]/(2 * omega[i] * r[i] * r[i]);
-	//
-	// coeffs_A[i]  = coeffs_C[i]  * ( 2 * dlds[i] + d2lds[i]
-	// 			  + cool_fac * (d2ldtemp[i] + dldtemp[i]*(2 + dlds[i] + dldtemp[i])));
-	//
-	// coeffs_B[i]  = coeffs_C[i]  * (2 + dlds[i] + cool_fac * ( adi_gam*dldtemp[i] + ( adi_gam - 1)*(dlds[i] + 2)));
-	//
-	// coeffs_C[i]  *= (1 + cool_fac * (adi_gam -1));
-
-	double complex cool_fac = (adi_gam-1)/(adi_gam*( 1 - I*beta_cool*(adi_gam-1)));
+//	double complex cool_fac = (adi_gam-1)/(adi_gam*( 1 - I*beta_cool*(adi_gam-1)));
+	double complex tilbeta = 1 - I*beta_cool*(adi_gam-1);
+	double complex cool_fac = 1/(adi_gam*tilbeta);
 	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
+	//
+	// coeffs_A[i] = norm*( 2*dlds[i] + adi_gam*cool_fac*dldtemp[i]*(2+dldtemp[i]+dlds[i]));
+	// coeffs_B[i] = norm*( 2+dlds[i] + adi_gam*cool_fac*(2+2*dldtemp[i]+dlds[i]));
+	// coeffs_C[i] = norm*(1 + adi_gam*cool_fac);
 
-	coeffs_A[i] = norm*( 2*dlds[i] + adi_gam*cool_fac*dldtemp[i]*(2+dldtemp[i]+dlds[i]));
-	coeffs_B[i] = norm*( 2+dlds[i] + adi_gam*cool_fac*(2+2*dldtemp[i]+dlds[i]));
-	coeffs_C[i] = norm*(1 + adi_gam*cool_fac);
+	coeffs_A[i] = norm*cool_fac*(dldtemp[i]*(2+dldtemp[i]) + (2*tilbeta+dldtemp[i])*dlds[i]
+								+ d2ldtemp[i] + tilbeta*d2lds[i]);
 
-
+	coeffs_B[i] = norm*cool_fac*(adi_gam*(2+dldtemp[i]+dlds[i]) - I*beta_cool*(adi_gam-1)*(2+dlds[i]));
+	coeffs_C[i] = norm*cool_fac*(adi_gam - I*beta_cool*(adi_gam-1));
 
 
 #endif
@@ -139,10 +133,12 @@ void calc_viscosity(void) {
 			coeffs_C[i] -= norm*8;
 
 #if defined(COOLING) && defined(VISCHEATING)
-			norm =I*alpha_s *temp[i]/(omega[i]*r[i]*r[i]);
-			norm *= (3./8);
-			norm *= (adi_gam)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
-			coeffs_A[i] += norm*(2+dldtemp[i]+dlds[i]);
+			// norm =I*alpha_s *temp[i]/(omega[i]*r[i]*r[i]);
+			// norm *= (3./8);
+			// norm *= (adi_gam)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
+			// coeffs_A[i] += norm*(2+dldtemp[i]+dlds[i]);
+			norm = 3*I*alpha_s*temp[i]*adi_gam*(adi_gam-1)/(8*omega[i]*r[i]*r[i]*(1-I*beta_cool*(adi_gam-1)));
+			coeffs_A[i] += norm*(2 + dldtemp[i]+dlds[i]);
 			coeffs_B[i] += norm*(5+2*dldtemp[i]+2*dlds[i]);
 			coeffs_C[i] += norm*2;
 #endif

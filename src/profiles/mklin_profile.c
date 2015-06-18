@@ -10,8 +10,7 @@ const static double R2 = 2;
 #define s_p  (1 + flare_index)
 #define delta1 (delta_R * h_p * pow(R1,flare_index + 1))
 #define  delta2  (delta_R * h_p * pow(R2,flare_index + 1))
-	
-	
+
 double bump_function(double x);
 double f1_func(double x);
 double drf1_func(double x);
@@ -38,13 +37,13 @@ double dlogsigma_func(double x) {
 double d2logsigma_func(double x) {
 	double d2lf1 = d2rf1_func(x) - drf1_func(x)*drf1_func(x)/f1_func(x);
 	double d2lf2 = d2rf2_func(x) - drf2_func(x)*drf2_func(x)/f2_func(x);
-	
+
 	return d2lf1/f1_func(x) + d2lf2/f2_func(x);
 }
 
 
 double temp_func(double x) {
-	return  h0*h0 * pow(x,temp_index); 
+	return  h0*h0 * pow(x,temp_index);
 }
 
 double dlogtemp_func(double x) {
@@ -86,13 +85,13 @@ double f2_func(double x) {
 
 double drf1_func(double x) {
 	double arg = (x - R1)/delta1;
-	
+
 	return  -x * (eps_p - 1) * sech(arg)*sech(arg)/(2*delta1);
 
 }
 double drf2_func(double x) {
 	double arg = (x - R2)/delta2;
-	
+
 	return  x * (eps_p - 1) * sech(arg)*sech(arg)/(2*delta2);
 
 }
