@@ -15,8 +15,9 @@ def create_defines_file(optfile='params.opt',sourcedir='src/'):
 				'GAUSSIANRING_PROF':'src/profiles/gaussian_ring.c', \
 				'GAUSSIANBUMP_PROF':'src/profiles/gaussian_bump.c', \
 				'INNERTAPER_PROF':'src/profiles/innertaper_profile.c', \
-				'PAPALOIZOU_PROF': 'src/profiles/papaloizou_profile.c'}
-
+				'PAPALOIZOU_PROF': 'src/profiles/papaloizou_profile.c', \
+				'USER_PROF': 'src/profiles/user_profile.c'}
+	print profiles
 	with open(optfile,'r') as f:
 		temp = [x.split('+') for x in f.readlines()]
 		defs=[]

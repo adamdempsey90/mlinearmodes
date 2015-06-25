@@ -1,13 +1,14 @@
 #include "eigen.h"
 
-//#define ANALYTICPOTENTIAL
+
+// g = sigma0
 
 double sigma_func(double x) {
-	return sigma0 * pow(x, sigma_index);
+	return pow(x, -1.5);
 }
 
 double dlogsigma_func(double x) {
-	return sigma_index;
+	return -1.5;
 }
 
 double d2logsigma_func(double x) {
@@ -16,34 +17,15 @@ double d2logsigma_func(double x) {
 
 
 double temp_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = flare_index*pow(sigma_func(x),flare_index-1);
-//	printf("%.2e\t%.2e\n",sigma_func(x),res);
-#else	
-	res = h0*h0*pow(x,temp_index);
-#endif
-	return res;
+	return h0*h0*pow(x,-.5);
 }
 
 double dlogtemp_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = (flare_index - 1)*dlogsigma_func(x);
-#else
-	res = temp_index;
-#endif
-	return res;
+	return -.5;
 }
 
 double d2logtemp_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = (flare_index - 1)*d2logsigma_func(x);
-#else
-	res = 0;
-#endif
-	return res;
+	return 0;
 }
 
 double omk_func(double x) {
@@ -59,20 +41,14 @@ double d2logomk_func(double x) {
 }
 
 double scaleH_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = sqrt(flare_index)*pow(sigma_func(x),.5*(flare_index-1))*pow(omk_func(x),-1);
-#else
-	res =  h0*x*pow(x,flare_index);
-#endif
-	return res;
+	return h0*x*pow(x,.25);
 }
 
-
 int analytic_potential(void) {
-	return 0;
+	return 1;
 }
 
 double omega_prec_grav_analytic(double x) {
-	return 0;
+//	return -pow(x,1.5)*pow(x*x + 1,-2.5) ;
+	return pow(scaleH_func(x)/x,2)*omk_func(x);
 }

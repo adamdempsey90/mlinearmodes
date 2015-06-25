@@ -30,14 +30,14 @@ int init(double ri,double ro) {
 	compute_kernels();
 
 #ifndef INFINITEDISK
-#ifndef NOOMEGAPREC
+#ifndef NOOMEGAPRECGRAV
 	calc_omega_prec_grav();
 #endif
 #endif
 #endif
 
 #ifndef NOPRESSURE
-#ifndef NOOMEGAPREC
+#ifndef NOOMEGAPRECPRES
 	for(i=0;i<N;i++) {
 		omega_prec[i] += omega_prec_pres(r[i]);
 	}
