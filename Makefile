@@ -32,6 +32,12 @@ endif
 ifeq ($(UNAME),jupiter)
 CC=gcc-4.9
 endif
+ifeq ($(UNAME),zeus)
+CC=gcc-4.9
+INCLIB=-I/usr/local/include/
+LDLIB=-L/usr/local/lib/
+endif
+
 
 ifeq ($(UNAME),helios)
 CC=gcc-4.9

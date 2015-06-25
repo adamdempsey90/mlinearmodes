@@ -41,7 +41,7 @@ class Field():
 				evals = f['Mateig/Results']['Evals'][:]
 
 				self.matrix =  f['Mateig/Matrices']['Matrix'][:]
-				self.bcmatrix = f['Mateig/Matrices']['Bcmatrix'][:]
+				self.bcmatrix = f['Mateig/Matrices']['BC'][:]
 				self.D = f['Mateig/Matrices']['D'][:]
 				self.D2 = f['Mateig/Matrices']['D2'][:]
 
