@@ -17,7 +17,6 @@ def create_defines_file(optfile='params.opt',sourcedir='src/'):
 				'INNERTAPER_PROF':'src/profiles/innertaper_profile.c', \
 				'PAPALOIZOU_PROF': 'src/profiles/papaloizou_profile.c', \
 				'USER_PROF': 'src/profiles/user_profile.c'}
-	print profiles
 	with open(optfile,'r') as f:
 		temp = [x.split('+') for x in f.readlines()]
 		defs=[]

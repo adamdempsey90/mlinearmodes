@@ -20,7 +20,7 @@ double temp_func(double x) {
 #ifdef POLYTROPE
 	res = flare_index*pow(sigma_func(x),flare_index-1);
 //	printf("%.2e\t%.2e\n",sigma_func(x),res);
-#else	
+#else
 	res = h0*h0*pow(x,temp_index);
 #endif
 	return res;
@@ -69,10 +69,10 @@ double scaleH_func(double x) {
 }
 
 
-int analytic_potential(void) {
-	return 0;
-}
-
-double omega_prec_grav_analytic(double x) {
-	return 0;
-}
+// int analytic_potential(void) {
+// 	return 0;
+// }
+//
+// double omega_prec_grav_analytic(double x) {
+// 	return 0;
+// }

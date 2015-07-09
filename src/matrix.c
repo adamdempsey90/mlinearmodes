@@ -246,3 +246,12 @@ void normalize_evectors(double complex *evecs) {
 
 
 }
+int getindex4(int i, int j, int k, int l, int size_small, int size_large) {
+	return l + size_small*(j + size_large * ( k + size_small*i ) );
+}
+int getindex3(int i, int k, int l,int size) {
+	return l + size*(k + size*i);
+}
+int getindex2(int k, int l, int size) {
+	return l + size*k;
+}

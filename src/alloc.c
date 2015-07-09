@@ -3,9 +3,9 @@
 
 void alloc_globals(void) {
 
-	D = (double *)malloc(sizeof(double)*N*N);
-	D2 = (double *)malloc(sizeof(double)*N*N);
-	Identity = (double *)malloc(sizeof(double)*N*N);
+	D = (double *)malloc(sizeof(double)*N*N*NF*NF);
+	D2 = (double *)malloc(sizeof(double)*N*N*NF*NF);
+	Identity = (double *)malloc(sizeof(double)*N*N*NF*NF);
 	kernel = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
 
@@ -22,6 +22,7 @@ void alloc_globals(void) {
 	omega = (double *)malloc(sizeof(double)*N);
 	dldom = (double *)malloc(sizeof(double)*N);
 	d2ldom = (double *)malloc(sizeof(double)*N);
+	kappa2 = (double *)malloc(sizeof(double)*N);
 
 	sigma = (double *)malloc(sizeof(double)*N);
 	dlds = (double *)malloc(sizeof(double)*N);
@@ -39,11 +40,9 @@ void alloc_globals(void) {
 	dldc2 = (double *)malloc(sizeof(double)*N);
 	d2ldc2 = (double *)malloc(sizeof(double)*N);
 
-	omega_prec =  (double *)malloc(sizeof(double)*N);
-
-	coeffs_A =  (double complex *)malloc(sizeof(double complex)*N);
-	coeffs_B =  (double complex *)malloc(sizeof(double complex)*N);
-	coeffs_C =  (double complex *)malloc(sizeof(double complex)*N);
+	coeffs_A =  (double complex *)malloc(sizeof(double complex)*N*NF*NF);
+	coeffs_B =  (double complex *)malloc(sizeof(double complex)*N*NF*NF);
+	coeffs_C =  (double complex *)malloc(sizeof(double complex)*N*NF*NF);
 
 	return;
 
@@ -69,6 +68,7 @@ void free_globals(void) {
 	free(omega );
 	free(dldom);
 	free(d2ldom );
+	free(kappa2);
 
 	free(sigma);
 	free(dlds);
@@ -86,7 +86,6 @@ void free_globals(void) {
 	free(dldc2);
 	free(d2ldc2);
 
-	free(omega_prec);
 
 	free(coeffs_A);
 	free(coeffs_B);

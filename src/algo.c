@@ -1,38 +1,50 @@
 #include "eigen.h"
 
 void calc_coefficients(void);
-void calc_viscosity(void);
-
+void calc_A_coeff(int i, double complex *Amat);
+void calc_B_coeff(int i, double complex *Bmat);
+void calc_C_coeff(int i, double complex *Cmat);
 
 int calc_matrices(double complex *mat, double complex *bcmat) {
 	int i,j,indx,mindx;
+	int k,l,cindx;
 
 /* Compute the matrix including all of its component matrices */
 
-	for(i=0;i<N;i++) {
+// OPENMP
+	for(i=0;i<N*NF*NF;i++) {
 		coeffs_A[i] = 0;
 		coeffs_B[i] = 0;
 		coeffs_C[i] = 0;
 	}
 
-#ifndef NOPRESSURE
+	printf("Calculating coefficients...\n");
 	calc_coefficients();
-#endif
-	calc_viscosity();
+
+	printf("Filling matrix...\n\tPressure...\n\tViscosity...\n");
 	for(i=0;i<N;i++) {
 		for(j=0;j<N;j++) {
-			mindx=  j + ncols*i;
-			indx = j+ N*i;
+			indx = getindex2(i,j,N);
+			for(k=0;k<NF;k++) {
+				for(l=0;l<NF;l++) {
+					mindx = getindex4(i,j,k,l,NF,N);
+					cindx = getindex3(i,k,l,NF);
+					// mindx=  j + ncols*i;
+					// indx = j+ N*i;
 
-			mat[mindx] = ( omega_prec[i] + coeffs_A[i])*Identity[indx]
-					    + coeffs_B[i]*D[indx]
-					    + coeffs_C[i]*D2[indx];
-			bcmat[mindx] = Identity[indx];
+					mat[mindx] = coeffs_A[cindx]*Identity[mindx];
+							//    + coeffs_B[cindx]*D[mindx]
+							  //  + coeffs_C[cindx]*D2[mindx];
+					bcmat[mindx] = Identity[mindx];
+
+				}
+			}
 		}
 	}
 
 
 #ifdef SELFGRAVITY
+	printf("\tSelfgravity...\n");
 	add_sg(mat,bcmat);
 #endif
 
@@ -40,120 +52,268 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 
 /* Set Boundary Conditions */
+	printf("Setting Boundary Conditions...\n");
 	set_bc(mat,bcmat);
 
-
-#ifdef PLANETS
-	add_planets(mat,bcmat);
-#endif
 
 	return 0;
 }
 
 
-
 void calc_coefficients(void) {
-	int i;
-	double complex norm;
+	int i,k,l;
+	double rval,rval2;
 
+// OPENMP
 	for(i=0;i<N;i++) {
-
-
-#ifdef BAROTROPIC
-		coeffs_C[i]  = c2[i]/(2*omega[i]*r[i]*r[i]);
-
-		coeffs_A[i]  = coeffs_C[i]  * ( dlds[i]*(2 + dldc2[i]) + d2lds[i]);
-		coeffs_B[i]  = coeffs_C[i]  * (2 + dldc2[i] + dlds[i]) ;
-
-
-
-#endif
-
-
-#ifdef ISOTHERMAL
-
-		coeffs_C[i]  = c2[i]/(2*omega[i]*r[i]*r[i]);
-
-		coeffs_A[i]  = coeffs_C[i]  *( 2 * dlds[i] + d2lds[i]) ;
-		coeffs_B[i]  = coeffs_C[i]  *( 2 + dlds[i]);
-
-
-
-#endif
-
-
-
-
-#ifdef ADIABATIC
-
-		coeffs_C[i]  = temp[i]/(2*omega[i]*r[i]*r[i]);
-
-		coeffs_B[i]  = coeffs_C[i] * adi_gam*(2 + dldpres[i]);
-
-		coeffs_A[i] = coeffs_C[i]  * ( (2 + dldpres[i])*dldpres[i] + d2ldpres[i]);
-
-		coeffs_C[i]  *= adi_gam;
-
-#endif
-
-
-#ifdef COOLING
-
-//	double complex cool_fac = (adi_gam-1)/(adi_gam*( 1 - I*beta_cool*(adi_gam-1)));
-	double complex tilbeta = 1 - I*beta_cool*(adi_gam-1);
-	double complex cool_fac = 1/(adi_gam*tilbeta);
-	norm = temp[i]/(2*omega[i]*r[i]*r[i]);
-	//
-	// coeffs_A[i] = norm*( 2*dlds[i] + adi_gam*cool_fac*dldtemp[i]*(2+dldtemp[i]+dlds[i]));
-	// coeffs_B[i] = norm*( 2+dlds[i] + adi_gam*cool_fac*(2+2*dldtemp[i]+dlds[i]));
-	// coeffs_C[i] = norm*(1 + adi_gam*cool_fac);
-
-	coeffs_A[i] = norm*cool_fac*(dldtemp[i]*(2+dldtemp[i]) + (2*tilbeta+dldtemp[i])*dlds[i]
-								+ d2ldtemp[i] + tilbeta*d2lds[i]);
-
-	coeffs_B[i] = norm*cool_fac*(adi_gam*(2+dldtemp[i]+dlds[i]) - I*beta_cool*(adi_gam-1)*(2+dlds[i]));
-	coeffs_C[i] = norm*cool_fac*(adi_gam - I*beta_cool*(adi_gam-1));
-
-
-#endif
+		calc_A_coeff(i,&coeffs_A[NF*NF*i]);
+		calc_B_coeff(i,&coeffs_B[NF*NF*i]);
+		calc_C_coeff(i,&coeffs_C[NF*NF*i]);
+	}
+	printf("\t\tConverting to lnr derivatives...\n");
+	for(i=0;i<N;i++) {
+		rval = r[i];
+		rval2 = rval*rval;
+		for(k=0;k<NF;k++) {
+			for(l=0;l<NF;l++) {
+				coeffs_A[getindex3(i,k,l,NF)] /= (I*mval);
+				coeffs_C[getindex3(i,k,l,NF)] /= (I*mval*rval2);
+				coeffs_B[getindex3(i,k,l,NF)] /= (I*mval*rval);
+				coeffs_B[getindex3(i,k,l,NF)] -= coeffs_C[getindex3(i,k,l,NF)];
+			}
+		}
 	}
 
 	return;
 }
 
-void calc_viscosity(void) {
-	int i;
-	double complex norm;
-	for(i=0;i<N;i++) {
-/*	Shear Viscosity	*/
-		if (alpha_s !=0) {
-			norm = - I * alpha_s * temp[i]/(24 * omega[i]*r[i]*r[i]);
-			coeffs_A[i]  += norm*3*( 9 + 4*dlds[i]*(-2+3*dlds[i])+2*dldtemp[i]*(-1+6*dlds[i])-12*d2lds[i] );
-			coeffs_B[i] += norm*(-82+64*dldtemp[i]+28*dlds[i]);
-			coeffs_C[i] -= norm*8;
 
-#if defined(COOLING) && defined(VISCHEATING)
-			// norm =I*alpha_s *temp[i]/(omega[i]*r[i]*r[i]);
-			// norm *= (3./8);
-			// norm *= (adi_gam)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
-			// coeffs_A[i] += norm*(2+dldtemp[i]+dlds[i]);
-			norm = 3*I*alpha_s*temp[i]*adi_gam*(adi_gam-1)/(8*omega[i]*r[i]*r[i]*(1-I*beta_cool*(adi_gam-1)));
-			coeffs_A[i] += norm*(2 + dldtemp[i]+dlds[i]);
-			coeffs_B[i] += norm*(5+2*dldtemp[i]+2*dlds[i]);
-			coeffs_C[i] += norm*2;
+void calc_A_coeff(int i, double complex *Amat) {
+/* Calculate the coefficients for the A matrix assuming we're given the correct
+ offset in memory to start from ( NF^2 *i )
+*/
+	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval;
+	mu = dlds[i];
+	mup = d2lds[i];
+	delta = dldtemp[i];
+	deltap = d2ldtemp[i];
+	om = omega[i];
+	rval = r[i];
+	rval2 = rval*rval;
+	sigval = sigma[i];
+	Tval  = temp[i];
+	kap2 = kappa2[i];
+	kapom = kap2/(2*om);
+
+	double nus = alpha_s * Tval/om;
+	double dldnu = delta + 1.5;
+
+
+#ifdef BAROTROPIC
+	Amat[getindex2(0,0,NF)] = I*mval*om;
+	Amat[getindex2(0,1,NF)] = - 2 *om;
+	Amat[getindex2(0,2,NF)] = - Tval*mu/(rval*sigval);
+
+	Amat[getindex2(1,0,NF)] = kapom;
+	Amat[getindex2(1,1,NF)] = I*mval*om;
+	Amat[getindex2(1,2,NF)] = I*mval*Tval/(rval*sigval);
+
+	Amat[getindex2(2,0,NF)] = ( 1 + mu)*sigval/rval;
+	Amat[getindex2(2,1,NF)] = I*mval*sigval/rval;
+	Amat[getindex2(2,2,NF)] = I*mval*om;
+
 #endif
 
-		}
-	/* Bulk Viscosity */
-		if (alpha_b != 0) {
+#ifdef ISOTHERMAL
+	Amat[getindex2(0,0,NF)] = 0;
+	Amat[getindex2(0,1,NF)] = 0;
+	Amat[getindex2(0,2,NF)] = 0;
 
-			norm = I*alpha_b * temp[i]/(2 * omega[i]*r[i]*r[i]);
+	Amat[getindex2(1,0,NF)] = 0;
+	Amat[getindex2(1,1,NF)] = 0;
+	Amat[getindex2(1,2,NF)] = 0;
 
-			coeffs_B[i] += norm*(-1 + dldtemp[i] + dlds[i]);
-			coeffs_C[i] += norm;
-		}
-	}
+	Amat[getindex2(2,0,NF)] = 0;
+	Amat[getindex2(2,1,NF)] = 0;
+	Amat[getindex2(2,2,NF)] = 0;
+
+#endif
+
+#ifdef COOLING
+	Amat[getindex2(0,0,NF)] = 0;
+	Amat[getindex2(0,1,NF)] = 0;
+	Amat[getindex2(0,2,NF)] = 0;
+
+	Amat[getindex2(1,0,NF)] = 0;
+	Amat[getindex2(1,1,NF)] = 0;
+	Amat[getindex2(1,2,NF)] = 0;
+
+	Amat[getindex2(2,0,NF)] = 0;
+	Amat[getindex2(2,1,NF)] = 0;
+	Amat[getindex2(2,2,NF)] = 0;
+
+#endif
+
+// Viscosity
+	Amat[getindex2(0,0,NF)] += nus*(2+mval2)/rval2;
+	Amat[getindex2(0,1,NF)] += nus*3*I*mval/rval2;
+	Amat[getindex2(0,2,NF)] += nus*-I*mval*(kapom-2*om)/rval2;
+
+	Amat[getindex2(1,0,NF)] += nus*-I*mval*(3+dldnu+mu)/rval2;
+	Amat[getindex2(1,1,NF)] += nus*(1+2*mval2+dldnu + mu)/rval2;
+	Amat[getindex2(1,2,NF)] += nus*mu/(sigval*rval)*(kapom-2*om);
 
 	return;
+}
 
+void calc_B_coeff(int i, double complex *Bmat) {
+/* Calculate the coefficients for the A matrix assuming we're given the correct
+ offset in memory to start from ( NF^2 *i )
+*/
+	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval;
+	mu = dlds[i];
+	mup = d2lds[i];
+	delta = dldtemp[i];
+	deltap = d2ldtemp[i];
+	om = omega[i];
+	rval = r[i];
+	rval2 = rval*rval;
+	sigval = sigma[i];
+	Tval  = temp[i];
+	kap2 = kappa2[i];
+	kapom = kap2/(2*om);
+
+	double nus = alpha_s * Tval/om;
+	double dldnu = delta + 1.5;
+
+#ifdef BAROTROPIC
+	Bmat[getindex2(0,0,NF)] = 0;
+	Bmat[getindex2(0,1,NF)] = 0;
+	Bmat[getindex2(0,2,NF)] = Tval/sigval;
+
+	Bmat[getindex2(1,0,NF)] = 0;
+	Bmat[getindex2(1,1,NF)] = 0;
+	Bmat[getindex2(1,2,NF)] = 0;
+
+	Bmat[getindex2(2,0,NF)] = sigval;
+	Bmat[getindex2(2,1,NF)] = 0;
+	Bmat[getindex2(2,2,NF)] = 0;
+
+#endif
+
+#ifdef ISOTHERMAL
+	Bmat[getindex2(0,0,NF)] = 0;
+	Bmat[getindex2(0,1,NF)] = 0;
+	Bmat[getindex2(0,2,NF)] = 0;
+
+	Bmat[getindex2(1,0,NF)] = 0;
+	Bmat[getindex2(1,1,NF)] = 0;
+	Bmat[getindex2(1,2,NF)] = 0;
+
+	Bmat[getindex2(2,0,NF)] = 0;
+	Bmat[getindex2(2,1,NF)] = 0;
+	Bmat[getindex2(2,2,NF)] = 0;
+
+#endif
+
+#ifdef COOLING
+	Bmat[getindex2(0,0,NF)] = 0;
+	Bmat[getindex2(0,1,NF)] = 0;
+	Bmat[getindex2(0,2,NF)] = 0;
+
+	Bmat[getindex2(1,0,NF)] = 0;
+	Bmat[getindex2(1,1,NF)] = 0;
+	Bmat[getindex2(1,2,NF)] = 0;
+
+	Bmat[getindex2(2,0,NF)] = 0;
+	Bmat[getindex2(2,1,NF)] = 0;
+	Bmat[getindex2(2,2,NF)] = 0;
+
+#endif
+//Viscosity
+	Bmat[getindex2(0,0,NF)] += nus*-2*(1+dldnu+mu)/rval;
+	Bmat[getindex2(0,1,NF)] += nus*-I*mval/rval;
+	Bmat[getindex2(0,2,NF)] += 0;
+
+	Bmat[getindex2(1,0,NF)] += nus*-I*mval/rval;
+	Bmat[getindex2(1,1,NF)] += -nus*(1 + dldnu+mu)/rval;
+	Bmat[getindex2(1,2,NF)] += -nus*(kapom-2*om)/sigval;
+
+	return;
+}
+
+void calc_C_coeff(int i, double complex *Cmat) {
+/* Calculate the coefficients for the A matrix assuming we're given the correct
+ offset in memory to start from ( NF^2 *i )
+*/
+	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval;
+	mu = dlds[i];
+	mup = d2lds[i];
+	delta = dldtemp[i];
+	deltap = d2ldtemp[i];
+	om = omega[i];
+	rval = r[i];
+	rval2 = rval*rval;
+	sigval = sigma[i];
+	Tval  = temp[i];
+	kap2 = kappa2[i];
+	kapom = kap2/(2*om);
+
+	double nus = alpha_s * Tval/om;
+	double dldnu = delta + 1.5;
+
+#ifdef BAROTROPIC
+	Cmat[getindex2(0,0,NF)] = 0;
+	Cmat[getindex2(0,1,NF)] = 0;
+	Cmat[getindex2(0,2,NF)] = 0;
+
+	Cmat[getindex2(1,0,NF)] = 0;
+	Cmat[getindex2(1,1,NF)] = 0;
+	Cmat[getindex2(1,2,NF)] = 0;
+
+	Cmat[getindex2(2,0,NF)] = 0;
+	Cmat[getindex2(2,1,NF)] = 0;
+	Cmat[getindex2(2,2,NF)] = 0;
+
+#endif
+
+#ifdef ISOTHERMAL
+	Cmat[getindex2(0,0,NF)] = 0;
+	Cmat[getindex2(0,1,NF)] = 0;
+	Cmat[getindex2(0,2,NF)] = 0;
+
+	Cmat[getindex2(1,0,NF)] = 0;
+	Cmat[getindex2(1,1,NF)] = 0;
+	Cmat[getindex2(1,2,NF)] = 0;
+
+	Cmat[getindex2(2,0,NF)] = 0;
+	Cmat[getindex2(2,1,NF)] = 0;
+	Cmat[getindex2(2,2,NF)] = 0;
+
+#endif
+
+#ifdef COOLING
+	Cmat[getindex2(0,0,NF)] = 0;
+	Cmat[getindex2(0,1,NF)] = 0;
+	Cmat[getindex2(0,2,NF)] = 0;
+
+	Cmat[getindex2(1,0,NF)] = 0;
+	Cmat[getindex2(1,1,NF)] = 0;
+	Cmat[getindex2(1,2,NF)] = 0;
+
+	Cmat[getindex2(2,0,NF)] = 0;
+	Cmat[getindex2(2,1,NF)] = 0;
+	Cmat[getindex2(2,2,NF)] = 0;
+
+#endif
+// Viscosity
+	Cmat[getindex2(0,0,NF)] += -2*nus;
+	Cmat[getindex2(0,1,NF)] += 0;
+	Cmat[getindex2(0,2,NF)] += 0;
+
+	Cmat[getindex2(1,0,NF)] += 0;
+	Cmat[getindex2(1,1,NF)] += -nus;
+	Cmat[getindex2(1,2,NF)] += 0;
+
+	return;
 }

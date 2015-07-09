@@ -65,6 +65,7 @@ class Field():
 
 				pvals = f['Mateig/Parameters']['Parameters']
 				self.params = {}
+				self.params['m'] = int(pvals['m'])
 				self.params['nr'] = int(pvals['nr'])
 				self.params['ri'] = float(pvals['ri'])
 				self.params['ro'] = float(pvals['ro'])
@@ -123,7 +124,7 @@ class Field():
 		self.nu = self.params['alpha_s'] * self.c2/self.omega
 		self.dlr = diff(self.lr)[0]
 		self.nr = len(self.r)
-
+		NF = self.matrix.shape[0]/self.nr
 
 		self.npl = self.params['Nplanets']
 		if self.npl > 0:
@@ -176,21 +177,29 @@ class Field():
 
 		for i,ev in enumerate(self.evals):
 			ee = self.evecs[i,:]
-			self.modes[ev] = Mode(ev,ee,(self.r,self.dlr,self.omega,self.sigma))
-			self.edict[ev] = ee
+#			self.modes[ev] = Mode(ev,ee,(self.r,self.dlr,self.omega,self.sigma))
+
+			self.udict[ev] = ee[::NF]
+			self.vdict[ev] = ee[1::NF]
+			self.sdict[ev] = ee[2::NF]
+			if NF==4:
+				self.pdict[ev] = ee[3::NF]
+			else:
+				self.pdict[ev] = self.c2*ee[2::NF]
+
 			if self.npl > 0:
 				self.pedict[ev] = self.pevecs[i,:]
 
-			sp = -dot(self.D,self.sigma*ee)
-			self.sigp[ev] = sp
-
-			uu =  1j*self.r*self.omega*ee
-			self.vrp[ev] =  uu
-			self.vpp[ev] = .5*1j*uu
-			vv = self.omega*(.75*ee -.5*dot(self.D,ee))
-			self.vortp[ev] = vv
-			self.vortensp[ev] = vv/self.sigma - sp*self.vort/(self.sigma**2)
-
+			# sp = -dot(self.D,self.sigma*ee)
+			# self.sigp[ev] = sp
+			#
+			# uu =  1j*self.r*self.omega*ee
+			# self.vrp[ev] =  uu
+			# self.vpp[ev] = .5*1j*uu
+			# vv = self.omega*(.75*ee -.5*dot(self.D,ee))
+			# self.vortp[ev] = vv
+			# self.vortensp[ev] = vv/self.sigma - sp*self.vort/(self.sigma**2)
+			self.vortp[ev] = dot(self.udict[ev])
  #			if abs(ev) != 0:
 #				self.evdict[self.nodes(self.evecs[i,:])] = ev
 #				self.edict[self.nodes(self.evecs[i,:])] = self.evecs[i,:]

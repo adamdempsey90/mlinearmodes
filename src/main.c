@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	}
 	printf("\n");
 
-	if ((argc < 15) && (argc != 3)) {
+	if ((argc < 16) && (argc != 3)) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
 
 #if defined(ISOTHERMAL) || defined(BAROTROPIC)
 	printf("\nUsing the Parameters:\n \
+		\tm=%d\n \
 		\tNr=%d\n \
 		\tInner radius = %lg\n \
 		\tOuter radius = %lg\n \
@@ -45,9 +46,10 @@ int main(int argc, char *argv[]) {
 		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = 1\n \
 		\tBeta Cooling = inf\n",
-		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
+		mval,N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
 #else
 	printf("\nUsing the Parameters:\n \
+		\tm=%d\n \
 		\tNr=%d\n \
 		\tInner radius = %lg\n \
 		\tOuter radius = %lg\n \
@@ -58,7 +60,7 @@ int main(int argc, char *argv[]) {
 		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = %lg\n \
 		\tBeta Cooling = %lg\n",
-		N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,adi_gam,beta_cool);
+		mval,N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,adi_gam,beta_cool);
 #endif
 
 #ifdef OPENMP
@@ -92,12 +94,12 @@ int main(int argc, char *argv[]) {
 
   	printf("Outputting Derivative Matrices...\n");
   	output_derivatives();
-#ifndef READKERNEL
-
-	printf("Outputting Kernel...\n");
-  	output_kernel();
-
-#endif
+// #ifndef READKERNEL
+//
+// 	printf("Outputting Kernel...\n");
+//   	output_kernel();
+//
+// #endif
 
 #endif
 
@@ -136,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   	printf("Freeing Arrays...\n");
 
-  	free_globals();
+  free_globals();
 #ifdef PLANETS
 	free_planets();
 #endif

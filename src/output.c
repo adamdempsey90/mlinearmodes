@@ -23,7 +23,7 @@ void output_globals(void) {
 			scaleH[i]/r[i],
 			pres[i],
 			temp[i],
-			omega_prec[i],
+			kappa2[i],
 			dldc2[i],
 			dlds[i],
 			dldpres[i],

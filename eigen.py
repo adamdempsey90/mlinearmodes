@@ -7,7 +7,7 @@ def load_params(fname='params.in'):
 	params={}
 
 
-	int_keys = ['nr','Nplanets','np']
+	int_keys = ['m','nr','Nplanets','np']
 	str_keys = ['outputname']
 
 	with open(fname,'r') as f:
@@ -36,7 +36,7 @@ def load_defines():
 
 
 def dump_params(params,fname='params.in'):
-	skeys = ['nr','ri','ro','mdisk','rs','h0','sig_ind', \
+	skeys = ['m','nr','ri','ro','mdisk','rs','h0','sig_ind', \
 			'flare_ind','alpha_s','alpha_b','np','gam', \
 			'beta','tol','Nplanets','outputname']
 
@@ -49,6 +49,7 @@ def dump_params(params,fname='params.in'):
 
 def param_dict(prof=None):
 	params={}
+	params['m'] = 1
 	params['h0'] = .05
 	params['rs'] = .1
 	params['mdisk'] = .04
@@ -67,7 +68,8 @@ def param_dict(prof=None):
 	params['Nplanets'] = 0
 	params['outputname'] = 'results'
 	if prof=='yoram':
-		params = {'alpha_b': 0, \
+		params = {'m':1, \
+		 'alpha_b': 0, \
 		 'alpha_s': 0, \
  		 'beta': 0, \
 		 'flare_ind': 0, \
@@ -114,6 +116,7 @@ def run_code(params, defines = None):
 		call(['./compile'])
 
 	callstr = ['./eigen']
+	callstr.append(str(params['m']))
 	callstr.append(str(params['nr']))
 	callstr.append(str(params['ri']))
 	callstr.append(str(params['ro']))

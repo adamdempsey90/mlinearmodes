@@ -4,7 +4,9 @@
 #include <hdf5.h>
 
 typedef struct param_t {
+	int m;
 	int nr;
+	int nf;
 	double ri;
 	double ro;
 	double mdisk;
@@ -95,8 +97,9 @@ void write_hdf5_params(void) {
 
   param_t params;
 
-
+	params.m = mval;
   params.nr = N;
+	params.nf = NF;
   params.ri = ri;
   params.ro = ro;
 
@@ -120,7 +123,9 @@ void write_hdf5_params(void) {
 
 
   memtype = H5Tcreate (H5T_COMPOUND, sizeof (param_t));
+	status = H5Tinsert (memtype, "m", HOFFSET (param_t, m), H5T_NATIVE_INT);
   status = H5Tinsert (memtype, "nr", HOFFSET (param_t, nr), H5T_NATIVE_INT);
+	status = H5Tinsert (memtype, "nf", HOFFSET (param_t, nf), H5T_NATIVE_INT);
   status = H5Tinsert (memtype, "ri", HOFFSET (param_t, ri), H5T_NATIVE_DOUBLE);
   status = H5Tinsert (memtype, "ro", HOFFSET (param_t, ro), H5T_NATIVE_DOUBLE);
   status = H5Tinsert (memtype, "mdisk", HOFFSET (param_t, mdisk), H5T_NATIVE_DOUBLE);
@@ -155,7 +160,7 @@ void write_hdf5_params(void) {
 
 void write_hdf5_results(double complex *evecs, double complex *evals) {
 
-  hsize_t dims2[2] = {nrows,ncols};
+	hsize_t dims2[2] = {nrows,ncols};
   hsize_t dims1[1] = {nrows};
 
   write_hdf5_complex(evecs,dims2,2,results_id,"Evecs");
@@ -180,7 +185,7 @@ void write_hdf5_globals(void) {
   write_hdf5_double(aspect_ratio,dims,1,globals_id,"hor");
   write_hdf5_double(pres,dims,1,globals_id,"P");
   write_hdf5_double(temp,dims,1,globals_id,"T");
-  write_hdf5_double(omega_prec,dims,1,globals_id,"wp");
+  write_hdf5_double(kappa2,dims,1,globals_id,"kappa2");
   write_hdf5_double(dldc2,dims,1,globals_id,"dc2");
   write_hdf5_double(dlds,dims,1,globals_id,"ds");
   write_hdf5_double(dldpres,dims,1,globals_id,"dp");
@@ -201,7 +206,10 @@ void write_hdf5_globals(void) {
 void write_hdf5_matrices(double complex *mat, double complex *bcmat) {
 /* Write all of the matrices */
   int i,j;
-  double complex *coeffs_mat = (double complex *)malloc(sizeof(double complex)*N*3);
+//  double complex *coeffs_mat = (double complex *)malloc(sizeof(double complex)*N*3);
+	double *dsmall, *d2small;
+	dsmall = (double *)malloc(sizeof(double)*N*N);
+	d2small = (double *)malloc(sizeof(double)*N*N);
 
   hsize_t dims1[1], dims2[2], dims3[3];
 
@@ -210,14 +218,22 @@ void write_hdf5_matrices(double complex *mat, double complex *bcmat) {
   dims1[0] = N;
 
 
-  write_hdf5_double(D, dims2, 2, matrices_id, "D");
-  write_hdf5_double(D2, dims2, 2, matrices_id, "D2");
+	for(i=0;i<N;i++) {
+		for(j=0;j<N;j++) {
+			dsmall[j+i*N] = D[getindex4(i,j,0,0,NF,N)];
+			d2small[j+i*N] = D2[getindex4(i,j,0,0,NF,N)];
+		}
+	}
+
+
+  write_hdf5_double(dsmall, dims2, 2, matrices_id, "D");
+  write_hdf5_double(d2small, dims2, 2, matrices_id, "D2");
   write_hdf5_double(weights, dims1, 1, matrices_id, "Weights");
 
-
-#ifdef SELFGRAVITY
-  write_hdf5_double(kernel,dims2,2,matrices_id,"Kernel");
-#endif
+	free(dsmall); free(d2small);
+// #ifdef SELFGRAVITY
+//   write_hdf5_double(kernel,dims2,2,matrices_id,"Kernel");
+// #endif
 
   dims2[0] = nrows; dims2[1] = ncols;
   write_hdf5_complex(bcmat,dims2,2,matrices_id,"BC");
@@ -226,19 +242,19 @@ void write_hdf5_matrices(double complex *mat, double complex *bcmat) {
 
 
 
-
-  dims2[0] = N; dims2[1] = 3;
-
-  for(i=0;i<N;i++) {
-      for(j=0;j<3;j++) {
-        coeffs_mat[0 + 3*i] = coeffs_A[i];
-        coeffs_mat[1 + 3*i] = coeffs_B[i];
-        coeffs_mat[2 + 3*i] = coeffs_C[i];
-      }
-  }
-
-  write_hdf5_complex(coeffs_A,dims2,2,matrices_id,"Coeffs");
-  free(coeffs_mat);
+	//
+  // dims2[0] = N; dims2[1] = 3;
+	//
+  // for(i=0;i<N;i++) {
+  //     for(j=0;j<3;j++) {
+  //       coeffs_mat[0 + 3*i] = coeffs_A[i];
+  //       coeffs_mat[1 + 3*i] = coeffs_B[i];
+  //       coeffs_mat[2 + 3*i] = coeffs_C[i];
+  //     }
+  // }
+	//
+  // write_hdf5_complex(coeffs_A,dims2,2,matrices_id,"Coeffs");
+  // free(coeffs_mat);
 
   return;
 }

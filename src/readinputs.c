@@ -7,7 +7,7 @@ void read_input_file(char *fname);
 
 void read_arguments(int argc, char *argv[]) {
 /*  Read command line arguments.
-
+  m
   Nr
   ri
   ro
@@ -37,26 +37,27 @@ void read_arguments(int argc, char *argv[]) {
       read_input_file(argv[2]);
     }
     else {
-    	N = atoi(argv[1]);
-    	ri = atof(argv[2]);
+      mval = atoi(argv[1]);
+    	N = atoi(argv[2]);
+    	ri = atof(argv[3]);
 
-    	ro = atof(argv[3]);
+    	ro = atof(argv[4]);
 
-      Mdisk = atof(argv[4]);
+      Mdisk = atof(argv[5]);
 
-      eps = atof(argv[5]);
-  	  h0 = atof(argv[6]);
-  	  sigma_index = atof(argv[7]);
-  	  flare_index = atof(argv[8]);
+      eps = atof(argv[6]);
+  	  h0 = atof(argv[7]);
+  	  sigma_index = atof(argv[8]);
+  	  flare_index = atof(argv[9]);
 
-  	  alpha_s = atof(argv[9]);
-  	  alpha_b = atof(argv[10]);
-      nprocs = atoi(argv[11]);
-      adi_gam = atof(argv[12]);
-    	beta_cool = atof(argv[13]);
-  	  tol = atof(argv[14]);
-      NP = atoi(argv[15]);
-      sprintf(outputname,"%s.hdf5",argv[16]);
+  	  alpha_s = atof(argv[10]);
+  	  alpha_b = atof(argv[11]);
+      nprocs = atoi(argv[12]);
+      adi_gam = atof(argv[13]);
+    	beta_cool = atof(argv[14]);
+  	  tol = atof(argv[15]);
+      NP = atoi(argv[16]);
+      sprintf(outputname,"%s.hdf5",argv[17]);
 
     }
     set_secondary_inputs();
@@ -76,6 +77,7 @@ void read_input_file(char *fname) {
   if (f==NULL) printf("\n\nERROR Can't Find Input File!\n\n");
 
 	gchar=fgets(garbage,sizeof(garbage),f);	// Input Parameters
+  read_res=fscanf(f,"m = %d \n",&mval);
 	read_res=fscanf(f,"nr = %d \n",&N);
   read_res=fscanf(f,"ri = %lg \n",&ri);
   read_res=fscanf(f,"ro = %lg \n",&ro);
@@ -107,9 +109,9 @@ void read_input_file(char *fname) {
 
 
 void set_secondary_inputs(void) {
-
+  mval2 = mval*mval;
   dlr = (log(ro) - log(ri))/((float) N);
-  nrows = N; ncols = N;
+  nrows = N*NF; ncols = N*NF;
 #ifdef PLANETS
   nrows += NP;
   ncols += NP;

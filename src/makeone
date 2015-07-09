@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gcc-4.9 -c -fopenmp -Wall -O3 -DH5_USE_16_API -g -I/usr/local/include $1 

@@ -5,10 +5,12 @@ void init_globals(double ri, double ro);
 
 void init_weights(void);
 double calc_total_disk_mass(void);
-double omega_prec_pres(double x);
+void calc_omega_corrections(void);
+void calc_omega_pres(double *omp2, double *kapp2);
+
+
 
 int init(double ri,double ro) {
-	int i;
 	init_derivatives();
 
 
@@ -16,77 +18,59 @@ int init(double ri,double ro) {
 
 	init_globals(ri,ro);
 
-#ifdef PLANETS
-		printf("Initializing %d Planets...\n",NP);
-		init_planets();
-#endif
 
-/* Initialize Kernels if we're not reading it from a file */
-
-	printf("Calculating Kernels\n");
-
-#ifdef SELFGRAVITY
-
-	compute_kernels();
-
-#ifndef INFINITEDISK
-#ifndef NOOMEGAPRECGRAV
-	calc_omega_prec_grav();
-#endif
-#endif
-#endif
-
-#ifndef NOPRESSURE
-#ifndef NOOMEGAPRECPRES
-	for(i=0;i<N;i++) {
-		omega_prec[i] += omega_prec_pres(r[i]);
-	}
-#endif
-#endif
-
-
+	calc_omega_corrections();
 
 
 	return 0;
 }
 
-double omega_prec_pres(double x) {
-	double delta = dlogtemp_func(x);
-	double mu = dlogsigma_func(x);
-	double delta_p = d2logtemp_func(x);
-	double mu_p = d2logsigma_func(x);
-	double fac;
+void calc_omega_corrections(void) {
+	int i;
+	double *omp2 = (double *)malloc(sizeof(double)*N);
+	double *omg2 = (double *)malloc(sizeof(double)*N);
+	double *kapp2 = (double *)malloc(sizeof(double)*N);
+	double *kapg2 = (double *)malloc(sizeof(double)*N);
 
-#if defined(ISOTHERMAL) || defined(COOLING)
 
-//	fac = (mu+delta)*(delta+1)*temp_func(x);
-	fac = -temp_func(x) * ( (mu+delta)*(1+delta) + mu_p + delta_p);
-#endif
 
-#ifdef COOLING
-	fac *= adi_gam;
-#endif
+	calc_omega_pres(omp2,kapp2);
+	calc_omega_sg(omg2,kapg2);
 
-// #ifdef COOLING
-//
-// 	fac =  (mu+delta)*(delta+1)*temp_func(x);
-//
+// #ifdef OPENMP
+// #pragma omp for private(i)
 // #endif
+	for(i=0;i<N;i++) {
+		kappa2[i] = omega[i]*omega[i] + kapp2[i] + kapg2[i];
+		omega[i] = sqrt(omega[i]*omega[i] + omp2[i]+omg2[i]);
 
+	}
+
+	free(omp2); free(omg2); free(kapp2); free(kapg2);
+	return;
+}
+
+void calc_omega_pres(double *omp2, double *kapp2) {
+	int i;
+
+// OPENMP
+	for(i=0;i<N;i++) {
 #ifdef BAROTROPIC
-
-//	fac = mu*(delta + 1)*temp_func(x)*adi_gam;
-	fac = -temp_func(x)*( mu*(1+delta) + mu_p);
+		omp2[i] = dlds[i]*c2[i]/(r[i]*r[i]);
+		kapp2[i] = c2[i]*(dlds[i]*(2+dldc2[i]) + d2lds[i])/(r[i]*r[i]);
 #endif
-
-#if defined(INFINITEDISK) && defined(SELFGRAVITY)
-	fac += sigma_func(x)*(1+mu)*(2+mu)*x*27.5;
+#if defined(ISOTHERMAL) || defined(COOLING)
+		omp2[i]= temp[i]*(dldtemp[i] + dlds[i])/(r[i]*r[i]);
+		kapp2[i] = temp[i]*((2+dldtemp[i])*(dldtemp[i]+dlds[i])+d2ldtemp[i]+d2lds[i])/(r[i]*r[i]);
 #endif
+	}
 
-	return fac /(2*omk_func(x)*x*x);
+	return;
+
 }
 void init_globals(double ri, double ro) {
 	int i;
+// OPENMP
 	for(i=0;i<N;i++) {
 
 
@@ -117,9 +101,6 @@ void init_globals(double ri, double ro) {
 		pres[i] = sigma[i] * temp[i];
 		dldpres[i] = dlds[i] + dldtemp[i];
 		d2ldpres[i] = d2lds[i] + d2ldtemp[i];
-		omega_prec[i] = 0;
-
-
 
 	}
 

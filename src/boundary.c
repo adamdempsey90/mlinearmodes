@@ -3,130 +3,81 @@
 
 
 void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
-
+	int ind;
 /* Set up zero Lagrangian Pressure B.C at inner boundary */
 
-	int j,indx;
-#ifdef COOLING
-// 	double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
-// 	eta_fac /= (1 - eta_fac);
-		double complex cool_fac = (adi_gam - 1)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
-		double complex fac1, fac2;
-#endif
-	for(j=0;j<N;j++) {
-		indx = j;
-		mat[indx] = D[indx];
-		bcmat[indx] = 0;
 
-		if (j==0) {
-#ifdef COOLING
-//			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
-				fac1 = dldtemp[j] - cool_fac*adi_gam*dldtemp[j];
-				fac2 = 1 + cool_fac*adi_gam;
-#ifdef VISCHEATING
-				fac1 -= cool_fac*.75*alpha_s*I;
-				fac2 += cool_fac*1.5*alpha_s*I;
-#endif
-			mat[indx] -= fac1/fac2;
-
-#endif
-#ifdef ISOTHERMAL
-			mat[indx] -= dldtemp[j];
-#endif
-
-		}
+/* Zero first NF rows */
+	for(ind=0; ind < NF*N*NF;ind++) {
+		mat[ind] = 0;
+		bcmat[ind] = 0;
 	}
+/* Add b.c condition */
+
+	int i = 0;
+	int j = 0;
+#ifdef BAROTROPIC
+	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
+	mat[getindex4(i,j,0,0,NF,N)] = sigma[i]*dlds[i]/(I*mval*r[i]);
+	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
+
+#endif
+
+#ifdef ISOTHERMAL
+	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
+	mat[getindex4(i,j,0,0,NF,N)] = sigma[i]*temp[i]*(dldtemp[i] + dlds[i])/(I*mval*r[i]);
+	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
+#endif
+
+#ifdef COOLING
+	bcmat[getindex4(i,j,3,3,NF,N)] = 1;
+	mat[getindex4(i,j,0,0,NF,N)] = pres[i]*dldpres[i]/(I*mval*r[i]);
+	mat[getindex4(i,j,3,3,NF,N)] = omega[i];
+#endif
+
 	return;
 }
 
 void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
-
+	int ind;
 /* Set up zero Lagrangian Pressure B.C at outer boundary */
-#ifdef COOLING
-	// double complex eta_fac = 1 - I*beta_cool*(adi_gam -1);
-	// eta_fac /= (1 - eta_fac);
-	double complex cool_fac = (adi_gam - 1)/(adi_gam*(1-I*beta_cool*(adi_gam-1)));
-	double complex fac1, fac2;
-#endif
-	int j,indx;
-	for(j=0;j<N;j++) {
-		indx= j + nrows*(N-1);
 
-		mat[indx] = D[j+N*(N-1)];
-		bcmat[indx] = 0;
+	int i = N-1;
+	int j = N-1;
+/* Zero last NF rows */
+	for(ind=getindex4(i,0,0,0,NF,N) ; ind < getindex4(i,j,NF-1,NF-1,NF,N);ind++) {
+		mat[ind] = 0;
+		bcmat[ind] = 0;
+	}
+/* Add b.c condition */
 
-		if (j==(N-1)) {
-#ifdef COOLING
-//			mat[indx] -= dldtemp[j]/(1 + eta_fac * adi_gam);
-			fac1 = dldtemp[j] - cool_fac*adi_gam*dldtemp[j];
-			fac2 = 1 + cool_fac*adi_gam;
-#ifdef VISCHEATING
-			fac1 -= cool_fac*.75*alpha_s*I;
-			fac2 += cool_fac*1.5*alpha_s*I;
+
+#ifdef BAROTROPIC
+	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
+	mat[getindex4(i,j,2,0,NF,N)] = sigma[i]*dlds[i]/(I*mval*r[i]);
+	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
+
 #endif
-			mat[indx] -= fac1/fac2;
-#endif
+
 #ifdef ISOTHERMAL
-			mat[indx] -= dldtemp[j];
+	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
+	mat[getindex4(i,j,2,0,NF,N)] = sigma[i]*temp[i]*(dldtemp[i] + dlds[i])/(I*mval*r[i]);
+	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
 #endif
 
-		}
-
-	}
-	return;
-}
-
-
-void zero_e_bc_inner(double complex *mat, double complex *bcmat) {
-
-	int j,indx;
-	for(j=0;j<N;j++) {
-		indx = j;
-		mat[indx] = 0;
-		bcmat[indx] = 0;
-		if (j==0) {
-			mat[indx] = 1;
-		}
-
-	}
+#ifdef COOLING
+	bcmat[getindex4(i,j,3,3,NF,N)] = 1;
+	mat[getindex4(i,j,3,0,NF,N)] = pres[i]*dldpres[i]/(I*mval*r[i]);
+	mat[getindex4(i,j,3,3,NF,N)] = omega[i];
+#endif
 
 	return;
 }
 
-
-void zero_e_bc_outer(double complex *mat, double complex *bcmat) {
-
-	int j,indx;
-	for(j=0;j<N;j++) {
-		indx = j + nrows*(N-1);
-		mat[indx] = 0;
-		bcmat[indx] = 0;
-		if (j==N-1) {
-			mat[indx] = 1;
-		}
-	}
-
-	return;
-}
-void user_gradient_bc_outer(double complex *mat, double complex *bcmat,double complex val) {
-
-/* Set up zero Lagrangian Pressure B.C at outer boundary */
-	int j,indx;
-	for(j=0;j<N;j++) {
-		indx= j + nrows*(N-1);
-
-		mat[indx] = D[j+N*(N-1)];
-		bcmat[indx] = 0;
-
-		if (j==(N-1)) {
-			mat[indx] -= val;
-		}
-
-	}
-	return;
-}
 void set_bc(double complex *mat, double complex *bcmat) {
 
+
+#ifndef NOBC
 #ifndef NOPRESSURE
 
 #ifdef ZEROBCIN
@@ -150,6 +101,7 @@ void set_bc(double complex *mat, double complex *bcmat) {
 #endif
 
 
+#endif
 #endif
 	return;
 }

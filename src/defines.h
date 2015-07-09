@@ -1,7 +1,8 @@
-#define OPENMP
 #define HDF5_OUTPUT
 #define BAROTROPIC
-#define USER_PROF
+#define SELFGRAVITY
+#define EXTENDINTEG
+#define POWERLAW_PROF
 #define COMPSIMPS
 #define SYMSOFT2
 #define PRESBCIN
