@@ -43,6 +43,7 @@
 # Normalize the integrated disk eccentricity
 #+NORMALIZE_MAX
 #+NORMALIZE_INT
+#+NORMALIZE_NORM
 
 # Profile Options
 
@@ -81,3 +82,4 @@
 +PRESBCIN
 +PRESBCOUT
 #+GRADBCOUT
+#+NOBC

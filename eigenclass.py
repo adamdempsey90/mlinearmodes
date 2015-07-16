@@ -138,3 +138,4 @@ class Field():
         self.modes = [None]*self.params.nr*self.params.nf
         for i,j in enumerate(self.inds):
             self.modes[i] = Mode(self.evals[j],self.evecs[j,:],self.params,self.globals)
+        self.modes = array(self.modes)

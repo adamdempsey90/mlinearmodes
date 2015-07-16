@@ -7,7 +7,7 @@ void calc_C_coeff(int i, double complex *Cmat);
 
 int calc_matrices(double complex *mat, double complex *bcmat) {
 	int i,j,indx,mindx;
-	int k,l,cindx;
+	int k,l,cindx,s,dindx;
 
 /* Compute the matrix including all of its component matrices */
 
@@ -28,14 +28,17 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 			for(k=0;k<NF;k++) {
 				for(l=0;l<NF;l++) {
 					mindx = getindex4(i,j,k,l,NF,N);
-					cindx = getindex3(i,k,l,NF);
-					// mindx=  j + ncols*i;
-					// indx = j+ N*i;
-
-					mat[mindx] = coeffs_A[cindx]*Identity[mindx];
-							//    + coeffs_B[cindx]*D[mindx]
-							  //  + coeffs_C[cindx]*D2[mindx];
 					bcmat[mindx] = Identity[mindx];
+					mat[mindx] = coeffs_A[getindex3(i,k,l,NF)];
+					for(s=0;s<NF;s++) {
+						cindx = getindex3(i,k,s,NF);
+						dindx = getindex4(i,j,k,s,NF,N);
+						mat[mindx] += coeffs_B[cindx]*D[dindx] + coeffs_C[cindx]*D2[dindx];
+					}
+
+//					mat[mindx] = coeffs_A[cindx]*Identity[mindx] + coeffs_B[cindx]*D[mindx]
+//											+ coeffs_C[cindx]*D2[mindx];
+
 
 				}
 			}
@@ -61,7 +64,7 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 
 
 void calc_coefficients(void) {
-	int i,k,l;
+	int i,k,l,indx;
 	double rval,rval2;
 
 // OPENMP
@@ -76,10 +79,16 @@ void calc_coefficients(void) {
 		rval2 = rval*rval;
 		for(k=0;k<NF;k++) {
 			for(l=0;l<NF;l++) {
-				coeffs_A[getindex3(i,k,l,NF)] /= (I*mval);
-				coeffs_C[getindex3(i,k,l,NF)] /= (I*mval*rval2);
-				coeffs_B[getindex3(i,k,l,NF)] /= (I*mval*rval);
-				coeffs_B[getindex3(i,k,l,NF)] -= coeffs_C[getindex3(i,k,l,NF)];
+				indx = getindex3(i,k,l,NF);
+				coeffs_B[indx] = coeffs_B[indx]/rval - coeffs_C[indx]/rval2;
+				coeffs_C[indx] = coeffs_C[indx]/rval2;
+				coeffs_A[indx] /= (I*mval);
+				coeffs_B[indx] /= (I*mval);
+				coeffs_C[indx] /= (I*mval);
+				// coeffs_A[indx] /= (I*mval);
+				// coeffs_C[indx] /= (I*mval*rval2);
+				// coeffs_B[indx] /= (I*mval*rval);
+				// coeffs_B[indx] -= coeffs_C[indx];
 			}
 		}
 	}
@@ -92,24 +101,40 @@ void calc_A_coeff(int i, double complex *Amat) {
 /* Calculate the coefficients for the A matrix assuming we're given the correct
  offset in memory to start from ( NF^2 *i )
 */
-	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval;
-	mu = dlds[i];
-	mup = d2lds[i];
-	delta = dldtemp[i];
-	deltap = d2ldtemp[i];
-	om = omega[i];
-	rval = r[i];
-	rval2 = rval*rval;
-	sigval = sigma[i];
-	Tval  = temp[i];
-	kap2 = kappa2[i];
-	kapom = kap2/(2*om);
+double mu, delta, om, mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval;
+mu = dlds[i];
+mup = d2lds[i];
+delta = dldtemp[i];
+deltap = d2ldtemp[i];
+om = omega[i];
+rval = r[i];
+rval2 = rval*rval;
+sigval = sigma[i];
+Tval  = temp[i];
+kap2 = kappa2[i];
+kapom = kap2/(2*om);
+Pval = pres[i];
 
-	double nus = alpha_s * Tval/om;
-	double dldnu = delta + 1.5;
+double nus = alpha_s * Tval/om;
+double dldnu = delta + 1.5;
 
 
 #ifdef BAROTROPIC
+	Amat[getindex2(0,0,NF)] = I*mval*om;
+	Amat[getindex2(0,1,NF)] = - 2 *om;
+	Amat[getindex2(0,2,NF)] = Tval*(delta-mu)/(rval*sigval);
+
+	Amat[getindex2(1,0,NF)] = kapom;
+	Amat[getindex2(1,1,NF)] = I*mval*om;
+	Amat[getindex2(1,2,NF)] = I*mval*Tval/(rval*sigval);
+
+	Amat[getindex2(2,0,NF)] = ( 1 + mu)*sigval/rval;
+	Amat[getindex2(2,1,NF)] = I*mval*sigval/rval;
+	Amat[getindex2(2,2,NF)] = I*mval*om;
+
+#endif
+
+#ifdef ISOTHERMAL
 	Amat[getindex2(0,0,NF)] = I*mval*om;
 	Amat[getindex2(0,1,NF)] = - 2 *om;
 	Amat[getindex2(0,2,NF)] = - Tval*mu/(rval*sigval);
@@ -124,35 +149,27 @@ void calc_A_coeff(int i, double complex *Amat) {
 
 #endif
 
-#ifdef ISOTHERMAL
-	Amat[getindex2(0,0,NF)] = 0;
-	Amat[getindex2(0,1,NF)] = 0;
-	Amat[getindex2(0,2,NF)] = 0;
-
-	Amat[getindex2(1,0,NF)] = 0;
-	Amat[getindex2(1,1,NF)] = 0;
-	Amat[getindex2(1,2,NF)] = 0;
-
-	Amat[getindex2(2,0,NF)] = 0;
-	Amat[getindex2(2,1,NF)] = 0;
-	Amat[getindex2(2,2,NF)] = 0;
-
-#endif
-
 #ifdef COOLING
-	Amat[getindex2(0,0,NF)] = 0;
-	Amat[getindex2(0,1,NF)] = 0;
-	Amat[getindex2(0,2,NF)] = 0;
+	Amat[getindex2(0,0,NF)] = I*mval*om;
+	Amat[getindex2(0,1,NF)] = - 2 *om;
+	Amat[getindex2(0,2,NF)] =  - Tval*(mu+delta)/(rval*sigval)
+	Amat[getindex2(0,3,NF)] = 0;
 
-	Amat[getindex2(1,0,NF)] = 0;
-	Amat[getindex2(1,1,NF)] = 0;
+	Amat[getindex2(1,0,NF)] = kapom;
+	Amat[getindex2(1,1,NF)] = I*mval*om;
 	Amat[getindex2(1,2,NF)] = 0;
+	Amat[getindex2(1,3,NF)] = I*mval/(rval*sigval);
 
-	Amat[getindex2(2,0,NF)] = 0;
-	Amat[getindex2(2,1,NF)] = 0;
-	Amat[getindex2(2,2,NF)] = 0;
+	Amat[getindex2(2,0,NF)] = ( 1 + mu)*sigval/rval;
+	Amat[getindex2(2,1,NF)] = I*mval*sigval/rval;
+	Amat[getindex2(2,2,NF)] = I*mval*om;
+	Amat[getindex2(2,3,NF)] = 0;
 
-#endif
+	Amat[getindex2(3,0,NF)] = ( adi_gam + mu +delta)*Pval/rval;
+	Amat[getindex2(3,1,NF)] = I*mval*adi_gam*Pval/rval;
+	Amat[getindex2(3,2,NF)] = 0;
+	Amat[getindex2(3,3,NF)] = I*mval*om;
+	#endif
 
 // Viscosity
 	Amat[getindex2(0,0,NF)] += nus*(2+mval2)/rval2;
@@ -164,13 +181,14 @@ void calc_A_coeff(int i, double complex *Amat) {
 	Amat[getindex2(1,2,NF)] += nus*mu/(sigval*rval)*(kapom-2*om);
 
 	return;
+
 }
 
 void calc_B_coeff(int i, double complex *Bmat) {
 /* Calculate the coefficients for the A matrix assuming we're given the correct
  offset in memory to start from ( NF^2 *i )
 */
-	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval;
+	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval;
 	mu = dlds[i];
 	mup = d2lds[i];
 	delta = dldtemp[i];
@@ -182,6 +200,7 @@ void calc_B_coeff(int i, double complex *Bmat) {
 	Tval  = temp[i];
 	kap2 = kappa2[i];
 	kapom = kap2/(2*om);
+	Pval = temp[i]*sigma[i];
 
 	double nus = alpha_s * Tval/om;
 	double dldnu = delta + 1.5;
@@ -204,13 +223,13 @@ void calc_B_coeff(int i, double complex *Bmat) {
 #ifdef ISOTHERMAL
 	Bmat[getindex2(0,0,NF)] = 0;
 	Bmat[getindex2(0,1,NF)] = 0;
-	Bmat[getindex2(0,2,NF)] = 0;
+	Bmat[getindex2(0,2,NF)] = Tval/sigval;;
 
 	Bmat[getindex2(1,0,NF)] = 0;
 	Bmat[getindex2(1,1,NF)] = 0;
 	Bmat[getindex2(1,2,NF)] = 0;
 
-	Bmat[getindex2(2,0,NF)] = 0;
+	Bmat[getindex2(2,0,NF)] = sigval;
 	Bmat[getindex2(2,1,NF)] = 0;
 	Bmat[getindex2(2,2,NF)] = 0;
 
@@ -220,14 +239,22 @@ void calc_B_coeff(int i, double complex *Bmat) {
 	Bmat[getindex2(0,0,NF)] = 0;
 	Bmat[getindex2(0,1,NF)] = 0;
 	Bmat[getindex2(0,2,NF)] = 0;
+	Bmat[getindex2(0,3,NF)] = 1./sigval;
 
 	Bmat[getindex2(1,0,NF)] = 0;
 	Bmat[getindex2(1,1,NF)] = 0;
 	Bmat[getindex2(1,2,NF)] = 0;
+	Bmat[getindex2(1,3,NF)] = 0;
 
-	Bmat[getindex2(2,0,NF)] = 0;
+	Bmat[getindex2(2,0,NF)] = sigval;
 	Bmat[getindex2(2,1,NF)] = 0;
 	Bmat[getindex2(2,2,NF)] = 0;
+	Bmat[getindex2(2,3,NF)] = 0;
+
+	Bmat[getindex2(3,0,NF)] = adi_gam*Pval;
+	Bmat[getindex2(3,1,NF)] = 0;
+	Bmat[getindex2(3,2,NF)] = 0;
+	Bmat[getindex2(3,3,NF)] = 0;
 
 #endif
 //Viscosity
@@ -246,7 +273,7 @@ void calc_C_coeff(int i, double complex *Cmat) {
 /* Calculate the coefficients for the A matrix assuming we're given the correct
  offset in memory to start from ( NF^2 *i )
 */
-	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval;
+	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval;
 	mu = dlds[i];
 	mup = d2lds[i];
 	delta = dldtemp[i];
@@ -258,6 +285,7 @@ void calc_C_coeff(int i, double complex *Cmat) {
 	Tval  = temp[i];
 	kap2 = kappa2[i];
 	kapom = kap2/(2*om);
+	Pval = temp[i]*sigma[i];
 
 	double nus = alpha_s * Tval/om;
 	double dldnu = delta + 1.5;
@@ -296,16 +324,25 @@ void calc_C_coeff(int i, double complex *Cmat) {
 	Cmat[getindex2(0,0,NF)] = 0;
 	Cmat[getindex2(0,1,NF)] = 0;
 	Cmat[getindex2(0,2,NF)] = 0;
+	Cmat[getindex2(0,3,NF)] = 0;
 
 	Cmat[getindex2(1,0,NF)] = 0;
 	Cmat[getindex2(1,1,NF)] = 0;
 	Cmat[getindex2(1,2,NF)] = 0;
+	Cmat[getindex2(1,3,NF)] = 0;
 
 	Cmat[getindex2(2,0,NF)] = 0;
 	Cmat[getindex2(2,1,NF)] = 0;
 	Cmat[getindex2(2,2,NF)] = 0;
+	Cmat[getindex2(2,3,NF)] = 0;
+
+	Cmat[getindex2(3,0,NF)] = 0;
+	Cmat[getindex2(3,1,NF)] = 0;
+	Cmat[getindex2(3,2,NF)] = 0;
+	Cmat[getindex2(3,3,NF)] = 0;
 
 #endif
+
 // Viscosity
 	Cmat[getindex2(0,0,NF)] += -2*nus;
 	Cmat[getindex2(0,1,NF)] += 0;

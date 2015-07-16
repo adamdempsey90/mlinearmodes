@@ -35,8 +35,11 @@ void calc_omega_corrections(void) {
 
 
 	calc_omega_pres(omp2,kapp2);
+#ifdef SELFGRAVITY
 	calc_omega_sg(omg2,kapg2);
-
+#else
+	for(i=0;i<N;i++) {kapg2[i] =0; omg2[i] = 0;}
+#endif
 // #ifdef OPENMP
 // #pragma omp for private(i)
 // #endif
