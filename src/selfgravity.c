@@ -106,7 +106,7 @@ void calc_kernels(double *kernel1, double *kernel2) {
 		}
 	}
 /* Indirect Pontential for m=1 */
-	
+#ifdef INDIRECT
 	if (mval==1) {
 		printf("\tIncluding Indirect Potential for m=1 ...\n");
 		for(i=0;i<N;i++) {
@@ -116,7 +116,7 @@ void calc_kernels(double *kernel1, double *kernel2) {
 			}
 		}
 	}
-
+#endif
 	return;
 }
 
@@ -226,12 +226,12 @@ void calc_omega_sg(double *omg2, double *kapg2) {
 			gsl_integration_error_handler(status,errorstr);
 		}
 
-		if (res1 < 0) {
-			fprintf(stderr, "omega_g^2 < 0!\n omp2=%lg, r=%lg\n",res1,r[i]);
-		}
-		if (res2 < 0) {
-			fprintf(stderr, "kappa_g^2 < 0!\n omp2=%lg, r=%lg\n",res1,r[i]);
-		}
+		// if (res1 < 0) {
+		// 	fprintf(stderr, "omega_g^2 < 0!\n omp2=%lg, r=%lg\n",res1,r[i]);
+		// }
+		// if (res2 < 0) {
+		// 	fprintf(stderr, "kappa_g^2 < 0!\n omp2=%lg, r=%lg\n",res1,r[i]);
+		// }
 		omg2[i] = res1;
 		kapg2[i] = res2;
 

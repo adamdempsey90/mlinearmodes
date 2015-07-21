@@ -56,6 +56,49 @@ class Globals():
         self.d2ldtemp = dat['d2t'][:]
         self.kappa = sqrt(self.kappa2)
         self.wp = (self.omega**2 - self.kappa2)/(self.omega+self.kappa)
+        self.Q = self.kappa*sqrt(self.c2)/(pi*self.sigma)
+        self.Q0 = self.omega*sqrt(self.c2)/(pi*self.sigma)
+        self.mdisk = trapz(self.r*self.sigma,x=self.r)*2*pi
+
+    def get2d(self,rlim=None,Nphi=200):
+        if rlim != None:
+            r = self.r[self.r<rlim]
+
+        phi = linspace(0,2*pi,Nphi)
+    	rr,pp = meshgrid(r,phi)
+    	xx = rr*cos(pp)
+    	yy = rr*sin(pp)
+        return xx,yy
+
+    def loglog(self,q):
+        self.plot(q,True,True)
+    def semilogx(self,q):
+        self.plot(q,True,False)
+    def semilogy(self,q):
+        self.plot(q,False,True)
+    def plot(self,q,logr=False,logy=False):
+        arglist = vars(self).keys()
+    	if q not in arglist:
+    		print 'Bad argument'
+    		return
+
+    	dat = getattr(self,q)
+        figure();
+        if logr:
+            if logy:
+                loglog(self.r,dat)
+            else:
+                semilogx(self.r,dat)
+        else:
+            if logy:
+                semilogy(self.r,dat)
+            else:
+                plot(self.r,dat)
+
+        xlabel('$r$',fontsize=20)
+        title(q,fontsize=20)
+
+
 
 class Mode():
     def __init__(self,ev,evec,params,glbls):
@@ -79,6 +122,8 @@ class Mode():
             self.cor = self.r[sign(cor_rhs)[1:] - sign(cor_rhs)[:-1] != 0]
             overlap = sign(self.u.real[1:])-sign(self.u.real[:-1])
             self.nodes = len(overlap[overlap != 0])
+            self.dbar = glbls.sigma
+            self.vpbar = self.r*glbls.omega
 
 
     def semilogx(self):
@@ -92,29 +137,40 @@ class Mode():
         fig,axes = subplots(2,2,sharex='row',figsize=(15,10))
 
         if logxy == (False,False):
-            axes[0,0].plot(self.r,self.u.real,'-b',self.r,self.u.imag,'-r')
-            axes[0,1].plot(self.r,self.v.real,'-b',self.r,self.v.imag,'-r')
-            axes[1,0].plot(self.r,self.s.real,'-b',self.r,self.s.imag,'-r')
-            axes[1,1].plot(self.r,self.p.real,'-b',self.r,self.p.imag,'-r')
+            axes[0,0].plot(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
+            axes[0,1].plot(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
+            axes[1,0].plot(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
+            axes[1,1].plot(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
 
         elif logxy == (True,False):
-            axes[0,0].semilogx(self.r,self.u.real,'-b',self.r,self.u.imag,'-r')
-            axes[0,1].semilogx(self.r,self.v.real,'-b',self.r,self.v.imag,'-r')
-            axes[1,0].semilogx(self.r,self.s.real,'-b',self.r,self.s.imag,'-r')
-            axes[1,1].semilogx(self.r,self.p.real,'-b',self.r,self.p.imag,'-r')
+            axes[0,0].semilogx(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
+            axes[0,1].semilogx(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
+            axes[1,0].semilogx(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
+            axes[1,1].semilogx(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
 
         elif logxy == (False,True):
-            axes[0,0].semilogy(self.r,self.u.real,'-b',self.r,self.u.imag,'-r')
-            axes[0,1].semilogy(self.r,self.v.real,'-b',self.r,self.v.imag,'-r')
-            axes[1,0].semilogy(self.r,self.s.real,'-b',self.r,self.s.imag,'-r')
-            axes[1,1].semilogy(self.r,self.p.real,'-b',self.r,self.p.imag,'-r')
+            axes[0,0].semilogy(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
+            axes[0,1].semilogy(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
+            axes[1,0].semilogy(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
+            axes[1,1].semilogy(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
         elif logxy == (True,True):
-            axes[0,0].loglog(self.r,self.u.real,'-b',self.r,self.u.imag,'-r')
-            axes[0,1].loglog(self.r,self.v.real,'-b',self.r,self.v.imag,'-r')
-            axes[1,0].loglog(self.r,self.s.real,'-b',self.r,self.s.imag,'-r')
-            axes[1,1].loglog(self.r,self.p.real,'-b',self.r,self.p.imag,'-r')
+            axes[0,0].loglog(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
+            axes[0,1].loglog(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
+            axes[1,0].loglog(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
+            axes[1,1].loglog(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
 
-
+        if len(self.ilr) != 0:
+            for xin in self.ilr:
+                for ax in axes.flatten():
+                    ax.axvline(x=xin,color='r')
+        if len(self.olr) != 0:
+            for xin in self.olr:
+                for ax in axes.flatten():
+                    ax.axvline(x=xin,color='r',linestyle='--')
+        if len(self.cor) != 0:
+            for xin in self.cor:
+                for ax in axes.flatten():
+                    ax.axvline(x=xin,color='r',linewidth=2)
 
         axes[0,0].set_ylabel('u',fontsize=20)
         axes[0,1].set_ylabel('v',fontsize=20)
@@ -124,6 +180,90 @@ class Mode():
         axes[1,1].set_xlabel('r',fontsize=20)
 
         axes[0,0].set_title('$\\Omega_p = %.2e + %.2ei$'%(self.ev.real,self.ev.imag),fontsize=20)
+
+    def semilogxreal(self,Nphi=200,rmax=None,plotbar=True):
+        self.plot(logx=True,logy=False,Nphi=200,rmax=None,plotbar=True)
+    def semilogyreal(self,Nphi=200,rmax=None,plotbar=True):
+        self.plot(logx=False,logy=True,Nphi=200,rmax=None,plotbar=True)
+    def loglogreal(self,Nphi=200,rmax=None,plotbar=True):
+        self.plot(logx=True,logy=True,Nphi=200,rmax=None,plotbar=True)
+    def plotreal(self,logx=False,logy=False,Nphi=200,rmax=None,plotbar=True):
+        phi = linspace(-pi,pi,Nphi)
+        fig,axes = subplots(2,2,figsize=(8,6),dpi=80)
+
+        if rmax != None:
+            r = self.r[self.r < rmax]
+            rf = self.r[self.r < rmax]
+            sval = self.s[self.r<rmax]
+        else:
+            r = self.r
+            rf = self.r
+            sval = self.s
+        if logx:
+            r = log10(r)
+
+
+        rr,pp = meshgrid(r,phi)
+
+
+        x = rr*cos(pp)
+        y = rr*sin(pp)
+
+        rho = zeros(x.shape)
+        vr = zeros(x.shape)
+        vp = zeros(x.shape)
+        p = zeros(x.shape)
+
+        for i,r in enumerate(r):
+
+            rho[:,i] =real(self.s[i]*exp(1j*self.m*phi))
+            vr[:,i] = real(self.u[i]*exp(1j*self.m*phi))
+            vp[:,i] = real(self.v[i]*exp(1j*self.m*phi))
+            if plotbar:
+                rho[:,i] += self.dbar[i]
+                vp[:,i] += self.vpbar[i]
+
+        if logy:
+            rho = log10(rho)
+            tstr = '$\\log_10 \\Sigma$'
+        else:
+            tstr = '$\\Sigma$'
+
+        axes[0,0].pcolormesh(x,y,rho)
+        axes[0,1].pcolormesh(x,y,vp)
+        axes[1,0].pcolormesh(x,y,vr)
+        axes[1,1]
+        axes[0,0].set_title('$\\Sigma$')
+        axes[0,1].set_title('$v_\\phi$')
+        axes[1,0].set_title('$v_r$')
+
+
+        if logx:
+            if logy:
+                axes[1,1].loglog(rf,sval.real,'-k',rf,sval.imag,'--k')
+            else:
+                axes[1,1].semilogx(rf,sval.real,'-k',rf,sval.imag,'--k')
+        else:
+            if logy:
+                axes[1,1].semilogy(rf,sval.real,'-k',rf,sval.imag,'--k')
+            else:
+                axes[1,1].plot(rf,sval.real,'-k',rf,sval.imag,'--k')
+
+
+        if len(self.ilr) != 0:
+            for xin in self.ilr:
+                axes[1,1].axvline(x=xin,color='r')
+        if len(self.olr) != 0:
+            for xin in self.olr:
+                axes[1,1].axvline(x=xin,color='r',linestyle='--')
+        if len(self.cor) != 0:
+            for xin in self.cor:
+                axes[1,1].axvline(x=xin,color='r',linewidth=2)
+
+        axes[1,1].set_ylabel('$\\sigma$',fontsize=14)
+        axes[1,1].set_xlabel('r',fontsize=14)
+        axes[1,1].set_title('$\\Omega_p = %.2e + %.2ei$'%(self.ev.real,self.ev.imag),fontsize=14)
+
 
 class Field():
     def __init__(self,fname='results.hdf5'):
@@ -135,6 +275,7 @@ class Field():
             self.evecs = f['Mateig/Results/Evecs'][:]
 
         self.inds = argsort(self.evals)
+        self.sevals = self.evals[self.inds]
         self.modes = [None]*self.params.nr*self.params.nf
         for i,j in enumerate(self.inds):
             self.modes[i] = Mode(self.evals[j],self.evecs[j,:],self.params,self.globals)

@@ -45,7 +45,7 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 	}
 
 
-#ifdef NOPRESSURE
+#if defined(NOPRESSURE) || defined(NOBC)
 	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
 #else
 	zggev_( &JOBVL, &JOBVR, &nA, tA, &LDA, tQ, &LDB, evals_alpha,evals_beta, NULL, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );

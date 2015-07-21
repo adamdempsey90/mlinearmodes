@@ -144,7 +144,15 @@ def run_code(params, defines = None):
 		tic = time()
 		fname = params['outputname'] + '.hdf5'
 		print 'Loading from file ' + fname
-		fld = Field(fname)
+		try:
+			fld = eigenclass.Field(fname)
+		except:
+			import eigenclass
+			try:
+				fld = eigenclass.Field(fname)
+			except:
+				print 'Could not find eigenclass module!'
+				return -1
 		toc = time()
 		print 'Loading time: %.4f seconds' % (toc - tic)
 

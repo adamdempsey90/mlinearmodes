@@ -2,8 +2,8 @@
 
 //#define ANALYTICPOTENTIAL
 
-const double dens_width2 = .05;
-const double dens_peak_rad = .45;
+const double dens_width2 = .1;
+const double dens_peak_rad = .3;
 
 
 double sigma_func(double x) {
@@ -20,34 +20,22 @@ double d2logsigma_func(double x) {
 
 
 double temp_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = flare_index*pow(sigma_func(x),flare_index-1);
-//	printf("%.2e\t%.2e\n",sigma_func(x),res);
-#else
-	res = h0*h0*pow(x,temp_index);
-#endif
-	return res;
+/* Polytrope with gamma = flare_index
+ * Treat this as an isothermal disk with
+ * T = K \sigma^(\gamma -1), so that
+ * P = K \sigma^\gamma
+*/
+//1.76398*sigma0*flare_index*
+	return 0.74528*sigma0*flare_index*pow(sigma_func(x),flare_index-1);
 }
 
 double dlogtemp_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = (flare_index - 1)*dlogsigma_func(x);
-#else
-	res = temp_index;
-#endif
-	return res;
+
+	return (flare_index - 1)*dlogsigma_func(x);
 }
 
 double d2logtemp_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = (flare_index - 1)*d2logsigma_func(x);
-#else
-	res = 0;
-#endif
-	return res;
+	return  (flare_index - 1)*d2logsigma_func(x);
 }
 
 double omk_func(double x) {
@@ -63,13 +51,7 @@ double d2logomk_func(double x) {
 }
 
 double scaleH_func(double x) {
-	double res;
-#ifdef POLYTROPE
-	res = sqrt(flare_index)*pow(sigma_func(x),.5*(flare_index-1))*pow(omk_func(x),-1);
-#else
-	res =  h0*x*pow(x,flare_index);
-#endif
-	return res;
+	return sqrt(temp_func(x))/omk_func(x);
 }
 
 

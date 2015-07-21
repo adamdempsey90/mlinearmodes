@@ -1,13 +1,13 @@
 # Input parameters for matrixeigenvalue code
-m = 2
+m = 1
 nr = 400
 ri = .1
 ro = 10
-mdisk = .001
-rs = .03
+mdisk = .01
+rs = .1
 h0 = .05
-sig_ind = -1.5
-flare_ind = .25
+sig_ind = 1
+flare_ind = .5
 alpha_s = 0
 alpha_b = 0
 np = 8

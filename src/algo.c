@@ -29,10 +29,15 @@ int calc_matrices(double complex *mat, double complex *bcmat) {
 				for(l=0;l<NF;l++) {
 					mindx = getindex4(i,j,k,l,NF,N);
 					bcmat[mindx] = Identity[mindx];
-					mat[mindx] = coeffs_A[getindex3(i,k,l,NF)];
+					if (i==j) {
+						mat[mindx] = coeffs_A[getindex3(i,k,l,NF)];
+					}
+					else {
+						mat[mindx] = 0;
+					}
 					for(s=0;s<NF;s++) {
 						cindx = getindex3(i,k,s,NF);
-						dindx = getindex4(i,j,k,s,NF,N);
+						dindx = getindex4(i,j,s,l,NF,N);
 						mat[mindx] += coeffs_B[cindx]*D[dindx] + coeffs_C[cindx]*D2[dindx];
 					}
 

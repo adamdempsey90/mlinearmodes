@@ -2,8 +2,10 @@
 #define BAROTROPIC
 #define SELFGRAVITY
 #define EXTENDINTEG
-#define POWERLAW_PROF
+#define INDIRECT
+#define GAUSSIANRING_PROF
 #define COMPSIMPS
 #define SYMSOFT2
 #define PRESBCIN
 #define PRESBCOUT
+#define NOBC
