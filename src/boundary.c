@@ -189,8 +189,8 @@ void reflecting_bc(double complex *mat, double complex *bcmat) {
 	for(k=1;k<NF;k++) {
 		mat[getindex4(0,1,k,k,NF,N)] = -1;
 		mat[getindex4(N-1,N-2,k,k,NF,N)] = -1;
-		mat[getindex4(0,0,k,k,NF,N)] = -1;
-		mat[getindex4(N-1,N-1,k,k,NF,N)] = -1;
+		mat[getindex4(0,0,k,k,NF,N)] = 1;
+		mat[getindex4(N-1,N-1,k,k,NF,N)] = 1;
 	}
 	return;
 }
