@@ -96,7 +96,8 @@ void gsl_integration_error_handler(int status,char *reason) {
 	}
 	else if (status == GSL_EROUND){
 		fprintf(stderr,"failed because of roundoff error\n");
-		bad_exit();
+    fprintf(stderr,"Continuing anyway...\n");
+//		bad_exit();
 	}
 	else if (status == GSL_EBADLEN){
 		fprintf(stderr,"matrix, vector lengths are not conformant\n");

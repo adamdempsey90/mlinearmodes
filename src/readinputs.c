@@ -35,6 +35,10 @@ void read_arguments(int argc, char *argv[]) {
 
     if (strstr(argv[1],"-i")) {
       read_input_file(argv[2]);
+      if ((argc == 5) && (strstr(argv[3],"-o"))) {
+        printf("Overriding output file name to %s\n",argv[4]);
+        sprintf(outputname,"%s.hdf5",argv[4]);
+      }
     }
     else {
       mval = atoi(argv[1]);

@@ -169,22 +169,28 @@ void zero_bc_inner(double complex *mat,double complex *bcmat) {
 	}
 	return;
 }
-void reflecting_bc(double complex *mat) {
+void reflecting_bc(double complex *mat, double complex *bcmat) {
 	int j,k,l;
 	for(j=0;j<N;j++) {
 		for(k=0;k<NF;k++) {
 			for(l=0;l<NF;l++) {
 				mat[getindex4(0,j,k,l,NF,N)] = 0;
 				mat[getindex4(N-1,j,k,l,NF,N)] = 0;
+				bcmat[getindex4(0,j,k,l,NF,N)] = 0;
+				bcmat[getindex4(N-1,j,k,l,NF,N)] = 0;
 			}
 		}
 	}
 
-	mat[getindex4(0,1,0,0,NF,N)] = -1;
-	mat[getindex4(N-1,N-2,0,0,NF,N)] = -1;
+	mat[getindex4(0,1,0,0,NF,N)] = 1;
+	mat[getindex4(N-1,N-2,0,0,NF,N)] = 1;
+	mat[getindex4(0,0,0,0,NF,N)] = 1;
+	mat[getindex4(N-1,N-1,0,0,NF,N)] = 1;
 	for(k=1;k<NF;k++) {
-		mat[getindex4(0,1,k,k,NF,N)] = 1;
-		mat[getindex4(N-1,N-2,k,k,NF,N)] = 1;
+		mat[getindex4(0,1,k,k,NF,N)] = -1;
+		mat[getindex4(N-1,N-2,k,k,NF,N)] = -1;
+		mat[getindex4(0,0,k,k,NF,N)] = -1;
+		mat[getindex4(N-1,N-1,k,k,NF,N)] = -1;
 	}
 	return;
 }
@@ -215,10 +221,11 @@ void set_bc(double complex *mat, double complex *bcmat) {
 	user_gradient_bc_outer(mat,bcmat,.5);
 #endif
 
+#ifdef REFLECTBC
+	reflecting_bc(mat,bcmat);
+#endif
 
 #endif
-#else
-//	reflecting_bc(mat);
 #endif
 	return;
 }

@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	}
 	printf("\n");
 
-	if ((argc < 16) && (argc != 3)) {
+	if ((argc < 16) && (argc != 3) && (argc != 5)) {
 		printf("\n\nToo Few Arguments!\n\n");
 		return -1;
 	}
@@ -45,8 +45,9 @@ int main(int argc, char *argv[]) {
 		\tFlare Index = %lg\n \
 		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = 1\n \
-		\tBeta Cooling = inf\n",
-		mval,N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s);
+		\tBeta Cooling = inf\n \
+		\tOutput file = %s\n",
+		mval,N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,outputname);
 #else
 	printf("\nUsing the Parameters:\n \
 		\tm=%d\n \
@@ -59,8 +60,9 @@ int main(int argc, char *argv[]) {
 		\tFlare Index = %lg\n \
 		\tAlpha Viscosity = %lg\n \
 		\tAdiabatic Index = %lg\n \
-		\tBeta Cooling = %lg\n",
-		mval,N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,adi_gam,beta_cool);
+		\tBeta Cooling = %lg\n \
+		\tOutput file = %s\n",
+		mval,N,ri,ro,dlr,Mdisk,sigma_index,flare_index,alpha_s,adi_gam,beta_cool,outputname);
 #endif
 
 #ifdef OPENMP

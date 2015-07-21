@@ -1,11 +1,9 @@
 #define HDF5_OUTPUT
-#define BAROTROPIC
+#define ISOTHERMAL
 #define SELFGRAVITY
 #define EXTENDINTEG
 #define INDIRECT
-#define GAUSSIANRING_PROF
+#define MKLIN_PROF
 #define COMPSIMPS
 #define SYMSOFT2
-#define PRESBCIN
-#define PRESBCOUT
-#define NOBC
+#define REFLECTBC
