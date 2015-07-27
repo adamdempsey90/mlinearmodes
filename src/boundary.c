@@ -171,6 +171,7 @@ void zero_bc_inner(double complex *mat,double complex *bcmat) {
 }
 void reflecting_bc(double complex *mat, double complex *bcmat) {
 	int j,k,l;
+	int indx1, indx2;
 	for(j=0;j<N;j++) {
 		for(k=0;k<NF;k++) {
 			for(l=0;l<NF;l++) {
@@ -182,18 +183,72 @@ void reflecting_bc(double complex *mat, double complex *bcmat) {
 		}
 	}
 
-	mat[getindex4(0,1,0,0,NF,N)] = 1;
-	mat[getindex4(N-1,N-2,0,0,NF,N)] = 1;
-	mat[getindex4(0,0,0,0,NF,N)] = 1;
-	mat[getindex4(N-1,N-1,0,0,NF,N)] = 1;
-	for(k=1;k<NF;k++) {
-		mat[getindex4(0,1,k,k,NF,N)] = -1;
-		mat[getindex4(N-1,N-2,k,k,NF,N)] = -1;
-		mat[getindex4(0,0,k,k,NF,N)] = 1;
-		mat[getindex4(N-1,N-1,k,k,NF,N)] = 1;
+	for(j=0;j<N;j++) {
+		for(k=0;k<NF;k++) {
+			for(l=0;l<NF;l++) {
+				indx1 = getindex4(0,j,k,l,NF,N);
+				indx2 = getindex4(N-1,j,k,l,NF,N);
+				mat[indx1] = D[indx1];
+				mat[indx2] = D[indx2];
+				bcmat[indx1] = 0;
+				bcmat[indx2] = 0;
+			}
+		}
 	}
+	// mat[getindex4(0,1,0,0,NF,N)] = 1;
+	// mat[getindex4(N-1,N-2,0,0,NF,N)] = 1;
+	// mat[getindex4(0,0,0,0,NF,N)] = 1;
+	// mat[getindex4(N-1,N-1,0,0,NF,N)] = 1;
+	// for(k=1;k<NF;k++) {
+	// 	mat[getindex4(0,1,k,k,NF,N)] = -1;
+	// 	mat[getindex4(N-1,N-2,k,k,NF,N)] = -1;
+	// 	mat[getindex4(0,0,k,k,NF,N)] = 1;
+	// 	mat[getindex4(N-1,N-1,k,k,NF,N)] = 1;
+	// }
 	return;
 }
+
+void free_bc(double complex *mat) {
+/* All lagrangian perturbations = 0 at boundary
+*  \delta q = i m ( \Omega - \Omega_p)q' + u d\bar{q}/dr
+*  This allows us to not solve a generalized e.v problem which is much
+*  more expensive.
+*/
+	int ii,io,j,ji,jo,k,l,indx;
+
+	ii = 0; io = N-1;
+	ji = 0; jo = N-1;
+
+	for(j=0;j<N;j++) {
+		for(k=0;k<NF;k++) {
+			for(l=0;l<NF;l++) {
+				mat[getindex4(ii,j,k,l,NF,N)] = 0;
+				mat[getindex4(io,j,k,l,NF,N)] = 0;
+			}
+		}
+	}
+
+
+	for(k=0;k<NF;k++) {
+		mat[getindex4(ii,ji,k,k,NF,N)] = omega[ii];
+		mat[getindex4(io,jo,k,k,NF,N)] = omega[io];
+	}
+
+	mat[getindex4(ii,ji,1,0,NF,N)] = (kappa2[ii] - 2*omega[ii]*omega[ii])/(2*I*mval*omega[ii]);
+	mat[getindex4(ii,ji,2,0,NF,N)] = sigma[ii]*dlds[ii]/(I*mval*r[ii]);
+	mat[getindex4(io,jo,1,0,NF,N)] = (kappa2[io] - 2*omega[io]*omega[io])/(2*I*mval*omega[io]);
+	mat[getindex4(io,jo,2,0,NF,N)] = sigma[io]*dlds[io]/(I*mval*r[io]);
+
+#ifdef COOLING
+	mat[getindex4(ii,ji,3,0,NF,N)] = pres[ii]*dldpres[ii]/(I*mval*r[ii]);
+	mat[getindex4(io,jo,3,0,NF,N)] = pres[io]*dldpres[io]/(I*mval*r[io]);
+#endif
+
+	return;
+
+}
+
+
 
 void set_bc(double complex *mat, double complex *bcmat) {
 
@@ -223,6 +278,10 @@ void set_bc(double complex *mat, double complex *bcmat) {
 
 #ifdef REFLECTBC
 	reflecting_bc(mat,bcmat);
+#endif
+
+#ifdef FREEBC
+	free_bc(mat);
 #endif
 
 #endif

@@ -3,9 +3,9 @@
 
 void alloc_globals(void) {
 
-	D = (double *)malloc(sizeof(double)*N*N*NF*NF);
-	D2 = (double *)malloc(sizeof(double)*N*N*NF*NF);
-	Identity = (double *)malloc(sizeof(double)*N*N*NF*NF);
+	D = (double *)malloc(sizeof(double)*nrows*ncols);
+	D2 = (double *)malloc(sizeof(double)*nrows*ncols);
+	Identity = (double *)malloc(sizeof(double)*nrows*ncols);
 	kernel = (double *)malloc(sizeof(double)*N*N);
 	weights = (double *)malloc(sizeof(double)*N);
 

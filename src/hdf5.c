@@ -239,7 +239,18 @@ void write_hdf5_matrices(double complex *mat, double complex *bcmat) {
   write_hdf5_complex(bcmat,dims2,2,matrices_id,"BC");
   write_hdf5_complex(mat,dims2,2,matrices_id,"Matrix");
 
-
+	// FILE *rmatfile = fopen("rematrix.dat","w");
+	// FILE *imatfile = fopen("iematrix.dat","w");
+	//
+	// for(i=0;i<N*NF;i++) {
+	// 	for(j=0;j<N*NF;j++) {
+	// 		fprintf(rmatfile,"%.12lg\t",creal(mat[j+N*NF*i]));
+	// 		fprintf(imatfile,"%.12lg\t",cimag(mat[j+N*NF*i]));
+	// 	}
+	// 	fprintf(rmatfile,"\n");
+	// 	fprintf(imatfile,"\n");
+	// }
+	// fclose(rmatfile); fclose(imatfile);
 
 
 	//

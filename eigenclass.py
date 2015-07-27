@@ -124,6 +124,9 @@ class Mode():
             self.nodes = len(overlap[overlap != 0])
             self.dbar = glbls.sigma
             self.vpbar = self.r*glbls.omega
+            self.freq = self.m*(self.ev.real - glbls.omega)/glbls.kappa
+            self.freq *= self.freq
+            self.Qbarr = glbls.Q**2*(1-self.freq)
 
 
     def semilogx(self):
@@ -137,28 +140,35 @@ class Mode():
         fig,axes = subplots(2,2,sharex='row',figsize=(15,10))
 
         if logxy == (False,False):
-            axes[0,0].plot(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
-            axes[0,1].plot(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
-            axes[1,0].plot(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
-            axes[1,1].plot(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
-
+            axes[0,0].plot(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
+            axes[0,1].plot(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
+            axes[1,0].plot(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+#            axes[1,1].plot(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
+            axes[1,1].plot(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
         elif logxy == (True,False):
-            axes[0,0].semilogx(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
-            axes[0,1].semilogx(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
-            axes[1,0].semilogx(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
-            axes[1,1].semilogx(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
+            axes[0,0].semilogx(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
+            axes[0,1].semilogx(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
+            axes[1,0].semilogx(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+#            axes[1,1].semilogx(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
+            axes[1,1].semilogx(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
 
         elif logxy == (False,True):
-            axes[0,0].semilogy(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
-            axes[0,1].semilogy(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
-            axes[1,0].semilogy(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
-            axes[1,1].semilogy(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
+            axes[0,0].semilogy(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
+            axes[0,1].semilogy(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
+            axes[1,0].semilogy(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+#            axes[1,1].semilogy(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
+            axes[1,1].semilogy(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
         elif logxy == (True,True):
-            axes[0,0].loglog(self.r,self.u.real,'-k',self.r,self.u.imag,'--k')
-            axes[0,1].loglog(self.r,self.v.real,'-k',self.r,self.v.imag,'--k')
-            axes[1,0].loglog(self.r,self.s.real,'-k',self.r,self.s.imag,'--k')
-            axes[1,1].loglog(self.r,self.p.real,'-k',self.r,self.p.imag,'--k')
+            axes[0,0].loglog(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
+            axes[0,1].loglog(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
+            axes[1,0].loglog(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+#            axes[1,1].loglog(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
+            axes[1,1].loglog(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
 
+        axes[1,1].axhline(1,color='r',linestyle='--')
+        axes[1,1].axhline(-1,color='r')
+    #    axes[1,1].set_ylim(-1000,1000)
+        axes[1,1].set_yscale('symlog')
         if len(self.ilr) != 0:
             for xin in self.ilr:
                 for ax in axes.flatten():
