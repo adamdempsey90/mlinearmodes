@@ -44,18 +44,18 @@ void reigenvalues(double complex *A, double complex *Q, double complex *evals, d
 		}
 	}
 
-
-#if defined(NOPRESSURE) || defined(NOBC) || defined(FREEBC)
 	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
-#else
-	zggev_( &JOBVL, &JOBVR, &nA, tA, &LDA, tQ, &LDB, evals_alpha,evals_beta, NULL, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
-
-	for(i=0;i<nA;i++) {
-		if (cabs(evals_beta[i]) != 0) {
-			evals[i] = evals_alpha[i]/evals_beta[i];
-		}
-	}
-#endif
+// #if defined(NOPRESSURE) || defined(NOBC) || defined(FREEBC)
+// 	zgeev_( &JOBVL, &JOBVR, &nA, tA, &LDA, evals, tQ, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
+// #else
+// 	zggev_( &JOBVL, &JOBVR, &nA, tA, &LDA, tQ, &LDB, evals_alpha,evals_beta, NULL, &LDVL, evecs, &LDVR, CWORK, &LWORK, RWORK, &INFO );
+//
+// 	for(i=0;i<nA;i++) {
+// 		if (cabs(evals_beta[i]) != 0) {
+// 			evals[i] = evals_alpha[i]/evals_beta[i];
+// 		}
+// 	}
+// #endif
 
 #if defined(NORMALIZE_INT) || defined(NORMALIZE_MAX) || defined(NORMALIZE_NORM)
 	printf("Normalzing eigenvectors...\n");

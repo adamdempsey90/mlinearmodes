@@ -169,32 +169,53 @@ void zero_bc_inner(double complex *mat,double complex *bcmat) {
 	}
 	return;
 }
-void reflecting_bc(double complex *mat, double complex *bcmat) {
-	int j,k,l;
-	int indx1, indx2;
-	for(j=0;j<N;j++) {
-		for(k=0;k<NF;k++) {
-			for(l=0;l<NF;l++) {
-				mat[getindex4(0,j,k,l,NF,N)] = 0;
-				mat[getindex4(N-1,j,k,l,NF,N)] = 0;
-				bcmat[getindex4(0,j,k,l,NF,N)] = 0;
-				bcmat[getindex4(N-1,j,k,l,NF,N)] = 0;
-			}
-		}
+void reflecting_bc_inner(double complex *mat) {
+	int i,j,k,l;
+
+
+	for(i=0;i<NF*N;i++) mat[i] = 0; // Sets first row to zero; -> lambda u = 0
+
+
+	i=0;j=0;
+	for(k=0;k<NF;k++) {
+		mat[getindex4(i,j,k,l,NF,N)] = 0;		// u = dru = d2ru = 0
 	}
 
-	for(j=0;j<N;j++) {
-		for(k=0;k<NF;k++) {
-			for(l=0;l<NF;l++) {
-				indx1 = getindex4(0,j,k,l,NF,N);
-				indx2 = getindex4(N-1,j,k,l,NF,N);
-				mat[indx1] = D[indx1];
-				mat[indx2] = D[indx2];
-				bcmat[indx1] = 0;
-				bcmat[indx2] = 0;
-			}
-		}
+
+	return;
+}
+void reflecting_bc_outer(double complex *mat) {
+	int i,j,k,l;
+
+	for(i=NF*N*(NF*N-1);i<NF*N*NF*N;i++) mat[i] = 0; // Sets first row to zero; -> lambda u = 0
+
+	i=N-1;j=N-1;
+	for(k=0;k<NF;k++) {
+		mat[getindex4(i,j,k,l,NF,N)] = 0;		// u = dru = d2ru = 0
 	}
+	// for(j=0;j<N;j++) {
+	// 	for(k=0;k<NF;k++) {
+	// 		for(l=0;l<NF;l++) {
+	// 			mat[getindex4(0,j,k,l,NF,N)] = 0;
+	// 			mat[getindex4(N-1,j,k,l,NF,N)] = 0;
+	// 			bcmat[getindex4(0,j,k,l,NF,N)] = 0;
+	// 			bcmat[getindex4(N-1,j,k,l,NF,N)] = 0;
+	// 		}
+	// 	}
+	// }
+	//
+	// for(j=0;j<N;j++) {
+	// 	for(k=0;k<NF;k++) {
+	// 		for(l=0;l<NF;l++) {
+	// 			indx1 = getindex4(0,j,k,l,NF,N);
+	// 			indx2 = getindex4(N-1,j,k,l,NF,N);
+	// 			mat[indx1] = D[indx1];
+	// 			mat[indx2] = D[indx2];
+	// 			bcmat[indx1] = 0;
+	// 			bcmat[indx2] = 0;
+	// 		}
+	// 	}
+	// }
 	// mat[getindex4(0,1,0,0,NF,N)] = 1;
 	// mat[getindex4(N-1,N-2,0,0,NF,N)] = 1;
 	// mat[getindex4(0,0,0,0,NF,N)] = 1;
@@ -250,6 +271,8 @@ void free_bc(double complex *mat) {
 
 
 
+
+
 void set_bc(double complex *mat, double complex *bcmat) {
 
 
@@ -277,7 +300,8 @@ void set_bc(double complex *mat, double complex *bcmat) {
 #endif
 
 #ifdef REFLECTBC
-	reflecting_bc(mat,bcmat);
+	reflecting_bc_inner(mat);
+	reflecting_bc_outer(mat);
 #endif
 
 #ifdef FREEBC

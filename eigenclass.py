@@ -129,39 +129,45 @@ class Mode():
             self.Qbarr = glbls.Q**2*(1-self.freq)
 
 
-    def semilogx(self):
-        self.plot(logxy=(True,False))
-    def semilogy(self):
-        self.plot(logxy=(False,True))
-    def loglog(self):
-        self.plot(logxy=(True,True))
+    def semilogx(self,points=True):
+        self.plot(logxy=(True,False),points=points)
+    def semilogy(self,points=True):
+        self.plot(logxy=(False,True),points=points)
+    def loglog(self,points=True):
+        self.plot(logxy=(True,True),points=points)
 
-    def plot(self,logxy=(False,False)):
+    def plot(self,logxy=(False,False),points=True):
         fig,axes = subplots(2,2,sharex='row',figsize=(15,10))
 
+        rline = '-k'
+        iline = '--k'
+        if points:
+            rline = '-.k'
+            iline = '--ok'
+
         if logxy == (False,False):
-            axes[0,0].plot(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
-            axes[0,1].plot(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
-            axes[1,0].plot(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+            axes[0,0].plot(self.r,self.u.real,rline,self.r,self.u.imag,iline)
+            axes[0,1].plot(self.r,self.v.real,rline,self.r,self.v.imag,iline)
+            axes[1,0].plot(self.r,self.s.real,rline,self.r,self.s.imag,iline)
 #            axes[1,1].plot(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
             axes[1,1].plot(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
         elif logxy == (True,False):
-            axes[0,0].semilogx(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
-            axes[0,1].semilogx(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
-            axes[1,0].semilogx(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+            axes[0,0].semilogx(self.r,self.u.real,rline,self.r,self.u.imag,iline)
+            axes[0,1].semilogx(self.r,self.v.real,rline,self.r,self.v.imag,iline)
+            axes[1,0].semilogx(self.r,self.s.real,rline,self.r,self.s.imag,iline)
 #            axes[1,1].semilogx(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
             axes[1,1].semilogx(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
 
         elif logxy == (False,True):
-            axes[0,0].semilogy(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
-            axes[0,1].semilogy(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
-            axes[1,0].semilogy(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+            axes[0,0].semilogy(self.r,self.u.real,rline,self.r,self.u.imag,iline)
+            axes[0,1].semilogy(self.r,self.v.real,rline,self.r,self.v.imag,iline)
+            axes[1,0].semilogy(self.r,self.s.real,rline,self.r,self.s.imag,iline)
 #            axes[1,1].semilogy(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
             axes[1,1].semilogy(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
         elif logxy == (True,True):
-            axes[0,0].loglog(self.r,self.u.real,'-.k',self.r,self.u.imag,'--ok')
-            axes[0,1].loglog(self.r,self.v.real,'-.k',self.r,self.v.imag,'--ok')
-            axes[1,0].loglog(self.r,self.s.real,'-.k',self.r,self.s.imag,'--ok')
+            axes[0,0].loglog(self.r,self.u.real,rline,self.r,self.u.imag,iline)
+            axes[0,1].loglog(self.r,self.v.real,rline,self.r,self.v.imag,iline)
+            axes[1,0].loglog(self.r,self.s.real,rline,self.r,self.s.imag,iline)
 #            axes[1,1].loglog(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
             axes[1,1].loglog(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
 
@@ -290,3 +296,12 @@ class Field():
         for i,j in enumerate(self.inds):
             self.modes[i] = Mode(self.evals[j],self.evecs[j,:],self.params,self.globals)
         self.modes = array(self.modes)
+        self.nodes = array([x.nodes for x in self.modes])
+        self.modes = self.modes[argsort(self.nodes)]
+    def argand(self,linrange=(1e-8,1e-8)):
+        figure();
+        plot(self.evals.real,self.evals.imag,'.')
+        xscale('symlog',linthreshx=linrange[0])
+        yscale('symlog',linthreshy=linrange[1])
+        xlabel('Re($\\Omega_p$)',fontsize=20)
+        ylabel('Im($\\Omega$)',fontsize=20)

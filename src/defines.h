@@ -1,6 +1,9 @@
 #define HDF5_OUTPUT
 #define ISOTHERMAL
-#define POWERLAW_PROF
+#define SELFGRAVITY
+#define EXTENDINTEG
+#define INDIRECT
+#define MKLIN_PROF
 #define COMPSIMPS
 #define SYMSOFT2
-#define FREEBC
+#define REFLECTBC

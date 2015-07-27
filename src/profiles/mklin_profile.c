@@ -10,7 +10,7 @@ const static double R2 = 2;
 #define s_p  (1 + flare_index)
 #define delta1 (delta_R * h_p * pow(R1,flare_index + 1))
 #define  delta2  (delta_R * h_p * pow(R2,flare_index + 1))
-
+#define sech(x) 1/cosh(x)
 double bump_function(double x);
 double f1_func(double x);
 double drf1_func(double x);
@@ -19,10 +19,6 @@ double f2_func(double x);
 double drf2_func(double x);
 double d2rf2_func(double x);
 
-
-double sech(double x) {
-	return 1/cosh(x);
-}
 
 double sigma_func(double x) {
 	double sigfac = h_p /(2 * M_PI * bump_function(2.0));
