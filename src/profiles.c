@@ -2,40 +2,42 @@
 
 //#define ANALYTICPOTENTIAL
 
-static const double r_max = 1;
-static const double inner_slope = 3;
-
+const double dens_width2 = .05;
+const double dens_peak_rad = .45;
 
 
 double sigma_func(double x) {
-	double outer_slope = sigma_index;
-	return sigma0 /( pow(x/r_max,-inner_slope) + pow(x/r_max,-outer_slope));
+	return sigma0 * exp(-(x-dens_peak_rad)*(x-dens_peak_rad)/(dens_width2));
 }
 
 double dlogsigma_func(double x) {
-	double outer_slope = sigma_index;
-	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
-	return outer_slope + (inner_slope - outer_slope)*pow(x/r_max,outer_slope)/denom;
+	return 2*(dens_peak_rad - x)*x/dens_width2;
 }
 
 double d2logsigma_func(double x) {
-	double outer_slope = sigma_index;
-	double denom = pow(x/r_max,inner_slope) + pow(x/r_max,outer_slope);
-	denom *= denom;
-	return -(outer_slope-inner_slope)*(outer_slope-inner_slope)*pow(x/r_max,inner_slope+outer_slope)/denom;
+	return 2*(dens_peak_rad - 2*x)*x/dens_width2;
 }
 
 
 double temp_func(double x) {
+/* Polytrope with gamma = flare_index
+ * Treat this as an isothermal disk with
+ * T = K \sigma^(\gamma -1), so that
+ * P = K \sigma^\gamma
+*/
+//1.76398*sigma0*flare_index*
 	return h0*h0*pow(x,temp_index);
+//	return 0.74528*sigma0*flare_index*pow(sigma_func(x),flare_index-1);
 }
 
 double dlogtemp_func(double x) {
 	return temp_index;
+//	return (flare_index - 1)*dlogsigma_func(x);
 }
 
 double d2logtemp_func(double x) {
 	return 0;
+//	return  (flare_index - 1)*d2logsigma_func(x);
 }
 
 double omk_func(double x) {
@@ -51,14 +53,14 @@ double d2logomk_func(double x) {
 }
 
 double scaleH_func(double x) {
-	return h0*x*pow(x,flare_index);
+	return sqrt(temp_func(x))/omk_func(x);
 }
 
 
-int analytic_potential(void) {
-	return 0;
-}
-
-double omega_prec_grav_analytic(double x) {
-	return 0;
-}
+// int analytic_potential(void) {
+// 	return 0;
+// }
+//
+// double omega_prec_grav_analytic(double x) {
+// 	return 0;
+// }

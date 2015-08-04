@@ -2,8 +2,8 @@
 
 //#define ANALYTICPOTENTIAL
 
-const double dens_width2 = .1;
-const double dens_peak_rad = .3;
+const double dens_width2 = .05;
+const double dens_peak_rad = .45;
 
 
 double sigma_func(double x) {
@@ -26,16 +26,18 @@ double temp_func(double x) {
  * P = K \sigma^\gamma
 */
 //1.76398*sigma0*flare_index*
-	return 0.74528*sigma0*flare_index*pow(sigma_func(x),flare_index-1);
+	return h0*h0*pow(x,temp_index);
+//	return 0.74528*sigma0*flare_index*pow(sigma_func(x),flare_index-1);
 }
 
 double dlogtemp_func(double x) {
-
-	return (flare_index - 1)*dlogsigma_func(x);
+	return temp_index;
+//	return (flare_index - 1)*dlogsigma_func(x);
 }
 
 double d2logtemp_func(double x) {
-	return  (flare_index - 1)*d2logsigma_func(x);
+	return 0;
+//	return  (flare_index - 1)*d2logsigma_func(x);
 }
 
 double omk_func(double x) {

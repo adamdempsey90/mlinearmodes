@@ -2,8 +2,8 @@
 m = 1
 nr = 400
 ri = .1
-ro = 10
-mdisk = .3
+ro = 1.2
+mdisk = .027
 rs = .03
 h0 = .05
 sig_ind = -1.5
@@ -15,4 +15,4 @@ gam = 2
 beta = 0
 tol = 1e-8
 Nplanets = 0
-outputname = results
+outputname = gauss1

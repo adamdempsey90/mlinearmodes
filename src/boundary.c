@@ -176,7 +176,7 @@ void reflecting_bc_inner(double complex *mat) {
 	for(i=0;i<NF*N;i++) mat[i] = 0; // Sets first row to zero; -> lambda u = 0
 
 
-	i=0;j=0;
+	i=0;j=0; l=0;
 	for(k=0;k<NF;k++) {
 		mat[getindex4(i,j,k,l,NF,N)] = 0;		// u = dru = d2ru = 0
 	}
@@ -189,7 +189,7 @@ void reflecting_bc_outer(double complex *mat) {
 
 	for(i=NF*N*(NF*N-1);i<NF*N*NF*N;i++) mat[i] = 0; // Sets first row to zero; -> lambda u = 0
 
-	i=N-1;j=N-1;
+	i=N-1;j=N-1; l=0;
 	for(k=0;k<NF;k++) {
 		mat[getindex4(i,j,k,l,NF,N)] = 0;		// u = dru = d2ru = 0
 	}

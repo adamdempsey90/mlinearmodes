@@ -106,7 +106,7 @@ void calc_A_coeff(int i, double complex *Amat) {
 /* Calculate the coefficients for the A matrix assuming we're given the correct
  offset in memory to start from ( NF^2 *i )
 */
-double mu, delta, om, mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval;
+double mu, delta, om, mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval,vr,dlvr;
 mu = dlds[i];
 mup = d2lds[i];
 delta = dldtemp[i];
@@ -119,6 +119,9 @@ Tval  = temp[i];
 kap2 = kappa2[i];
 kapom = kap2/(2*om);
 Pval = pres[i];
+vr = vrbar[i];
+dlvr = dlvrbar[i];
+
 
 double nus = alpha_s * Tval/om;
 double dldnu = delta + 1.5;
@@ -174,7 +177,7 @@ double dldnu = delta + 1.5;
 	Amat[getindex2(3,1,NF)] = I*mval*adi_gam*Pval/rval;
 	Amat[getindex2(3,2,NF)] = 0;
 	Amat[getindex2(3,3,NF)] = I*mval*om;
-	#endif
+#endif
 
 // Viscosity
 	Amat[getindex2(0,0,NF)] += nus*(2+mval2)/rval2;
@@ -185,6 +188,14 @@ double dldnu = delta + 1.5;
 	Amat[getindex2(1,1,NF)] += nus*(1+2*mval2+dldnu + mu)/rval2;
 	Amat[getindex2(1,2,NF)] += nus*mu/(sigval*rval)*(kapom-2*om);
 
+// Radial Velocity
+
+	Amat[getindex2(0,0,NF)] += dlvr/rval;
+	Amat[getindex2(0,2,NF)] += nus*mu*dlvr/(rval2*sigval);
+	Amat[getindex2(1,1,NF)] += vr/rval;
+	Amat[getindex2(1,2,NF)] += -2*I*mval*nus*vr/(rval2*sigval);
+	Amat[getindex2(2,2,NF)] += (vr + dlvr)/rval;
+
 	return;
 
 }
@@ -193,7 +204,7 @@ void calc_B_coeff(int i, double complex *Bmat) {
 /* Calculate the coefficients for the A matrix assuming we're given the correct
  offset in memory to start from ( NF^2 *i )
 */
-	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval;
+	double mu, delta, om,mup, deltap,kap2,rval,sigval,kapom,rval2,Tval,Pval,vr,dlvr;
 	mu = dlds[i];
 	mup = d2lds[i];
 	delta = dldtemp[i];
@@ -206,6 +217,8 @@ void calc_B_coeff(int i, double complex *Bmat) {
 	kap2 = kappa2[i];
 	kapom = kap2/(2*om);
 	Pval = temp[i]*sigma[i];
+	vr = vrbar[i];
+	dlvr = dlvrbar[i];
 
 	double nus = alpha_s * Tval/om;
 	double dldnu = delta + 1.5;
@@ -271,6 +284,12 @@ void calc_B_coeff(int i, double complex *Bmat) {
 	Bmat[getindex2(1,1,NF)] += -nus*(1 + dldnu+mu)/rval;
 	Bmat[getindex2(1,2,NF)] += -nus*(kapom-2*om)/sigval;
 
+// Radial Velocity
+
+	Bmat[getindex2(0,0,NF)] += vr;
+	Bmat[getindex2(0,2,NF)] += -2*nus*dlvr/(rval*sigval);
+	Bmat[getindex2(1,1,NF)] += vr;
+	Bmat[getindex2(2,2,NF)] += vr;
 	return;
 }
 

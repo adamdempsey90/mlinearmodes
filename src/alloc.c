@@ -40,6 +40,9 @@ void alloc_globals(void) {
 	dldc2 = (double *)malloc(sizeof(double)*N);
 	d2ldc2 = (double *)malloc(sizeof(double)*N);
 
+	vrbar = (double *)malloc(sizeof(double)*N);
+	dlvrbar = (double *)malloc(sizeof(double)*N);
+
 	coeffs_A =  (double complex *)malloc(sizeof(double complex)*N*NF*NF);
 	coeffs_B =  (double complex *)malloc(sizeof(double complex)*N*NF*NF);
 	coeffs_C =  (double complex *)malloc(sizeof(double complex)*N*NF*NF);
@@ -86,6 +89,8 @@ void free_globals(void) {
 	free(dldc2);
 	free(d2ldc2);
 
+	free(vrbar);
+	free(dlvrbar);
 
 	free(coeffs_A);
 	free(coeffs_B);

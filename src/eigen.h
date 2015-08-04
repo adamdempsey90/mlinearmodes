@@ -36,7 +36,7 @@ double complex *cwork;
 
 double *r, *lr , *scaleH,*omega, *dldom, *d2ldom, *sigma, *dlds, *d2lds, *pres, *dldpres, *d2ldpres, *aspect_ratio;
 double *temp , *dldtemp, *d2ldtemp, *c2, *dldc2, *d2ldc2, *kappa2;
-
+double *vrbar, *dlvrbar;
 
 double complex *coeffs_A , *coeffs_B, *coeffs_C;
 double *D, *D2, *Identity;

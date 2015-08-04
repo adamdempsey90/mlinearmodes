@@ -95,7 +95,13 @@ void init_globals(double ri, double ro) {
 		dldtemp[i] = dlogtemp_func(r[i]);
 		d2ldtemp[i] = d2logtemp_func(r[i]);
 
-
+#ifdef ACCRETION
+		vrbar[i] = -1.5*alpha_s*temp[i]/(r[i]*omega[i]);
+		dlvrbar[i] = 0;
+#else
+		vrbar[i] = 0;
+		dlvrbar[i] = 0;
+#endif
 
 		c2[i] = adi_gam * temp[i];
 		dldc2[i] = adi_gam * dldtemp[i];
@@ -104,6 +110,8 @@ void init_globals(double ri, double ro) {
 		pres[i] = sigma[i] * temp[i];
 		dldpres[i] = dlds[i] + dldtemp[i];
 		d2ldpres[i] = d2lds[i] + d2ldtemp[i];
+
+
 
 	}
 
@@ -115,6 +123,8 @@ void init_globals(double ri, double ro) {
 #else
 	Mdisk = calc_total_disk_mass();
 #endif
+
+	return;
 
 	}
 

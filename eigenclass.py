@@ -59,6 +59,8 @@ class Globals():
         self.Q = self.kappa*sqrt(self.c2)/(pi*self.sigma)
         self.Q0 = self.omega*sqrt(self.c2)/(pi*self.sigma)
         self.mdisk = trapz(self.r*self.sigma,x=self.r)*2*pi
+        self.g = self.sigma*pi*self.r/self.temp
+        self.dlr = diff(self.lr)[0]
 
     def get2d(self,rlim=None,Nphi=200):
         if rlim != None:
@@ -120,23 +122,38 @@ class Mode():
             self.ilr = self.r[sign(ilr_rhs)[1:] - sign(ilr_rhs)[:-1] != 0]
             self.olr = self.r[sign(olr_rhs)[1:] - sign(olr_rhs)[:-1] != 0]
             self.cor = self.r[sign(cor_rhs)[1:] - sign(cor_rhs)[:-1] != 0]
-            overlap = sign(self.u.real[1:])-sign(self.u.real[:-1])
-            self.nodes = len(overlap[overlap != 0])
+            overlapr = sign(self.s.real[1:])-sign(self.s.real[:-1])
+            overlapi = sign(self.s.imag[1:])-sign(self.s.imag[:-1])
+            self.nodes = min([len(overlapr[overlapr != 0]),len(overlapi[overlapi != 0])])
             self.dbar = glbls.sigma
             self.vpbar = self.r*glbls.omega
             self.freq = self.m*(self.ev.real - glbls.omega)/glbls.kappa
             self.freq *= self.freq
             self.Qbarr = glbls.Q**2*(1-self.freq)
+            self.g = glbls.g
+            k0 = 2*pi*params.ri/params.ro
+            k1 = 2*pi/glbls.dlr
+    #        self.kx = 10**linspace( log10(k0),log10(10),params.nr)
+            self.kx = linspace(-30,30,params.nr)
+            self.kk,self.xx,self.wkb = self.set_wkb(self.kx,self.r,0)
 
+    def set_wkb(self,kx,x,rs):
+        kk,xx = meshgrid(kx,x)
+        gg = tile(self.g,(len(kk[:,0]),1)).transpose()
+        QQ = tile(self.Qbarr,(len(kk[:,0]),1)).transpose()
+        res = kx*kx - 2*gg*abs(kx)*exp(-abs(kx)*rs) + gg*gg*QQ*QQ
+        return kk,xx,res
 
-    def semilogx(self,points=True):
+    def get_summary(self):
+        return [self.nodes, self.ilr, self.cor, self.olr, self.ev.real,self.ev.imag]
+    def semilogx(self,points=False):
         self.plot(logxy=(True,False),points=points)
-    def semilogy(self,points=True):
+    def semilogy(self,points=False):
         self.plot(logxy=(False,True),points=points)
-    def loglog(self,points=True):
+    def loglog(self,points=False):
         self.plot(logxy=(True,True),points=points)
 
-    def plot(self,logxy=(False,False),points=True):
+    def plot(self,logxy=(False,False),points=False):
         fig,axes = subplots(2,2,sharex='row',figsize=(15,10))
 
         rline = '-k'
@@ -171,6 +188,7 @@ class Mode():
 #            axes[1,1].loglog(self.r,self.p.real,'.k',self.r,self.p.imag,'ok')
             axes[1,1].loglog(self.r,self.freq.real,'b',self.r,self.Qbarr,'m')
 
+        axes[1,1].legend(['LR','Q barrier'],loc='best')
         axes[1,1].axhline(1,color='r',linestyle='--')
         axes[1,1].axhline(-1,color='r')
     #    axes[1,1].set_ylim(-1000,1000)
@@ -191,11 +209,20 @@ class Mode():
         axes[0,0].set_ylabel('u',fontsize=20)
         axes[0,1].set_ylabel('v',fontsize=20)
         axes[1,0].set_ylabel('$\\sigma$',fontsize=20)
-        axes[1,1].set_ylabel('p',fontsize=20)
+#        axes[1,1].set_ylabel('p',fontsize=20)
         axes[1,0].set_xlabel('r',fontsize=20)
         axes[1,1].set_xlabel('r',fontsize=20)
 
         axes[0,0].set_title('$\\Omega_p = %.2e + %.2ei$'%(self.ev.real,self.ev.imag),fontsize=20)
+
+        figure();
+        title('$\\Omega_p = %.2e + %.2ei$'%(self.ev.real,self.ev.imag),fontsize=20)
+        xlabel('kr',fontsize=20)
+        ylabel('r',fontsize=20)
+        contour(self.kk,self.xx,self.wkb,levels=(0,))
+#        xscale('log')
+        if logxy[0] == True:
+            yscale('log')
 
     def semilogxreal(self,Nphi=200,rmax=None,plotbar=True):
         self.plot(logx=True,logy=False,Nphi=200,rmax=None,plotbar=True)
@@ -298,6 +325,8 @@ class Field():
         self.modes = array(self.modes)
         self.nodes = array([x.nodes for x in self.modes])
         self.modes = self.modes[argsort(self.nodes)]
+        self.summary = [ m.get_summary() for m in self.modes]
+
     def argand(self,linrange=(1e-8,1e-8)):
         figure();
         plot(self.evals.real,self.evals.imag,'.')
