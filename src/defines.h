@@ -7,4 +7,5 @@
 #define LAUGHLIN_PROF
 #define COMPSIMPS
 #define SYMSOFT2
-#define REFLECTBC
+#define PRESBCIN
+#define PRESBCOUT

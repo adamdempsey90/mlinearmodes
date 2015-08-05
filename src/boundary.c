@@ -3,127 +3,107 @@
 
 
 void lagrangian_pressure_bc_inner(double complex *mat, double complex *bcmat) {
-	int ind,k,l;
+	int indq,indm,k,l;
+	double complex fac;
+	double om;
 /* Set up zero Lagrangian Pressure B.C at inner boundary */
 	int i = 0;
 	int j = 0;
 
-	for(k=0;k<NF;k++) {
-		for(j=0;j<N;j++) {
-			for(l=0;l<NF;l++) {
-				ind = getindex4(i,j,k,l,NF,N);
-				mat[ind] = 0;
-				if (j==0 && k==l) {
-					bcmat[ind] = 1;
-				}
-				else {
-					bcmat[ind] = 0;
-				}
-			}
-		}
-	}
-
-
-	// for(ind=getindex4(i,0,0,0,NF,N) ; ind < getindex4(i,N-1,NF-1,NF-1,NF,N);ind++) {
-	// 	mat[ind] = 0;
-	// 	bcmat[ind] = 0;
-	// }
-
-/* Zero first NF rows */
-	// for(ind=0; ind < NF*N*NF;ind++) {
-	// 	mat[ind] = 0;
-	// 	bcmat[ind] = 0;
-	// }
-/* Add b.c condition */
-
-	j=0;
-#ifdef BAROTROPIC
-	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
-	bcmat[getindex4(i,j,0,2,NF,N)] = 1;
-	mat[getindex4(i,j,2,0,NF,N)] = sigma[i]*dlds[i]/(I*mval*r[i]);
-	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
-//	mat[getindex4(i,j,0,0,NF,N)] = mat[getindex4(i,j,2,0,NF,N)];
-//	mat[getindex4(i,j,0,2,NF,N)] = mat[getindex4(i,j,2,2,NF,N)];
-
-#endif
-
-#ifdef ISOTHERMAL
-	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
-	bcmat[getindex4(i,j,0,2,NF,N)] = 1;
-	mat[getindex4(i,j,2,0,NF,N)] = sigma[i]*(dldtemp[i] + dlds[i])/(I*mval*r[i]);
-	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
-	mat[getindex4(i,j,0,0,NF,N)] = mat[getindex4(i,j,2,0,NF,N)];
-	mat[getindex4(i,j,0,2,NF,N)] = mat[getindex4(i,j,2,2,NF,N)];
-#endif
+	om = omega[i];
 
 #ifdef COOLING
-	bcmat[getindex4(i,j,3,3,NF,N)] = 1;
-	bcmat[getindex4(i,j,0,3,NF,N)] = 1;
-	mat[getindex4(i,j,3,0,NF,N)] = pres[i]*dldpres[i]/(I*mval*r[i]);
-	mat[getindex4(i,j,3,3,NF,N)] = omega[i];
-	mat[getindex4(i,j,0,0,NF,N)] = mat[getindex4(i,j,3,0,NF,N)];
-	mat[getindex4(i,j,0,3,NF,N)] = mat[getindex4(i,j,3,3,NF,N)];
+	fac = pres[i]*dldpres[i]/(I*mval*r[i]);
+#else
+	fac = sigma[i]*dlds[i]/(I*mval*r[i]);
 #endif
+
+
+
+/* Eval Matrix */
+	l = NF-1;
+	for(k=0;k<NF-1;k++) {
+		indq = getindex4(i,j,k,l,NF,N);
+		indm = getindex4(i,j,k,NF-1,NF,N);
+		bcmat[indq] -= mat[indm]/om;
+	}
+
+/* Coeff Matrix */
+	l = 0;
+	for(k=0;k<NF-1;k++) {
+		indq = getindex4(i,j,k,l,NF,N);
+		indm = getindex4(i,j,k,NF-1,NF,N);
+		mat[indq] -= mat[indm]*fac/om;
+		mat[indm] = 0;
+	}
+
+/* Sigma / Pressure equation */
+
+	k=NF-1;
+	for(j=0;j<N;j++) {
+		for(l=0;l<NF;l++) {
+			indm = getindex4(i,j,k,l,NF,N);
+			mat[indm] = 0;
+		}
+	}
+	j=0;
+	mat[getindex4(i,j,k,0,NF,N)] = fac;
+	mat[getindex4(i,j,k,NF-1,NF,N)] = om;
+
 
 	return;
 }
 
-void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
-	int ind,k,l;
-/* Set up zero Lagrangian Pressure B.C at outer boundary */
 
+void lagrangian_pressure_bc_outer(double complex *mat, double complex *bcmat) {
+	int indq,indm,k,l;
+	double complex fac;
+	double om;
+/* Set up zero Lagrangian Pressure B.C at outer boundary */
 	int i = N-1;
 	int j = N-1;
 
-	for(k=0;k<NF;k++) {
-		for(j=0;j<N;j++) {
-			for(l=0;l<NF;l++) {
-				ind = getindex4(i,j,k,l,NF,N);
-				mat[ind] = 0;
-				if (j==N-1 && k==l) {
-					bcmat[ind] = 1;
-				}
-				else {
-					bcmat[ind] = 0;
-				}
-			}
-		}
-	}
-/* Zero last NF rows */
-	// for(ind=getindex4(i,0,0,0,NF,N) ; ind < getindex4(i,N-1,NF-1,NF-1,NF,N);ind++) {
-	// 	mat[ind] = 0;
-	// 	bcmat[ind] = 0;
-	// }
-/* Add b.c condition */
-
-	j=N-1;
-#ifdef BAROTROPIC
-	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
-	bcmat[getindex4(i,j,0,2,NF,N)] = 1;
-	mat[getindex4(i,j,2,0,NF,N)] = sigma[i]*dlds[i]/(I*mval*r[i]);
-	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
-	mat[getindex4(i,j,0,0,NF,N)] = mat[getindex4(i,j,2,0,NF,N)];
-	mat[getindex4(i,j,0,2,NF,N)] = mat[getindex4(i,j,2,2,NF,N)];
-
-#endif
-
-#ifdef ISOTHERMAL
-	bcmat[getindex4(i,j,2,2,NF,N)] = 1;
-	bcmat[getindex4(i,j,0,2,NF,N)] = 1;
-	mat[getindex4(i,j,2,0,NF,N)] = sigma[i]*(dldtemp[i] + dlds[i])/(I*mval*r[i]);
-	mat[getindex4(i,j,2,2,NF,N)] = omega[i];
-	mat[getindex4(i,j,0,0,NF,N)] = mat[getindex4(i,j,2,0,NF,N)];
-	mat[getindex4(i,j,0,2,NF,N)] = mat[getindex4(i,j,2,2,NF,N)];
-#endif
+	om = omega[i];
 
 #ifdef COOLING
-	bcmat[getindex4(i,j,3,3,NF,N)] = 1;
-	bcmat[getindex4(i,j,0,3,NF,N)] = 1;
-	mat[getindex4(i,j,3,0,NF,N)] = pres[i]*dldpres[i]/(I*mval*r[i]);
-	mat[getindex4(i,j,3,3,NF,N)] = omega[i];
-	mat[getindex4(i,j,0,0,NF,N)] = mat[getindex4(i,j,3,0,NF,N)];
-	mat[getindex4(i,j,0,3,NF,N)] = mat[getindex4(i,j,3,3,NF,N)];
+	fac = pres[i]*dldpres[i]/(I*mval*r[i]);
+#else
+	fac = sigma[i]*dlds[i]/(I*mval*r[i]);
 #endif
+
+
+
+/* Eval Matrix */
+	l = NF-1;
+	for(k=0;k<NF-1;k++) {
+		indq = getindex4(i,j,k,l,NF,N);
+		indm = getindex4(i,j,k,NF-1,NF,N);
+		bcmat[indq] -= mat[indm]/om;
+	}
+
+/* Coeff Matrix */
+	l = 0;
+	for(k=0;k<NF-1;k++) {
+		indq = getindex4(i,j,k,l,NF,N);
+		indm = getindex4(i,j,k,NF-1,NF,N);
+		mat[indq] -= mat[indm]*fac/om;
+		mat[indm] = 0;
+	}
+
+/* Sigma / Pressure equation */
+
+	k=NF-1;
+	for(j=0;j<N;j++) {
+		for(l=0;l<NF;l++) {
+			indm = getindex4(i,j,k,l,NF,N);
+			mat[indm] = 0;
+		}
+	}
+	j=N-1;
+	mat[getindex4(i,j,k,0,NF,N)] = fac;
+	mat[getindex4(i,j,k,NF-1,NF,N)] = om;
+
+
 	return;
 }
 
